@@ -24,6 +24,69 @@ function verifyFlowOwnership($pdo, $flowId, $workspaceId) {
 /**
  * [SECURITY HARDENING] Centralized Snapshot Ownership Verification
  */
+
+/**
+ * [SECURITY HARDENING] Centralized Flow Permanent Deletion
+ * Properly cleans up subscriber flow states, queue jobs, events, logs, snapshots, and activity records.
+ */
+function deleteFlowPermanently($pdo, $flowId, $workspaceId) {
+    // Fetch flow metadata for logging BEFORE deletion
+    $stmtMeta = $pdo->prepare("SELECT name FROM flows WHERE id = ? AND workspace_id = ?");
+    $stmtMeta->execute([$flowId, $workspaceId]);
+    $flowMeta = $stmtMeta->fetch();
+
+    if (!$flowMeta) {
+        return false;
+    }
+
+    $flowName = $flowMeta['name'];
+    logSystemActivity($pdo, 'flows', 'delete', $flowId, $flowName);
+
+    $pdo->beginTransaction();
+    try {
+        // 1. Clean up Subscribers State
+        $pdo->prepare("DELETE FROM subscriber_flow_states WHERE flow_id = ?")->execute([$flowId]);
+        $pdo->prepare("DELETE FROM flow_enrollments WHERE flow_id = ?")->execute([$flowId]);
+
+        // 2. Clean up Queue Jobs
+        $pdo->prepare("DELETE FROM queue_jobs WHERE (payload LIKE ? OR payload LIKE ?) AND status IN ('pending', 'processing')")
+            ->execute(['%"flow_id":"' . $flowId . '"%', '%"priority_flow_id":"' . $flowId . '"%']);
+
+        // 3. Clean up Flow Event Queue
+        $stmtCols = $pdo->query("SHOW COLUMNS FROM flow_event_queue LIKE 'flow_id'");
+        if ($stmtCols->fetch()) {
+            $pdo->prepare("DELETE FROM flow_event_queue WHERE flow_id = ?")->execute([$flowId]);
+        }
+
+        // 4. Clean up delivery logs
+        try {
+            $pdo->prepare("DELETE FROM mail_delivery_logs WHERE flow_id = ?")->execute([$flowId]);
+        } catch (Exception $ignored) {}
+        try {
+            $pdo->prepare("DELETE FROM zalo_delivery_logs WHERE flow_id = ?")->execute([$flowId]);
+        } catch (Exception $ignored) {}
+
+        // 5. Delete Flow + its snapshots
+        $pdo->prepare("DELETE FROM flows WHERE id = ? AND workspace_id = ?")->execute([$flowId, $workspaceId]);
+        try {
+            $pdo->prepare("DELETE FROM flow_snapshots WHERE flow_id = ?")->execute([$flowId]);
+        } catch (Exception $ignored) {}
+
+        // 6. Clean up subscriber_activity
+        try {
+            $pdo->prepare("DELETE FROM subscriber_activity WHERE flow_id = ?")->execute([$flowId]);
+        } catch (Exception $ignored) {}
+
+        $pdo->commit();
+        return true;
+    } catch (Exception $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        throw $e;
+    }
+}
+
 function verifySnapshotOwnership($pdo, $snapshotId, $workspaceId) {
     if (!$snapshotId) return;
     $stmt = $pdo->prepare("SELECT 1 FROM flow_snapshots s JOIN flows f ON s.flow_id = f.id WHERE s.id = ? AND f.workspace_id = ?");
@@ -2683,6 +2746,62 @@ if (isset($_GET['route']) && $_GET['route'] === 'inactive-users') {
     }
 }
 
+
+// --- NEW ROUTE: Bulk Delete ---
+if (isset($_GET['route']) && $_GET['route'] === 'bulk-delete') {
+    if ($method !== 'POST')
+        jsonResponse(false, null, 'Method not allowed');
+
+    try {
+        require_permission($pdo, 'edit_campaigns', $workspace_id);
+
+        $input = json_decode(file_get_contents("php://input"), true);
+        $flowIds = $input['ids'] ?? [];
+
+        if (empty($flowIds))
+            jsonResponse(false, null, 'No flow IDs selected');
+
+        $deletedCount = 0;
+        foreach ($flowIds as $flowId) {
+            if (deleteFlowPermanently($pdo, $flowId, $workspace_id)) {
+                $deletedCount++;
+            }
+        }
+
+        jsonResponse(true, ['message' => "Successfully deleted $deletedCount flows permanently", 'count' => $deletedCount]);
+    } catch (Exception $e) {
+        error_log("Bulk delete error: " . $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống: ' . $e->getMessage());
+    }
+}
+
+// --- NEW ROUTE: Empty Trash ---
+if (isset($_GET['route']) && $_GET['route'] === 'empty-trash') {
+    if ($method !== 'DELETE' && $method !== 'POST')
+        jsonResponse(false, null, 'Method not allowed');
+
+    try {
+        require_permission($pdo, 'edit_campaigns', $workspace_id);
+
+        // Fetch all archived flows for the workspace
+        $stmt = $pdo->prepare("SELECT id FROM flows WHERE status = 'archived' AND workspace_id = ?");
+        $stmt->execute([$workspace_id]);
+        $flowIds = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+        $deletedCount = 0;
+        foreach ($flowIds as $flowId) {
+            if (deleteFlowPermanently($pdo, $flowId, $workspace_id)) {
+                $deletedCount++;
+            }
+        }
+
+        jsonResponse(true, ['message' => "Successfully emptied trash, deleted $deletedCount flows", 'count' => $deletedCount]);
+    } catch (Exception $e) {
+        error_log("Empty trash error: " . $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống: ' . $e->getMessage());
+    }
+}
+
 switch ($method) {
     case 'GET':
         // [PERF] Release session lock immediately to prevent "Pending" state in DevTools
@@ -3590,75 +3709,16 @@ switch ($method) {
             if (!$path)
                 jsonResponse(false, null, 'ID required');
 
-            // Add require_permission to prevent unauthorized deletions
             require_permission($pdo, 'edit_campaigns', $workspace_id);
 
-            // Fetch flow metadata for logging BEFORE deletion
-            $stmtMeta = $pdo->prepare("SELECT name FROM flows WHERE id = ? AND workspace_id = ?");
-            $stmtMeta->execute([$path, $workspace_id]);
-            $flowMeta = $stmtMeta->fetch();
-
-            // [FIX] Verify ownership before proceeding to wipe child tables
-            if (!$flowMeta) {
-                jsonResponse(false, null, 'KhÃ´ng tÃ¬m tháº¥y Flow hoáº·c khÃ´ng cÃ³ quyá»n xÃ³a');
-                return;
+            $success = deleteFlowPermanently($pdo, $path, $workspace_id);
+            if ($success) {
+                jsonResponse(true, ['id' => $path]);
+            } else {
+                jsonResponse(false, null, 'Không tìm thấy Flow hoặc không có quyền xóa');
             }
-
-            $flowName = $flowMeta['name'];
-
-            // Log System Activity inside deletion transaction
-            logSystemActivity($pdo, 'flows', 'delete', $path, $flowName);
-
-            // [BUG-FIX #15] Wrap all delete operations in transaction for atomicity.
-            $pdo->beginTransaction();
-
-            // 1. Clean up Subscribers State
-            $pdo->prepare("DELETE FROM subscriber_flow_states WHERE flow_id = ?")->execute([$path]);
-            $pdo->prepare("DELETE FROM flow_enrollments WHERE flow_id = ?")->execute([$path]);
-
-            // 2. Clean up Queue Jobs
-            $pdo->prepare("DELETE FROM queue_jobs WHERE (payload LIKE ? OR payload LIKE ?) AND status IN ('pending', 'processing')")
-                ->execute(['%"flow_id":"' . $path . '"%', '%"priority_flow_id":"' . $path . '"%']);
-
-            // 3. Clean up Flow Event Queue
-            $stmtCols = $pdo->query("SHOW COLUMNS FROM flow_event_queue LIKE 'flow_id'");
-            if ($stmtCols->fetch()) {
-                $pdo->prepare("DELETE FROM flow_event_queue WHERE flow_id = ?")->execute([$path]);
-            }
-
-            // 4. Clean up delivery logs
-            try {
-                $pdo->prepare("DELETE FROM mail_delivery_logs WHERE flow_id = ?")->execute([$path]);
-            } catch (Exception $ignored) {
-            }
-            try {
-                $pdo->prepare("DELETE FROM zalo_delivery_logs WHERE flow_id = ?")->execute([$path]);
-            } catch (Exception $ignored) {
-            }
-
-            // 5. Delete Flow + its snapshots
-            // [FIX P29-C1] CRITICAL: Added workspace_id guard to prevent cross-workspace deletion.
-            // The metadata SELECT above filters by workspace_id but does NOT block the DELETE if
-            // the SELECT returns empty (flowMeta = false). An attacker could delete any flow by ID.
-            $pdo->prepare("DELETE FROM flows WHERE id = ? AND workspace_id = ?")->execute([$path, $workspace_id]);
-            try {
-                $pdo->prepare("DELETE FROM flow_snapshots WHERE flow_id = ?")->execute([$path]);
-            } catch (Exception $ignored) {
-            }
-
-            // 6. [FIX] Clean up subscriber_activity for deleted flow to avoid orphaned records
-            try {
-                $pdo->prepare("DELETE FROM subscriber_activity WHERE flow_id = ?")->execute([$path]);
-            } catch (Exception $ignored) {
-                // Fail silently: no critical impact if activity records persist
-            }
-
-            $pdo->commit();
-            jsonResponse(true, ['id' => $path]);
         } catch (Exception $e) {
-            if ($pdo->inTransaction())
-                $pdo->rollBack();
-            jsonResponse(false, null, 'Lá»—i há»‡ thá»‘ng, vui lÃ²ng thá»­ láº¡i.');
+            jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
         }
         break;
 

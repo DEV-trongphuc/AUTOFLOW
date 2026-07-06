@@ -456,7 +456,7 @@ const CampaignList: React.FC<CampaignListProps> = ({ campaigns, loading, onSelec
                 }
             `}</style>
             {/* Desktop Table View */}
-            <div ref={parentRef} className="hidden md:block overflow-x-auto overflow-y-auto max-h-[420px]">
+            <div ref={parentRef} className="hidden md:block overflow-x-auto overflow-y-auto max-h-[580px]">
                 <table className="w-full relative">
                     <thead className="bg-slate-50/50 border-b border-slate-100 text-left sticky top-0 z-20 backdrop-blur-sm">
                         <tr>

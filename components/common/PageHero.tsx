@@ -60,7 +60,7 @@ const PageHero: React.FC<PageHeroProps> = ({
                                         action.customClass 
                                         ? action.customClass
                                         : action.primary 
-                                          ? 'bg-slate-900 hover:bg-slate-850 dark:bg-slate-100 dark:hover:bg-slate-200 text-white dark:text-slate-900 shadow-md hover:shadow-lg active:scale-95 transition-all duration-200' 
+                                          ? 'bg-violet-600 hover:bg-violet-700 dark:bg-violet-500 dark:hover:bg-violet-600 text-white shadow-md hover:shadow-violet-500/20 active:scale-95 transition-all duration-200' 
                                           : 'bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-350 border border-slate-200 dark:border-slate-800 active:scale-95 transition-all duration-200'
                                     }`}
                                 >

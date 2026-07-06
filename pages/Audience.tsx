@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import Button from '../components/common/Button';
 import PageHero from '../components/common/PageHero';
+import StatCard from '../components/common/StatCard';
 
 import Tabs from '../components/common/Tabs';
 import Select from '../components/common/Select';
@@ -1130,88 +1131,76 @@ const Audience: React.FC = () => {
 
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-6">
                     {/* Card 1: Liên hệ */}
-                    <div 
-                        className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/80 rounded-xl p-5 shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] duration-200 cursor-pointer min-h-[140px] flex flex-col justify-between"
+                    <StatCard
+                        title="Liên hệ"
+                        value={stats.total.toLocaleString()}
+                        growth={5.2}
+                        icon={<Users />}
+                        color="#8b5cf6"
+                        comparisonLabel="so với 30 ngày trước"
+                        loading={loading}
                         style={{ animation: 'slideUp 0.4s ease-out both', animationDelay: '50ms' }}
-                    >
-                        <div className="flex items-center justify-between mb-3">
-                            <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none">Liên hệ</span>
-                            <div className="text-violet-500 dark:text-violet-400 opacity-80 shrink-0">
-                                <Users className="w-5 h-5" />
-                            </div>
-                        </div>
-                        <div className="flex-1 flex flex-col justify-start">
-                            {loading ? (
-                                <div style={{ width: 100, height: 28, borderRadius: 8, background: '#e2e8f0', position: 'relative', overflow: 'hidden' }}><div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg,transparent,rgba(255,255,255,0.6),transparent)', animation: 'sk-shimmer 1.4s ease-in-out infinite', transform: 'translateX(-100%)' }} /></div>
-                            ) : (
-                                <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-800 dark:text-slate-100 tracking-tight leading-none">{stats.total.toLocaleString()}</h3>
-                            )}
-                            <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mt-2.5 flex flex-wrap gap-x-2.5 gap-y-1">
-                                <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: '#10b981' }}></span>Mới hôm nay: {Math.round(stats.total * 0.01).toLocaleString()}</span>
-                                <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#8b5cf6' }}></span>Active: {Math.round(stats.total * 0.85).toLocaleString()}</span>
-                            </div>
-                        </div>
-                        <div className="text-[11px] font-black text-emerald-500 mt-2 flex items-center gap-1">
-                            <span>▲ +5.2%</span>
-                            <span className="text-slate-400 font-bold">so với 30 ngày trước</span>
-                        </div>
-                    </div>
+                        breakdown={
+                            <>
+                                <span className="flex items-center gap-1.5">
+                                    <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: '#10b981' }}></span>
+                                    Mới hôm nay: {Math.round(stats.total * 0.01).toLocaleString()}
+                                </span>
+                                <span className="flex items-center gap-1.5">
+                                    <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#8b5cf6' }}></span>
+                                    Active: {Math.round(stats.total * 0.85).toLocaleString()}
+                                </span>
+                            </>
+                        }
+                    />
 
                     {/* Card 2: Multi-Channel Reach */}
-                    <div 
-                        className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/80 rounded-xl p-5 shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] duration-200 cursor-pointer min-h-[140px] flex flex-col justify-between"
+                    <StatCard
+                        title="Độ phủ tiếp cận"
+                        value={((stats.email_reach || stats.active || Math.round(stats.total * 0.85)) + (stats.zalo_reach || Math.round(stats.total * 0.15))).toLocaleString()}
+                        growth={4.8}
+                        icon={<Zap />}
+                        color="#3b82f6"
+                        comparisonLabel="so với 30 ngày trước"
+                        loading={loading}
                         style={{ animation: 'slideUp 0.4s ease-out both', animationDelay: '100ms' }}
-                    >
-                        <div className="flex items-center justify-between mb-3">
-                            <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none">Độ phủ tiếp cận</span>
-                            <div className="text-violet-500 dark:text-violet-400 opacity-80 shrink-0">
-                                <Zap className="w-5 h-5" />
-                            </div>
-                        </div>
-                        <div className="flex-1 flex flex-col justify-start">
-                            {loading ? (
-                                <div style={{ width: 80, height: 28, borderRadius: 8, background: '#e2e8f0', position: 'relative', overflow: 'hidden' }}><div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg,transparent,rgba(255,255,255,0.6),transparent)', animation: 'sk-shimmer 1.4s ease-in-out infinite', transform: 'translateX(-100%)' }} /></div>
-                            ) : (
-                                <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-800 dark:text-slate-100 tracking-tight leading-none">{( (stats.email_reach || stats.active || Math.round(stats.total * 0.85)) + (stats.zalo_reach || Math.round(stats.total * 0.15)) ).toLocaleString()}</h3>
-                            )}
-                            <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mt-2.5 flex flex-wrap gap-x-2.5 gap-y-1">
-                                <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#8b5cf6' }}></span>Email: {(stats.email_reach || stats.active || Math.round(stats.total * 0.85)).toLocaleString()}</span>
-                                <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#3b82f6' }}></span>Zalo/SĐT: {(stats.zalo_reach || Math.round(stats.total * 0.15)).toLocaleString()}</span>
-                            </div>
-                        </div>
-                        <div className="text-[11px] font-black text-emerald-500 mt-2 flex items-center gap-1">
-                            <span>▲ +4.8%</span>
-                            <span className="text-slate-400 font-bold">so với 30 ngày trước</span>
-                        </div>
-                    </div>
+                        breakdown={
+                            <>
+                                <span className="flex items-center gap-1.5">
+                                    <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#8b5cf6' }}></span>
+                                    Email: {(stats.email_reach || stats.active || Math.round(stats.total * 0.85)).toLocaleString()}
+                                </span>
+                                <span className="flex items-center gap-1.5">
+                                    <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#3b82f6' }}></span>
+                                    Zalo/SĐT: {(stats.zalo_reach || Math.round(stats.total * 0.15)).toLocaleString()}
+                                </span>
+                            </>
+                        }
+                    />
 
                     {/* Card 3: Hủy đăng ký */}
-                    <div 
-                        className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/80 rounded-xl p-5 shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] duration-200 cursor-pointer min-h-[140px] flex flex-col justify-between"
+                    <StatCard
+                        title="Hủy đăng ký"
+                        value={stats.unsubscribed.toLocaleString()}
+                        growth={-0.5}
+                        icon={<UserMinus />}
+                        color="#ec4899"
+                        comparisonLabel="so với 30 ngày trước"
+                        loading={loading}
                         style={{ animation: 'slideUp 0.4s ease-out both', animationDelay: '150ms' }}
-                    >
-                        <div className="flex items-center justify-between mb-3">
-                            <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none">Hủy đăng ký</span>
-                            <div className="text-rose-500 dark:text-rose-400 opacity-80 shrink-0">
-                                <UserMinus className="w-5 h-5" />
-                            </div>
-                        </div>
-                        <div className="flex-1 flex flex-col justify-start">
-                            {loading ? (
-                                <div style={{ width: 70, height: 28, borderRadius: 8, background: '#e2e8f0', position: 'relative', overflow: 'hidden' }}><div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg,transparent,rgba(255,255,255,0.6),transparent)', animation: 'sk-shimmer 1.4s ease-in-out infinite', transform: 'translateX(-100%)' }} /></div>
-                            ) : (
-                                <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-800 dark:text-slate-100 tracking-tight leading-none">{stats.unsubscribed.toLocaleString()}</h3>
-                            )}
-                            <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mt-2.5 flex flex-wrap gap-x-2.5 gap-y-1">
-                                <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#ef4444' }}></span>Churn: {Math.round(stats.unsubscribed * 0.05).toLocaleString()}</span>
-                                <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#64748b' }}></span>Khác: {Math.round(stats.unsubscribed * 0.95).toLocaleString()}</span>
-                            </div>
-                        </div>
-                        <div className="text-[11px] font-black text-emerald-500 mt-2 flex items-center gap-1">
-                            <span>▼ -0.5%</span>
-                            <span className="text-slate-400 font-bold">so với 30 ngày trước</span>
-                        </div>
-                    </div>
+                        breakdown={
+                            <>
+                                <span className="flex items-center gap-1.5">
+                                    <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#ef4444' }}></span>
+                                    Churn: {Math.round(stats.unsubscribed * 0.05).toLocaleString()}
+                                </span>
+                                <span className="flex items-center gap-1.5">
+                                    <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#64748b' }}></span>
+                                    Khác: {Math.round(stats.unsubscribed * 0.95).toLocaleString()}
+                                </span>
+                            </>
+                        }
+                    />
                 </div>
 
 

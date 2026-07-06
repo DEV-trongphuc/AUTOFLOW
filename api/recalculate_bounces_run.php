@@ -55,15 +55,16 @@ try {
     ";
     $affectedEntrances = $pdo->exec($sqlEntrance);
 
-    // Recalculate bounce flag based on page count and interaction events
+    // Recalculate bounce flag based on page count, duration, and interaction events
     $sql = "
         UPDATE web_sessions s
         SET is_bounce = CASE
             WHEN s.page_count > 1 THEN 0
+            WHEN s.duration_seconds >= 10 THEN 0
             WHEN EXISTS (
                 SELECT 1 FROM web_events
                 WHERE session_id = s.id
-                AND event_type IN ('click', 'canvas_click', 'form')
+                AND event_type IN ('click', 'canvas_click', 'form', 'copy', 'select')
                 LIMIT 1
             ) THEN 0
             ELSE 1

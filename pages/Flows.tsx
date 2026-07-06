@@ -219,6 +219,23 @@ const Flows: React.FC = () => {
 
     // Filters - Changed default to 'active'
     const [activeTab, setActiveTab] = useState<FlowFilter>('active');
+    const [selectedFlowIds, setSelectedFlowIds] = useState<Set<string>>(new Set());
+
+    useEffect(() => {
+        setSelectedFlowIds(new Set());
+    }, [activeTab]);
+
+    const handleToggleSelectFlow = useCallback((id: string) => {
+        setSelectedFlowIds(prev => {
+            const next = new Set(prev);
+            if (next.has(id)) {
+                next.delete(id);
+            } else {
+                next.add(id);
+            }
+            return next;
+        });
+    }, []);
     const [filterType, setFilterType] = useState<TriggerTypeFilter>('all');
     const [isTypeDropdownOpen, setIsTypeDropdownOpen] = useState(false);
     // Date filter (mirrors Campaign page)
@@ -450,6 +467,62 @@ const Flows: React.FC = () => {
             setLoading(false);
         }
     }, [showToast, loadLists, loadSegments, loadTags]);
+
+    const handleEmptyTrash = useCallback(() => {
+        setConfirmModal({
+            isOpen: true,
+            title: 'Dọn sạch Thùng rác?',
+            message: 'Bạn có chắc chắn muốn xóa vĩnh viễn tất cả kịch bản trong Thùng rác không? Hành động này không thể khôi phục.',
+            variant: 'danger',
+            confirmLabel: 'Xóa vĩnh viễn tất cả',
+            onConfirm: async () => {
+                setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                setLoading(true);
+                try {
+                    const res = await api.delete('flows?route=empty-trash');
+                    if (res.success) {
+                        showToast('Đã dọn sạch thùng rác thành công!', 'success');
+                        loadData();
+                    } else {
+                        showToast(res.message || 'Lỗi khi dọn sạch thùng rác', 'error');
+                    }
+                } catch (error) {
+                    showToast('Đã xảy ra lỗi hệ thống khi dọn sạch thùng rác', 'error');
+                } finally {
+                    setLoading(false);
+                }
+            }
+        });
+    }, [loadData, showToast]);
+
+    const handleBulkDeletePermanent = useCallback(() => {
+        if (selectedFlowIds.size === 0) return;
+        setConfirmModal({
+            isOpen: true,
+            title: 'Xóa vĩnh viễn kịch bản đã chọn?',
+            message: `Bạn có chắc chắn muốn xóa vĩnh viễn ${selectedFlowIds.size} kịch bản đã chọn không? Hành động này không thể khôi phục.`,
+            variant: 'danger',
+            confirmLabel: 'Xóa vĩnh viễn',
+            onConfirm: async () => {
+                setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                setLoading(true);
+                try {
+                    const res = await api.post('flows?route=bulk-delete', { ids: Array.from(selectedFlowIds) });
+                    if (res.success) {
+                        showToast(`Đã xóa vĩnh viễn ${selectedFlowIds.size} kịch bản thành công!`, 'success');
+                        setSelectedFlowIds(new Set());
+                        loadData();
+                    } else {
+                        showToast(res.message || 'Lỗi khi xóa vĩnh viễn kịch bản', 'error');
+                    }
+                } catch (error) {
+                    showToast('Đã xảy ra lỗi hệ thống khi xóa kịch bản', 'error');
+                } finally {
+                    setLoading(false);
+                }
+            }
+        });
+    }, [selectedFlowIds, loadData, showToast]);
 
     const fetchReportData = useCallback(async (flowId: string) => {
         setLoadingReport(true);
@@ -1829,6 +1902,26 @@ const Flows: React.FC = () => {
                                     ]}
                                 />
                                 <div className="flex items-center gap-2 shrink-0">
+                                    {activeTab === 'archived' && (
+                                        <button
+                                            onClick={handleEmptyTrash}
+                                            disabled={filteredFlows.length === 0 || loading}
+                                            className="flex items-center gap-1.5 px-4 py-2 bg-rose-50 hover:bg-rose-100 border border-rose-100 rounded-xl text-xs font-bold text-rose-600 transition-all active:scale-95 disabled:opacity-50"
+                                        >
+                                            <Trash2 className="w-3.5 h-3.5" />
+                                            Làm sạch
+                                        </button>
+                                    )}
+                                    {activeTab === 'archived' && selectedFlowIds.size > 0 && (
+                                        <button
+                                            onClick={handleBulkDeletePermanent}
+                                            disabled={loading}
+                                            className="flex items-center gap-1.5 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition-all active:scale-95 shadow-md shadow-rose-600/10"
+                                        >
+                                            <Trash2 className="w-3.5 h-3.5" />
+                                            Xóa vĩnh viễn đã chọn ({selectedFlowIds.size})
+                                        </button>
+                                    )}
                                     {/* Grid/List Toggle */}
                                     <div className="flex items-center bg-slate-50 dark:bg-slate-950 p-1 rounded-xl border border-slate-100 dark:border-slate-800/60">
                                         <button
@@ -1970,6 +2063,8 @@ const Flows: React.FC = () => {
                                                     key={flow.id}
                                                     flow={flow}
                                                     isList={viewMode === 'list'}
+                                                    selected={selectedFlowIds.has(flow.id)}
+                                                    onToggleSelect={() => handleToggleSelectFlow(flow.id)}
                                                     linkedCampaign={type === 'campaign' ? campaignsMap.get(targetId!) : undefined}
                                                     linkedForm={type === 'form' ? formsMap.get(targetId!) : undefined}
                                                     linkedPurchaseEvent={type === 'purchase' ? purchaseEventsMap.get(targetId!) : undefined}

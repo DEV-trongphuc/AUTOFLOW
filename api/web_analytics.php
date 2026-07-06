@@ -101,9 +101,19 @@ function handlePageView($pdo, $visitorId, $sessionId, $pageUrl, $pageTitle, $ref
     $session = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$session) {
-        // Create new session
+        // Create new session - starts as is_bounce = 1
         $stmt = $pdo->prepare("
-            INSERT INTO web_sessions (id, visitor_id, property_id, started_at, last_active_at, entry_url, page_count, referrer_source) VALUES (?, ?, 'unknown', ?, ?, ?, 1, ?)
+            INSERT INTO web_sessions (
+                id, visitor_id, property_id, started_at, entry_url, 
+                device_type, browser, os, country, city, 
+                referrer_source, utm_source, utm_medium, utm_campaign, 
+                page_count, is_bounce, last_active_at
+            ) VALUES (
+                ?, ?, 'unknown', ?, ?, 
+                ?, ?, ?, ?, ?, 
+                ?, ?, ?, ?, 
+                1, 1, ?
+            )
         ");
         $stmt->execute([
             $sessionId,
@@ -118,11 +128,12 @@ function handlePageView($pdo, $visitorId, $sessionId, $pageUrl, $pageTitle, $ref
             $referrer,
             $utmParams['utm_source'],
             $utmParams['utm_medium'],
-            $utmParams['utm_campaign']
+            $utmParams['utm_campaign'],
+            $timestamp
         ]);
     } else {
-        // Update existing session
-        $pdo->prepare("UPDATE web_sessions SET page_count = page_count + 1, last_active_at = ? WHERE id = ?")
+        // Update existing session - second pageview clears is_bounce
+        $pdo->prepare("UPDATE web_sessions SET page_count = page_count + 1, is_bounce = 0, last_active_at = ? WHERE id = ?")
             ->execute([$timestamp, $sessionId]);
     }
 
@@ -145,9 +156,9 @@ function handlePageExit($pdo, $sessionId, $pageUrl, $duration, $scrollDepth, $ti
     ");
     $stmt->execute([$duration, $scrollDepth, $sessionId, $pageUrl]);
 
-    // Update session total duration
-    $pdo->prepare("UPDATE web_sessions SET duration_seconds = duration_seconds + ?, last_active_at = ? WHERE id = ?")
-        ->execute([$duration, $timestamp, $sessionId]);
+    // Update session total duration and check GA4 standard engagement duration (>= 10s)
+    $pdo->prepare("UPDATE web_sessions SET duration_seconds = duration_seconds + ?, is_bounce = IF(duration_seconds + ? >= 10, 0, is_bounce), last_active_at = ? WHERE id = ?")
+        ->execute([$duration, $duration, $timestamp, $sessionId]);
 }
 
 function handleClick($pdo, $visitorId, $sessionId, $pageUrl, $data, $timestamp, $viewportWidth, $viewportHeight)
@@ -155,17 +166,20 @@ function handleClick($pdo, $visitorId, $sessionId, $pageUrl, $data, $timestamp, 
     $subscriberId = getSubscriberIdByVisitor($pdo, $visitorId);
 
     // Record event
-        $stmt = $pdo->prepare("
-            INSERT INTO web_events (session_id, visitor_id, property_id, event_type, meta_data, target_selector, target_text, created_at) VALUES (?, ?, 'unknown', 'click', ?, ?, ?, ?)
-        ");
-        $stmt->execute([
-            $sessionId,
-            $visitorId,
-            json_encode($data),
-            $data['element_id'] ?? $data['element_class'] ?? $pageUrl,
-            $data['element_text'] ?? $data['event_name'] ?? 'click',
-            $timestamp
-        ]);
+    $stmt = $pdo->prepare("
+        INSERT INTO web_events (session_id, visitor_id, property_id, event_type, meta_data, target_selector, target_text, created_at) VALUES (?, ?, 'unknown', 'click', ?, ?, ?, ?)
+    ");
+    $stmt->execute([
+        $sessionId,
+        $visitorId,
+        json_encode($data),
+        $data['element_id'] ?? $data['element_class'] ?? $pageUrl,
+        $data['element_text'] ?? $data['event_name'] ?? 'click',
+        $timestamp
+    ]);
+
+    // Clear bounce status on interaction
+    $pdo->prepare("UPDATE web_sessions SET is_bounce = 0 WHERE id = ?")->execute([$sessionId]);
 
     // Record heatmap data
     if (isset($data['x_position']) && isset($data['y_position'])) {
@@ -191,6 +205,9 @@ function handleFormSubmit($pdo, $visitorId, $sessionId, $pageUrl, $data, $timest
     $email = $data['email'] ?? null;
     $phone = $data['phone'] ?? null;
     $formFields = $data['form_fields'] ?? [];
+
+    // Clear bounce status on interaction
+    $pdo->prepare("UPDATE web_sessions SET is_bounce = 0 WHERE id = ?")->execute([$sessionId]);
 
     if (!$email && !$phone) {
         $stmt = $pdo->prepare("
@@ -300,6 +317,9 @@ function handleCustomEvent($pdo, $visitorId, $sessionId, $pageUrl, $data, $times
         INSERT INTO web_events (session_id, visitor_id, property_id, event_type, meta_data, target_selector, target_text, created_at) VALUES (?, ?, 'unknown', 'custom', ?, ?, ?, ?)
     ");
     $stmt->execute([$sessionId, $visitorId, json_encode($data), $pageUrl, $data['event_name'] ?? 'custom_event', $timestamp]);
+
+    // Clear bounce status on interaction
+    $pdo->prepare("UPDATE web_sessions SET is_bounce = 0 WHERE id = ?")->execute([$sessionId]);
 }
 
 function getSubscriberIdByVisitor($pdo, $visitorId)

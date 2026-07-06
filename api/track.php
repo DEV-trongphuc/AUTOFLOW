@@ -920,8 +920,9 @@ try {
     // Update Session Ping Data (accumulated) using cached $lastPvId
     // NOTE: This runs OUTSIDE $otherEvents block — ping/scroll must update even on pageview-only requests.
     if ($maxDuration > 0 || $maxScroll > 0) {
-        $pdo->prepare("UPDATE web_sessions SET duration_seconds = GREATEST(duration_seconds, ?), last_active_at = NOW() WHERE id = ?")
-            ->execute([$maxDuration, $sessionId]);
+        // [GA4 STANDARDS] A session is considered "engaged" (not a bounce) if duration_seconds is 10 seconds or longer
+        $pdo->prepare("UPDATE web_sessions SET duration_seconds = GREATEST(duration_seconds, ?), is_bounce = IF(GREATEST(duration_seconds, ?) >= 10, 0, is_bounce), last_active_at = NOW() WHERE id = ?")
+            ->execute([$maxDuration, $maxDuration, $sessionId]);
 
         if ($lastPvId) {
             $pdo->prepare("UPDATE web_page_views SET time_on_page = GREATEST(time_on_page, ?), scroll_depth = GREATEST(scroll_depth, ?) WHERE id = ?")

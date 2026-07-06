@@ -33,6 +33,7 @@ import Modal from '../components/common/Modal';
 
 
 import SesQuotaWidget from '../components/common/SesQuotaWidget';
+import StatCard from '../components/common/StatCard';
 
 const TAB_ITEMS = [
     { id: 'all', label: 'Tất cả', icon: PieChart },
@@ -626,100 +627,96 @@ const Campaigns: React.FC = () => {
             <div className="space-y-6">
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                     {/* Card 1: Tổng chiến dịch */}
-                    <div 
-                        className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/80 rounded-xl p-5 shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] duration-200 cursor-pointer min-h-[140px] flex flex-col justify-between"
+                    <StatCard
+                        title="Tổng chiến dịch"
+                        value={campaigns.length}
+                        growth={4.8}
+                        icon={<PieChart />}
+                        color="#8b5cf6"
+                        comparisonLabel="so với 30 ngày trước"
                         style={{ animation: 'slideUp 0.4s ease-out both', animationDelay: '50ms' }}
-                    >
-                        <div className="flex items-center justify-between mb-3">
-                            <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none">Tổng chiến dịch</span>
-                            <div className="text-violet-500 dark:text-violet-400 opacity-80 shrink-0">
-                                <PieChart className="w-5 h-5" />
-                            </div>
-                        </div>
-                        <div className="flex-1 flex flex-col justify-start">
-                            <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-800 dark:text-slate-100 tracking-tight leading-none">{campaigns.length}</h3>
-                            <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mt-2.5 flex flex-wrap gap-x-2.5 gap-y-1">
-                                <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: '#10b981' }}></span>Đang chạy: {campaigns.filter(c => c.status === CampaignStatus.SCHEDULED || c.status === CampaignStatus.SENDING || c.status === CampaignStatus.PAUSED).length}</span>
-                                <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#64748b' }}></span>Bản nháp: {campaigns.filter(c => c.status === CampaignStatus.DRAFT).length}</span>
-                            </div>
-                        </div>
-                        <div className="text-[11px] font-black text-emerald-500 mt-2 flex items-center gap-1">
-                            <span>▲ +4.8%</span>
-                            <span className="text-slate-400 font-bold">so với 30 ngày trước</span>
-                        </div>
-                    </div>
+                        breakdown={
+                            <>
+                                <span className="flex items-center gap-1.5">
+                                    <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: '#10b981' }}></span>
+                                    Đang chạy: {campaigns.filter(c => c.status === CampaignStatus.SCHEDULED || c.status === CampaignStatus.SENDING || c.status === CampaignStatus.PAUSED).length}
+                                </span>
+                                <span className="flex items-center gap-1.5">
+                                    <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#64748b' }}></span>
+                                    Bản nháp: {campaigns.filter(c => c.status === CampaignStatus.DRAFT).length}
+                                </span>
+                            </>
+                        }
+                    />
 
                     {/* Card 2: Tổng gửi */}
-                    <div 
-                        className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/80 rounded-xl p-5 shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] duration-200 cursor-pointer min-h-[140px] flex flex-col justify-between"
+                    <StatCard
+                        title="Tổng gửi"
+                        value={stats.totalSent.toLocaleString()}
+                        growth={12.3}
+                        icon={<Send />}
+                        color="#3b82f6"
+                        comparisonLabel="so với 30 ngày trước"
                         style={{ animation: 'slideUp 0.4s ease-out both', animationDelay: '100ms' }}
-                    >
-                        <div className="flex items-center justify-between mb-3">
-                            <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none">Tổng gửi</span>
-                            <div className="text-blue-500 dark:text-blue-400 opacity-80 shrink-0">
-                                <Send className="w-5 h-5" />
-                            </div>
-                        </div>
-                        <div className="flex-1 flex flex-col justify-start">
-                            <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-800 dark:text-slate-100 tracking-tight leading-none">{stats.totalSent.toLocaleString()}</h3>
-                            <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mt-2.5 flex flex-wrap gap-x-2.5 gap-y-1">
-                                <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#fbbf24' }}></span>Email: {(stats.totalSent * 0.6).toFixed(0).toLocaleString()}</span>
-                                <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#3b82f6' }}></span>Zalo: {(stats.totalSent * 0.4).toFixed(0).toLocaleString()}</span>
-                            </div>
-                        </div>
-                        <div className="text-[11px] font-black text-emerald-500 mt-2 flex items-center gap-1">
-                            <span>▲ +12.3%</span>
-                            <span className="text-slate-400 font-bold">so với 30 ngày trước</span>
-                        </div>
-                    </div>
+                        breakdown={
+                            <>
+                                <span className="flex items-center gap-1.5">
+                                    <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#fbbf24' }}></span>
+                                    Email: {(stats.totalSent * 0.6).toFixed(0).toLocaleString()}
+                                </span>
+                                <span className="flex items-center gap-1.5">
+                                    <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#3b82f6' }}></span>
+                                    Zalo: {(stats.totalSent * 0.4).toFixed(0).toLocaleString()}
+                                </span>
+                            </>
+                        }
+                    />
 
                     {/* Card 3: Tỷ lệ mở */}
-                    <div 
-                        className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/80 rounded-xl p-5 shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] duration-200 cursor-pointer min-h-[140px] flex flex-col justify-between"
+                    <StatCard
+                        title="Tỷ lệ mở"
+                        value={`${stats.openRate}%`}
+                        growth={1.5}
+                        icon={<MailOpen />}
+                        color="#10b981"
+                        comparisonLabel="so với 30 ngày trước"
                         style={{ animation: 'slideUp 0.4s ease-out both', animationDelay: '150ms' }}
-                    >
-                        <div className="flex items-center justify-between mb-3">
-                            <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none">Tỷ lệ mở</span>
-                            <div className="text-emerald-500 dark:text-emerald-400 opacity-80 shrink-0">
-                                <MailOpen className="w-5 h-5" />
-                            </div>
-                        </div>
-                        <div className="flex-1 flex flex-col justify-start">
-                            <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-800 dark:text-slate-100 tracking-tight leading-none">{stats.openRate}%</h3>
-                            <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mt-2.5 flex flex-wrap gap-x-2.5 gap-y-1">
-                                <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#10b981' }}></span>Lượt mở: {Math.round(stats.totalSent * Number(stats.openRate) / 100).toLocaleString()}</span>
-                                <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#64748b' }}></span>Không mở: {Math.max(0, stats.totalSent - Math.round(stats.totalSent * Number(stats.openRate) / 100)).toLocaleString()}</span>
-                            </div>
-                        </div>
-                        <div className="text-[11px] font-black text-emerald-500 mt-2 flex items-center gap-1">
-                            <span>▲ +1.5%</span>
-                            <span className="text-slate-400 font-bold">so với 30 ngày trước</span>
-                        </div>
-                    </div>
+                        breakdown={
+                            <>
+                                <span className="flex items-center gap-1.5">
+                                    <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#10b981' }}></span>
+                                    Lượt mở: {Math.round(stats.totalSent * Number(stats.openRate) / 100).toLocaleString()}
+                                </span>
+                                <span className="flex items-center gap-1.5">
+                                    <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#64748b' }}></span>
+                                    Không mở: {Math.max(0, stats.totalSent - Math.round(stats.totalSent * Number(stats.openRate) / 100)).toLocaleString()}
+                                </span>
+                            </>
+                        }
+                    />
 
                     {/* Card 4: Lượt Click */}
-                    <div 
-                        className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/80 rounded-xl p-5 shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] duration-200 cursor-pointer min-h-[140px] flex flex-col justify-between"
+                    <StatCard
+                        title="Lượt Click"
+                        value={stats.totalClicked.toLocaleString()}
+                        growth={8.1}
+                        icon={<MousePointerClick />}
+                        color="#ec4899"
+                        comparisonLabel="so với 30 ngày trước"
                         style={{ animation: 'slideUp 0.4s ease-out both', animationDelay: '200ms' }}
-                    >
-                        <div className="flex items-center justify-between mb-3">
-                            <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none">Lượt Click</span>
-                            <div className="text-rose-500 dark:text-rose-400 opacity-80 shrink-0">
-                                <MousePointerClick className="w-5 h-5" />
-                            </div>
-                        </div>
-                        <div className="flex-1 flex flex-col justify-start">
-                            <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-800 dark:text-slate-100 tracking-tight leading-none">{stats.totalClicked.toLocaleString()}</h3>
-                            <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mt-2.5 flex flex-wrap gap-x-2.5 gap-y-1">
-                                <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#ec4899' }}></span>Lượt click: {stats.totalClicked.toLocaleString()}</span>
-                                <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#8b5cf6' }}></span>CTR: {stats.totalSent > 0 ? (stats.totalClicked / stats.totalSent * 100).toFixed(1) : '0'}%</span>
-                            </div>
-                        </div>
-                        <div className="text-[11px] font-black text-emerald-500 mt-2 flex items-center gap-1">
-                            <span>▲ +8.1%</span>
-                            <span className="text-slate-400 font-bold">so với 30 ngày trước</span>
-                        </div>
-                    </div>
+                        breakdown={
+                            <>
+                                <span className="flex items-center gap-1.5">
+                                    <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#ec4899' }}></span>
+                                    Lượt click: {stats.totalClicked.toLocaleString()}
+                                </span>
+                                <span className="flex items-center gap-1.5">
+                                    <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#8b5cf6' }}></span>
+                                    CTR: {stats.totalSent > 0 ? (stats.totalClicked / stats.totalSent * 100).toFixed(1) : '0'}%
+                                </span>
+                            </>
+                        }
+                    />
                 </div>
 
                 {/* Table section */}

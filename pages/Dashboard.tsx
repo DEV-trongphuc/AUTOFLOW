@@ -224,6 +224,7 @@ const Dashboard: React.FC = () => {
     const [isCustomDateModalOpen, setIsCustomDateModalOpen] = useState(false);
     const [fromDate, setFromDate] = useState('');
     const [toDate, setToDate] = useState('');
+    const [chartTab, setChartTab] = useState<'web' | 'ai'>('ai');
 
     const fetchDashboardStats = async (d: number, forceBust = false) => {
         setStatsLoading(true);
@@ -516,21 +517,39 @@ const Dashboard: React.FC = () => {
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                             {/* BarChart */}
                             <div className="lg:col-span-2 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col justify-between h-[420px]">
-                                <div className="flex items-center gap-2 mb-6 shrink-0">
-                                    <BarChart3 className="w-4 h-4 text-violet-500" />
-                                    <h3 className="text-xs font-black uppercase tracking-[0.1em] text-slate-700 dark:text-slate-200">Hiệu suất xử lý Data theo ngày</h3>
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 shrink-0">
+                                    <div className="flex items-center gap-2">
+                                        <BarChart3 className="w-4 h-4 text-violet-500" />
+                                        <h3 className="text-xs font-black uppercase tracking-[0.1em] text-slate-700 dark:text-slate-200">Hiệu suất xử lý Data theo ngày</h3>
+                                    </div>
+                                    <div className="flex bg-slate-100 dark:bg-slate-800 p-0.5 rounded-xl border border-slate-200/50 dark:border-slate-700/60 scale-90 origin-right">
+                                        <button
+                                            type="button"
+                                            onClick={() => setChartTab('web')}
+                                            className={`px-3 py-1.5 text-[9px] font-black uppercase tracking-wider rounded-lg transition-all duration-300 ${chartTab === 'web' ? 'bg-white dark:bg-slate-900 shadow-sm text-violet-600 dark:text-violet-400' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}
+                                        >
+                                            Website truy cập
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setChartTab('ai')}
+                                            className={`px-3 py-1.5 text-[9px] font-black uppercase tracking-wider rounded-lg transition-all duration-300 ${chartTab === 'ai' ? 'bg-white dark:bg-slate-900 shadow-sm text-violet-600 dark:text-violet-400' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}
+                                        >
+                                            AI Chat
+                                        </button>
+                                    </div>
                                 </div>
                                 <div className="flex-1 h-[260px] w-full min-h-[220px]">
                                     <ResponsiveContainer width="100%" height="100%">
                                         <BarChart data={statsData.chart_data} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
                                             <defs>
                                                 <linearGradient id="barWebGrad" x1="0" y1="0" x2="0" y2="1">
-                                                    <stop offset="0%" stopColor="#a78bfa" />
-                                                    <stop offset="100%" stopColor="#7c3aed" />
-                                                </linearGradient>
-                                                <linearGradient id="barAiGrad" x1="0" y1="0" x2="0" y2="1">
                                                     <stop offset="0%" stopColor="#c084fc" />
                                                     <stop offset="100%" stopColor="#6366f1" />
+                                                </linearGradient>
+                                                <linearGradient id="barAiGrad" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="0%" stopColor="#a78bfa" />
+                                                    <stop offset="100%" stopColor="#7c3aed" />
                                                 </linearGradient>
                                             </defs>
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border-light, #f1f5f9)" className="dark:stroke-slate-800/40" />
@@ -549,12 +568,15 @@ const Dashboard: React.FC = () => {
                                                 itemStyle={{ fontWeight: 600, fontSize: '11px' }}
                                             />
                                             <Legend iconType="circle" wrapperStyle={{ fontSize: '10px', fontWeight: 'bold', paddingTop: '15px', color: 'var(--color-text-light, #64748b)' }} />
-                                            <Bar dataKey="web" name="Truy cập Web" fill="url(#barWebGrad)" fillOpacity={1} radius={[4, 4, 0, 0]} maxBarSize={20}>
-                                                <LabelList dataKey="web" position="top" style={{ fill: 'var(--color-text-light, #64748b)', fontSize: 10, fontWeight: 700 }} offset={6} />
-                                            </Bar>
-                                            <Bar dataKey="ai" name="AI Phản hồi" fill="url(#barAiGrad)" fillOpacity={1} radius={[4, 4, 0, 0]} maxBarSize={20}>
-                                                <LabelList dataKey="ai" position="top" style={{ fill: 'var(--color-text-light, #64748b)', fontSize: 10, fontWeight: 700 }} offset={6} />
-                                            </Bar>
+                                            {chartTab === 'web' ? (
+                                                <Bar dataKey="web" name="Truy cập Web" fill="url(#barWebGrad)" fillOpacity={1} radius={[6, 6, 0, 0]} maxBarSize={32}>
+                                                    <LabelList dataKey="web" position="top" style={{ fill: 'var(--color-text-light, #64748b)', fontSize: 10, fontWeight: 700 }} offset={6} />
+                                                </Bar>
+                                            ) : (
+                                                <Bar dataKey="ai" name="AI Phản hồi" fill="url(#barAiGrad)" fillOpacity={1} radius={[6, 6, 0, 0]} maxBarSize={32}>
+                                                    <LabelList dataKey="ai" position="top" style={{ fill: 'var(--color-text-light, #64748b)', fontSize: 10, fontWeight: 700 }} offset={6} />
+                                                </Bar>
+                                            )}
                                         </BarChart>
                                     </ResponsiveContainer>
                                 </div>
@@ -723,7 +745,13 @@ const Dashboard: React.FC = () => {
                                                     </div>
                                                     <div className="flex items-center gap-3">
                                                         <div className="flex-1 h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                                                            <div className="h-full bg-violet-600 dark:bg-violet-500 rounded-full transition-all duration-500" style={{ width: `${Math.max(pctEnrolled, 5)}%` }} />
+                                                            <div className={`h-full ${
+                                                                idx % 5 === 0 ? 'bg-violet-500' :
+                                                                idx % 5 === 1 ? 'bg-blue-500' :
+                                                                idx % 5 === 2 ? 'bg-emerald-500' :
+                                                                idx % 5 === 3 ? 'bg-amber-500' :
+                                                                'bg-pink-500'
+                                                            } rounded-full transition-all duration-500`} style={{ width: `${Math.max(pctEnrolled, 5)}%` }} />
                                                         </div>
                                                         <span className="w-14 text-right text-[10px] font-black text-slate-500 dark:text-slate-400 select-none shrink-0 font-mono">{flow.stat_enrolled?.toLocaleString() || 0} user</span>
                                                     </div>

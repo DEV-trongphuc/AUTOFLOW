@@ -23,6 +23,33 @@ const MisaIcon = ({ className }: { className?: string }) => (
     </div>
 );
 
+
+const getInitials = (name: string, email: string) => {
+    if (name && name.trim()) {
+        const parts = name.trim().split(/\s+/);
+        if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+        return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    if (email) {
+        const localPart = email.split('@')[0];
+        return localPart.substring(0, 2).toUpperCase();
+    }
+    return '?';
+};
+
+const getAvatarBg = (name: string, email: string) => {
+    const key = name || email || 'Unknown';
+    const colors = [
+        'bg-blue-500', 'bg-rose-500', 'bg-emerald-500', 'bg-amber-500', 'bg-indigo-500', 'bg-violet-500'
+    ];
+    let hash = 0;
+    for (let i = 0; i < key.length; i++) {
+        hash = key.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const index = Math.abs(hash) % colors.length;
+    return colors[index];
+};
+
 interface StepParticipantsModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -1080,11 +1107,11 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                                     </div>
                                                 </th>
                                             )}
-                                            <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                            <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider w-[35%] min-w-[200px]">
                                                 Khách hàng
                                             </th>
-                                            {['all_touched', 'report'].includes(activeTab) && (
-                                                <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">
+                                            {['all_touched', 'report'].includes(activeTab) && stepType !== 'action' && stepType !== 'zalo_zns' && stepType !== 'completed' && (
+                                                <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap w-[20%]">
                                                     Tên nhánh
                                                 </th>
                                             )}
@@ -1102,7 +1129,7 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                                 </>
                                             ) : (
                                                 <>
-                                                    <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap w-[100px]">Trạng thái</th>
+                                                    <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap w-[15%]">Trạng thái</th>
                                                     {activeTab === 'opened' && (
                                                         <>
                                                             <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-center whitespace-nowrap">Số lần</th>
@@ -1186,8 +1213,8 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                                 )}
                                                 <td className={['failed', 'zns_failed'].includes(activeTab as string) ? 'px-4 py-3' : 'px-6 py-4'}>
                                                     <div className="flex items-center gap-2">
-                                                        <div className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-bold text-[10px] uppercase shrink-0">
-                                                            {p.email.substring(0, 2)}
+                                                        <div className={`w-7 h-7 rounded-full ${getAvatarBg(p.name, p.email)} flex items-center justify-center text-white font-bold text-[10px] uppercase shrink-0 shadow-sm`}>
+                                                            {getInitials(p.name, p.email)}
                                                         </div>
                                                         <div className="min-w-0">
                                                             <p className="text-xs font-bold text-slate-700 group-hover:text-blue-600 transition-colors truncate">{p.name || 'Unknown'}</p>
@@ -1198,7 +1225,7 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                                     </div>
                                                 </td>
 
-                                                {['all_touched', 'report'].includes(activeTab) && (
+                                                {['all_touched', 'report'].includes(activeTab) && stepType !== 'action' && stepType !== 'zalo_zns' && stepType !== 'completed' && (
                                                     <td className="px-4 py-3">
                                                         {p.branchName ? (
                                                             <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-bold border border-slate-200 bg-white text-slate-700">
