@@ -138,10 +138,12 @@ printLog("\n[2/3] ĐANG KIỂM TRA & TỐI ƯU HÓA CHỈ MỤC (INDEX AUDIT)...
 if ($dbType === 'mysql') {
     try {
         // Helper to check if index exists on table
-        function indexExists($pdo, $table, $indexName) {
-            $stmt = $pdo->prepare("SHOW INDEX FROM `$table` WHERE Key_name = ?");
-            $stmt->execute([$indexName]);
-            return (bool)$stmt->fetch();
+        if (!function_exists('indexExists')) {
+            function indexExists($pdo, $table, $indexName) {
+                $stmt = $pdo->prepare("SHOW INDEX FROM `$table` WHERE Key_name = ?");
+                $stmt->execute([$indexName]);
+                return (bool)$stmt->fetch();
+            }
         }
         
         // 3.1 Composite index on subscriber_flow_states (status, scheduled_at)
