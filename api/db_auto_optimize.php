@@ -43,7 +43,7 @@ function printLog($message, $type = 'info') {
     }
 }
 
-printLog("=== KHỞI ĐỘNG HỆ THỐNG BẢO TRÌ DATABASE AUTOFLOW v1.0.1 ===", 'info');
+printLog("=== KHỞI ĐỘNG HỆ THỐNG BẢO TRÌ DATABASE AUTOFLOW v1.0.2 ===", 'info');
 
 // 1. Connection
 $pdo = null;
