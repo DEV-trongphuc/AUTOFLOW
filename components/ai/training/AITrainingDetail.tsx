@@ -797,7 +797,7 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
 
                         {/* Bulk Actions */}
                         {selectedIds.length > 0 && (
-                            <div className="sticky top-20 z-30 flex items-center justify-between bg-amber-50/90 backdrop-blur-md px-6 py-3 rounded-2xl shadow-sm border border-amber-100 animate-in slide-in-from-top-4 duration-300 mb-6 font-medium">
+                            <div className="sticky top-14 lg:top-16 z-30 flex items-center justify-between bg-amber-50/90 backdrop-blur-md px-6 py-3 rounded-2xl shadow-sm border border-amber-100 animate-in slide-in-from-top-4 duration-300 mb-6 font-medium">
                                 <div className="flex items-center gap-4">
                                     <div className="w-7 h-7 bg-amber-600 rounded-lg flex items-center justify-center text-white shadow-sm">
                                         <Check className="w-4 h-4 stroke-[4]" />
