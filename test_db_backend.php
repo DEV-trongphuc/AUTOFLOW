@@ -143,7 +143,7 @@ $criticalTables = [
     'activity_buffer' => 'Bộ đệm xử lý hoạt động',
     'campaigns' => 'Các chiến dịch gửi mail',
     'system_settings' => 'Cấu hình hệ thống',
-    'zalo_oa' => 'Liên kết Zalo OA',
+    'zalo_oa_configs' => 'Liên kết Zalo OA',
     'admin_logs' => 'Nhật ký quản trị viên',
     'stats_update_buffer' => 'Bộ đệm cập nhật chỉ số'
 ];
@@ -154,13 +154,12 @@ if ($dbType === 'sqlite') {
         $pdo->exec("CREATE TABLE IF NOT EXISTS workspaces (id INTEGER PRIMARY KEY, name TEXT)");
         $pdo->exec("CREATE TABLE IF NOT EXISTS subscribers (
             id TEXT PRIMARY KEY, 
-            workspace_id INTEGER, 
             email TEXT, 
-            phone TEXT, 
-            name TEXT, 
+            first_name TEXT, 
+            last_name TEXT, 
+            phone_number TEXT,
             status TEXT, 
-            created_at TIMESTAMP, 
-            zalo_id TEXT, 
+            joined_at TIMESTAMP, 
             meta_psid TEXT,
             stats_sent INTEGER DEFAULT 0,
             stats_opened INTEGER DEFAULT 0,
@@ -182,9 +181,10 @@ if ($dbType === 'sqlite') {
             stat_meta_sent INTEGER DEFAULT 0
         )");
         $pdo->exec("CREATE TABLE IF NOT EXISTS subscriber_flow_states (
+            workspace_id INTEGER DEFAULT 1,
             subscriber_id TEXT, 
             flow_id TEXT, 
-            current_step_id TEXT, 
+            step_id TEXT, 
             status TEXT, 
             scheduled_at TIMESTAMP, 
             updated_at TIMESTAMP,
@@ -225,7 +225,7 @@ if ($dbType === 'sqlite') {
             value TEXT, 
             PRIMARY KEY (workspace_id, key)
         )");
-        $pdo->exec("CREATE TABLE IF NOT EXISTS zalo_oa (
+        $pdo->exec("CREATE TABLE IF NOT EXISTS zalo_oa_configs (
             id TEXT PRIMARY KEY, 
             workspace_id INTEGER, 
             name TEXT, 
@@ -483,9 +483,9 @@ try {
     
     // Seed subscriber
     $insertSub = $isSqlite
-        ? "INSERT OR REPLACE INTO subscribers (id, workspace_id, email, phone, name, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)"
-        : "INSERT INTO subscribers (id, workspace_id, email, phone, name, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE name=VALUES(name)";
-    $pdo->prepare($insertSub)->execute([$subId, $wsId, 'sub_test@ka-en.com.vn', '0912345678', 'Test User Integration', 'active', date('Y-m-d H:i:s')]);
+        ? "INSERT OR REPLACE INTO subscribers (id, email, first_name, last_name, phone_number, status, joined_at) VALUES (?, ?, ?, ?, ?, ?, ?)"
+        : "INSERT INTO subscribers (id, email, first_name, last_name, phone_number, status, joined_at) VALUES (?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE first_name=VALUES(first_name)";
+    $pdo->prepare($insertSub)->execute([$subId, 'sub_test@ka-en.com.vn', 'Test User', 'Integration', '0912345678', 'active', date('Y-m-d H:i:s')]);
     
     // Seed Flow
     $steps = [
@@ -511,21 +511,21 @@ try {
     
     // Seed Flow State
     $insertState = $isSqlite
-        ? "INSERT OR REPLACE INTO subscriber_flow_states (subscriber_id, flow_id, current_step_id, status, scheduled_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)"
-        : "INSERT INTO subscriber_flow_states (subscriber_id, flow_id, current_step_id, status, scheduled_at, updated_at) VALUES (?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE current_step_id=VALUES(current_step_id)";
-    $pdo->prepare($insertState)->execute([$subId, $flowId, 'step-1', 'scheduled', date('Y-m-d H:i:s'), date('Y-m-d H:i:s')]);
+        ? "INSERT OR REPLACE INTO subscriber_flow_states (workspace_id, subscriber_id, flow_id, step_id, status, scheduled_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)"
+        : "INSERT INTO subscriber_flow_states (workspace_id, subscriber_id, flow_id, step_id, status, scheduled_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE step_id=VALUES(step_id)";
+    $pdo->prepare($insertState)->execute([$wsId, $subId, $flowId, 'step-1', 'waiting', date('Y-m-d H:i:s'), date('Y-m-d H:i:s')]);
     
     printResult("Chuẩn bị dữ liệu mẫu trong Transaction", true, "Đã nạp subscriber, flow và flow state giả lập.");
     
     // Test state update execution logic
-    $pdo->prepare("UPDATE subscriber_flow_states SET current_step_id = ?, status = ?, updated_at = ? WHERE subscriber_id = ? AND flow_id = ?")
-        ->execute(['step-2', 'waiting', date('Y-m-d H:i:s'), $subId, $flowId]);
+    $pdo->prepare("UPDATE subscriber_flow_states SET step_id = ?, status = ?, updated_at = ? WHERE subscriber_id = ? AND flow_id = ?")
+        ->execute(['step-2', 'processing', date('Y-m-d H:i:s'), $subId, $flowId]);
         
-    $stmt = $pdo->prepare("SELECT current_step_id, status FROM subscriber_flow_states WHERE subscriber_id = ? AND flow_id = ?");
+    $stmt = $pdo->prepare("SELECT step_id, status FROM subscriber_flow_states WHERE subscriber_id = ? AND flow_id = ?");
     $stmt->execute([$subId, $flowId]);
     $updatedState = $stmt->fetch();
     
-    if ($updatedState['current_step_id'] !== 'step-2' || $updatedState['status'] !== 'waiting') {
+    if ($updatedState['step_id'] !== 'step-2' || $updatedState['status'] !== 'processing') {
         throw new Exception("Thao tác cập nhật trạng thái bước Flow thất bại.");
     }
     
