@@ -142,7 +142,9 @@ if ($dbType === 'mysql') {
             function indexExists($pdo, $table, $indexName) {
                 $stmt = $pdo->prepare("SHOW INDEX FROM `$table` WHERE Key_name = ?");
                 $stmt->execute([$indexName]);
-                return (bool)$stmt->fetch();
+                $row = $stmt->fetch();
+                $stmt->closeCursor();
+                return (bool)$row;
             }
         }
         
@@ -227,6 +229,7 @@ foreach ($tablesToOptimize as $table) {
             ");
             $stmtSize->execute([$dbName, $table]);
             $sizeBefore = (float)$stmtSize->fetchColumn();
+            $stmtSize->closeCursor();
         }
         
         // Run ANALYZE TABLE to recalculate key statistics
@@ -242,6 +245,7 @@ foreach ($tablesToOptimize as $table) {
         if (!empty($dbName)) {
             $stmtSize->execute([$dbName, $table]);
             $sizeAfter = (float)$stmtSize->fetchColumn();
+            $stmtSize->closeCursor();
         }
         
         $reclaimed = max(0, $sizeBefore - $sizeAfter);
