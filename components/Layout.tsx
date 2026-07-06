@@ -77,13 +77,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             <div className="pointer-events-none fixed top-0 right-0 w-[500px] h-[400px] z-0" style={{ background: 'radial-gradient(ellipse at 100% 0%, rgba(139,92,246,0.08) 0%, transparent 65%)' }} />
 
             {/* True Overlapping Crossfade (CSS Grid) to eliminate white flashes */}
-            <AnimatePresence>
+            <AnimatePresence mode="wait">
               <motion.div
                 key={location.pathname}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0, transition: { duration: 0.15, ease: "easeOut" } }}
-                transition={{ duration: 0.25, ease: "easeOut" }}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6, transition: { duration: 0.15, ease: [0.33, 1, 0.68, 1] } }}
+                transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
                 className="max-w-[1400px] w-full min-w-0 mx-auto col-start-1 row-start-1 z-1000"
               >
                 {children}

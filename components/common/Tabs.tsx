@@ -51,18 +51,18 @@ const Tabs: React.FC<TabsProps> = ({ items, activeId, onChange, variant = 'under
               className={`
                 px-4 py-2 rounded-xl text-xs font-bold transition-all duration-200 flex items-center gap-2 whitespace-nowrap shrink-0
                 ${isActive
-                  ? 'bg-white dark:bg-slate-900 text-violet-600 dark:text-violet-400 shadow-sm border border-slate-200/30 dark:border-slate-800'
-                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+                  ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm border border-slate-200/30 dark:border-slate-800 font-extrabold'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
                 }
               `}
             >
-              {Icon && <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-violet-500 dark:text-violet-400' : 'text-slate-400 dark:text-slate-500'}`} />}
+              {Icon && <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-slate-850 dark:text-slate-100' : 'text-slate-400 dark:text-slate-500'}`} />}
               <span>{item.label}</span>
               {item.count !== undefined && (
                 <span className={`
                   px-1.5 py-0.5 rounded-md text-[9px] font-black transition-colors duration-200
                   ${isActive 
-                    ? 'bg-violet-50 dark:bg-violet-950/40 text-violet-600 dark:text-violet-400' 
+                    ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900' 
                     : 'bg-slate-200/60 dark:bg-slate-700/60 text-slate-500 dark:text-slate-400'
                   }
                 `}>
@@ -89,7 +89,7 @@ const Tabs: React.FC<TabsProps> = ({ items, activeId, onChange, variant = 'under
               className={`
                             px-3 py-2 sm:px-5 sm:py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all flex items-center gap-1.5 sm:gap-2 border
                             ${isActive
-                  ? (isDarkTheme ? 'bg-slate-800 text-white border-slate-700 shadow-sm' : 'bg-slate-100 text-slate-700 border-slate-200 shadow-sm')
+                  ? (isDarkTheme ? 'bg-slate-850 text-white border-slate-700 shadow-sm' : 'bg-slate-100 text-slate-700 border-slate-200 shadow-sm')
                   : (isDarkTheme ? 'bg-slate-900 text-slate-400 border-transparent hover:bg-slate-800 hover:text-slate-200' : 'bg-white text-slate-500 border-transparent hover:bg-slate-50 hover:text-slate-700')
                 }
                         `}
@@ -133,7 +133,7 @@ const Tabs: React.FC<TabsProps> = ({ items, activeId, onChange, variant = 'under
               ${isActive ? (isDarkTheme ? 'text-white' : 'text-slate-800') : (isDarkTheme ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600')}
             `}
           >
-            {Icon && <Icon className={`w-3.5 h-3.5 ${isActive ? (isDarkTheme ? 'text-white' : 'text-slate-700') : (isDarkTheme ? 'text-slate-500' : 'text-slate-300')}`} />}
+            {Icon && <Icon className={`w-3.5 h-3.5 ${isActive ? (isDarkTheme ? 'text-white' : 'text-slate-700') : 'text-slate-500'}`} />}
             {item.label}
             {item.count !== undefined && (
               <span className={`
@@ -154,7 +154,7 @@ const Tabs: React.FC<TabsProps> = ({ items, activeId, onChange, variant = 'under
       })}
 
       <span
-        className="absolute bottom-0 h-[2.5px] transition-all duration-300 ease-out bg-violet-600 dark:bg-violet-400"
+        className="absolute bottom-0 h-[2.5px] transition-all duration-300 ease-out bg-slate-900 dark:bg-slate-100"
         style={{ left: indicatorStyle.left, width: indicatorStyle.width }}
       />
     </div>

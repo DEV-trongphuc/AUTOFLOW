@@ -312,7 +312,7 @@ const Dashboard: React.FC = () => {
                 statusText="Multi-Channel Active"
                 actions={[
                     { label: 'TỔNG QUAN HỆ THỐNG', icon: BarChart3, onClick: () => setIsOverviewOpen(true) },
-                    { label: 'CẤU HÌNH LEADSCORE', icon: Target, onClick: () => setIsLeadscoreOpen(true), customClass: 'bg-white dark:bg-slate-900 border border-violet-600/70 text-violet-600 hover:bg-violet-50/50 dark:hover:bg-violet-950/20 active:scale-95' },
+                    { label: 'CẤU HÌNH LEADSCORE', icon: Target, onClick: () => setIsLeadscoreOpen(true), customClass: 'bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50/50 dark:hover:bg-slate-950/20 active:scale-95' },
                     { label: 'KẾT NỐI CẤU HÌNH', icon: (props: any) => <Play {...props} className={`${props.className} text-white fill-white opacity-90`} />, onClick: () => setIsConnectionsOpen(true), primary: true }
                 ]}
             />

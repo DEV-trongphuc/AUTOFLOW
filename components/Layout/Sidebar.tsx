@@ -101,10 +101,10 @@ const NavItem: React.FC<{ item: NavItemConfig; onClose: () => void; isCollapsed:
       onClick={handleClick}
       onMouseEnter={handleMouseEnter}
       className={({ isActive }) => `
-        relative flex items-center ${isCollapsed ? 'justify-center py-2.5' : 'px-6 py-2.5'} transition-all duration-200 group outline-none focus:outline-none focus:ring-0
+        relative flex items-center ${isCollapsed ? 'justify-center py-2' : 'px-4 py-2 mx-2.5 rounded-xl'} transition-all duration-200 group outline-none focus:outline-none focus:ring-0
         ${isPending ? 'opacity-70 scale-[0.98]' : ''}
         ${isActive
-          ? 'bg-white/10 text-white'
+          ? 'bg-white/10 text-white shadow-sm font-semibold'
           : 'text-white/50 hover:bg-white/5 hover:text-white'
         }
       `}
@@ -114,30 +114,26 @@ const NavItem: React.FC<{ item: NavItemConfig; onClose: () => void; isCollapsed:
         <>
           <div className="flex items-center gap-3">
             {/* Icon Wrapper Box */}
-            <div className={`w-9 h-9 rounded-[10px] flex items-center justify-center shrink-0 transition-all duration-200 relative ${isActive ? 'bg-white/15' : 'bg-white/5'}`}>
+            <div className={`w-8 h-8 rounded-[8px] flex items-center justify-center shrink-0 transition-all duration-200 relative ${isActive ? 'bg-white/15' : 'bg-white/5'}`}>
               <item.icon
-                className={`w-[18px] h-[18px] transition-transform duration-200 ${isActive ? 'text-white' : 'text-white/50 group-hover:text-white/80'}`}
+                className={`w-[16px] h-[16px] transition-transform duration-200 ${isActive ? 'text-white' : 'text-white/50 group-hover:text-white/80'}`}
                 strokeWidth={2}
               />
               {isCollapsed && badgeOverride && (
-                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-500 rounded-full border border-[#0d0331] shadow-sm animate-pulse"></span>
+                <span className="absolute -top-1 -right-1 w-2 h-2 bg-emerald-500 rounded-full border border-[#0d0331] shadow-sm animate-pulse"></span>
               )}
             </div>
             {!isCollapsed && (
-              <span className="text-[14px] tracking-wide font-medium">
+              <span className="text-[13px] tracking-wide font-medium">
                 {item.name}
               </span>
             )}
           </div>
 
           {!isCollapsed && (badgeOverride !== undefined ? badgeOverride !== null : item.badge) && (
-            <span className={`text-[9px] px-1.5 py-0.5 rounded-md font-bold uppercase tracking-wider ${isActive ? 'bg-violet-500/20 text-violet-300' : badgeOverride !== undefined ? 'bg-emerald-500/25 text-emerald-300' : 'bg-white/10 text-white/50'} ml-auto`}>
+            <span className={`text-[8px] px-1.5 py-0.5 rounded-md font-bold uppercase tracking-wider ${isActive ? 'bg-violet-500/20 text-violet-300' : badgeOverride !== undefined ? 'bg-emerald-500/25 text-emerald-300' : 'bg-white/10 text-white/50'} ml-auto`}>
               {badgeOverride !== undefined ? badgeOverride : item.badge}
             </span>
-          )}
-
-          {isActive && (
-            <div className="absolute left-0 top-0 w-1 h-full bg-violet-500"></div>
           )}
         </>
       )}
@@ -214,20 +210,20 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose, isCollapsed, onToggleCollaps
     <div className={`flex flex-col h-full bg-[#0d0331] text-[#dadada] border-r border-[#1a134d]/40 shadow-[4px_0_24px_rgba(0,0,0,0.12)] transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-64'} group/sidebar z-20 relative`}>
 
       {/* BRAND HEADER */}
-      <div className={`h-28 ${isCollapsed ? 'px-3' : 'px-6'} flex items-center justify-center shrink-0 relative border-b border-white/5`}>
+      <div className={`h-16 lg:h-20 ${isCollapsed ? 'px-3' : 'px-6'} flex items-center justify-center shrink-0 relative border-b border-white/5`}>
         {isCollapsed ? (
-          <div className="relative w-12 h-12 shrink-0 group cursor-pointer">
-            <div className="absolute inset-0 bg-violet-500 blur-xl opacity-20 group-hover:opacity-50 transition-opacity duration-500 rounded-full animate-logo-pulse"></div>
+          <div className="relative w-9 h-9 shrink-0 group cursor-pointer mx-auto">
+            <div className="absolute inset-0 bg-violet-500 blur-md opacity-20 group-hover:opacity-50 transition-opacity duration-500 rounded-full animate-logo-pulse"></div>
             <div className="relative w-full h-full flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 ease-out overflow-hidden rounded-full border-2 border-white/20 shadow-lg shadow-violet-500/10">
               <img src="https://crm-domation.vercel.app/LOGO.jpg" className="w-full h-full object-contain relative z-10" alt="Logo" />
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full animate-logo-shine pointer-events-none z-20"></div>
             </div>
           </div>
         ) : (
-          <div className="relative flex items-center gap-4 w-full group cursor-pointer">
+          <div className="relative flex items-center gap-3 w-full group cursor-pointer">
             {/* Animated Logo Icon */}
-            <div className="relative w-12 h-12 shrink-0">
-              <div className="absolute inset-0 bg-violet-500 blur-xl opacity-20 group-hover:opacity-50 transition-opacity duration-500 rounded-full animate-logo-pulse"></div>
+            <div className="relative w-9 h-9 shrink-0">
+              <div className="absolute inset-0 bg-violet-500 blur-md opacity-20 group-hover:opacity-50 transition-opacity duration-500 rounded-full animate-logo-pulse"></div>
               <div className="relative w-full h-full flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 ease-out overflow-hidden rounded-full border-2 border-white/20 shadow-lg shadow-violet-500/10">
                 <img src="https://crm-domation.vercel.app/LOGO.jpg" className="w-full h-full object-contain relative z-10" alt="Logo" />
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full animate-logo-shine pointer-events-none z-20"></div>
@@ -235,12 +231,12 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose, isCollapsed, onToggleCollaps
             </div>
 
             <div className="flex flex-col min-w-0">
-              <h1 className="text-2xl font-black text-white tracking-tighter leading-none group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-violet-400 group-hover:to-violet-600 transition-all duration-500">
+              <h1 className="text-lg font-black text-white tracking-tighter leading-none group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-violet-400 group-hover:to-violet-600 transition-all duration-500">
                 DOMATION
               </h1>
-              <div className="flex items-center gap-2 mt-1.5 opacity-60 group-hover:opacity-100 transition-opacity duration-500">
-                <span className="h-3 w-[2px] bg-violet-400 rotate-12"></span>
-                <span className="text-[9px] font-black text-violet-400 uppercase tracking-[0.2em] truncate group-hover:text-violet-300 transition-colors">
+              <div className="flex items-center gap-1.5 mt-1 opacity-60 group-hover:opacity-100 transition-opacity duration-500">
+                <span className="h-2 w-[1px] bg-violet-400 rotate-12"></span>
+                <span className="text-[8px] font-black text-violet-400 uppercase tracking-[0.2em] truncate group-hover:text-violet-300 transition-colors">
                   Digital AI Vision
                 </span>
               </div>
@@ -251,7 +247,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose, isCollapsed, onToggleCollaps
         {/* Toggle Button */}
         <button
           onClick={onToggleCollapse}
-          className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-[#13113c] border-2 border-[#2b216c] rounded-full flex items-center justify-center text-white/40 hover:text-violet-400 hover:border-violet-500/50 hover:bg-[#1a134d] transition-all shadow-md hover:shadow-lg z-10 group/toggle opacity-0 group-hover/sidebar:opacity-100"
+          className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-[#0a0426] border border-white/10 rounded-full flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition-all shadow-md z-10 group/toggle opacity-0 group-hover/sidebar:opacity-100"
           title={isCollapsed ? 'Mở rộng' : 'Thu gọn'}
         >
           {isCollapsed ? (
