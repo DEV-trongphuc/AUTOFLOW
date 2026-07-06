@@ -672,6 +672,7 @@ if (!isset($isHighTrafficEndpoint) || !$isHighTrafficEndpoint) {
         $vStmt = $pdo->prepare("SELECT value FROM system_settings WHERE workspace_id = 0 AND `key` = 'db_version' LIMIT 1");
         $vStmt->execute();
         $dbVerVal = $vStmt->fetchColumn();
+        $vStmt->closeCursor();
         if ($dbVerVal !== false) {
             $dbVer = (int)$dbVerVal;
             if ($dbVer < $targetDbVersion) {
@@ -682,6 +683,7 @@ if (!isset($isHighTrafficEndpoint) || !$isHighTrafficEndpoint) {
             $vStmtLegacy = $pdo->prepare("SELECT value FROM system_settings WHERE workspace_id = 0 AND `key` = 'schema_version' LIMIT 1");
             $vStmtLegacy->execute();
             $legacyVer = $vStmtLegacy->fetchColumn();
+            $vStmtLegacy->closeCursor();
             // If even legacy version is missing, or not up to date, trigger migration
             if ($legacyVer === false || $legacyVer !== '29.8') {
                 $db_needs_migration = true;
