@@ -571,13 +571,6 @@ const Campaigns: React.FC = () => {
                         <h1 className="text-xl sm:text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tight flex items-center gap-2">
                             Campaign <span className="text-slate-500 dark:text-slate-400">Marketing</span>
                         </h1>
-                        <div className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 rounded-full border border-emerald-100/50 shadow-sm pointer-events-none">
-                            <span className="relative flex h-1.5 w-1.5">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
-                            </span>
-                            <span className="text-[9px] font-black text-emerald-600 tracking-[0.08em] uppercase leading-none">AI Engine Active</span>
-                        </div>
                     </div>
                     
                     <p className="text-[11px] sm:text-xs text-slate-500 font-medium leading-relaxed mt-1">
