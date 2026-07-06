@@ -43,7 +43,7 @@ function printLog($message, $type = 'info') {
     }
 }
 
-printLog("=== KHỞI ĐỘNG HỆ THỐNG BẢO TRÌ DATABASE AUTOFLOW v1.0.2 ===", 'info');
+printLog("=== KHỞI ĐỘNG HỆ THỐNG BẢO TRÌ DATABASE AUTOFLOW v1.0.3 ===", 'info');
 
 // 1. Connection
 $pdo = null;
@@ -142,9 +142,8 @@ if ($dbType === 'mysql') {
             function indexExists($pdo, $table, $indexName) {
                 $stmt = $pdo->prepare("SHOW INDEX FROM `$table` WHERE Key_name = ?");
                 $stmt->execute([$indexName]);
-                $row = $stmt->fetch();
-                $stmt->closeCursor();
-                return (bool)$row;
+                $rows = $stmt->fetchAll();
+                return !empty($rows);
             }
         }
         
