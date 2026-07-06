@@ -54,6 +54,7 @@ function printResult($testName, $status, $details = '', $timeMs = null) {
     }
 }
 
+// Section helper
 function printSectionHeader($title) {
     global $isCli;
     if ($isCli) {
@@ -69,7 +70,7 @@ $dbType = 'mysql';
 $dbConnectTime = null;
 $usingMockSqlite = false;
 
-// 1.1 Read environment variables / credentials dynamically first to avoid crashing
+// 1.1 Read environment variables dynamically first to avoid crashing
 $host = getenv('DB_HOST') !== false ? getenv('DB_HOST') : 'localhost';
 $db   = getenv('DB_NAME') !== false ? getenv('DB_NAME') : 'vhvxoigh_mail_auto';
 $user = getenv('DB_USER') !== false ? getenv('DB_USER') : 'vhvxoigh_mail_auto';
@@ -167,18 +168,9 @@ if ($dbType === 'sqlite') {
         )");
         $pdo->exec("CREATE TABLE IF NOT EXISTS flows (
             id TEXT PRIMARY KEY, 
-            workspace_id INTEGER, 
             name TEXT, 
             steps TEXT, 
-            is_enabled INTEGER DEFAULT 0,
-            stat_total_sent INTEGER DEFAULT 0,
-            stat_total_failed INTEGER DEFAULT 0,
-            stat_completed INTEGER DEFAULT 0,
-            stat_enrolled INTEGER DEFAULT 0,
-            stat_zalo_sent INTEGER DEFAULT 0,
-            stat_zns_sent INTEGER DEFAULT 0,
-            stat_zns_failed INTEGER DEFAULT 0,
-            stat_meta_sent INTEGER DEFAULT 0
+            status TEXT
         )");
         $pdo->exec("CREATE TABLE IF NOT EXISTS subscriber_flow_states (
             workspace_id INTEGER DEFAULT 1,
@@ -382,7 +374,7 @@ if ($dbType !== 'sqlite') {
     try {
         $start = microtime(true);
         $pdo->beginTransaction();
-        // Check database schema syntax compatibility
+        // Check database schema compatibility
         $pdo->query("SELECT * FROM subscribers LIMIT 1 FOR UPDATE SKIP LOCKED")->fetchAll();
         $pdo->rollBack();
         $timeMs = (microtime(true) - $start) * 1000;
@@ -505,15 +497,15 @@ try {
     ];
     
     $insertFlow = $isSqlite
-        ? "INSERT OR REPLACE INTO flows (id, workspace_id, name, steps, is_enabled) VALUES (?, ?, ?, ?, ?)"
-        : "INSERT INTO flows (id, workspace_id, name, steps, is_enabled) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE name=VALUES(name)";
-    $pdo->prepare($insertFlow)->execute([$flowId, $wsId, 'Integrate Test Flow', json_encode($steps), 1]);
+        ? "INSERT OR REPLACE INTO flows (id, name, steps, status) VALUES (?, ?, ?, ?)"
+        : "INSERT INTO flows (id, name, steps, status) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE name=VALUES(name)";
+    $pdo->prepare($insertFlow)->execute([$flowId, 'Integrate Test Flow', json_encode($steps), 'active']);
     
     // Seed Flow State
     $insertState = $isSqlite
         ? "INSERT OR REPLACE INTO subscriber_flow_states (workspace_id, subscriber_id, flow_id, step_id, status, scheduled_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)"
         : "INSERT INTO subscriber_flow_states (workspace_id, subscriber_id, flow_id, step_id, status, scheduled_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE step_id=VALUES(step_id)";
-    $pdo->prepare($insertState)->execute([$wsId, $subId, $flowId, 'step-1', 'waiting', date('Y-m-d H:i:s'), date('Y-m-d H:i:s')]);
+    $pdo->prepare($insertState)->execute([1, $subId, $flowId, 'step-1', 'waiting', date('Y-m-d H:i:s'), date('Y-m-d H:i:s')]);
     
     printResult("Chuẩn bị dữ liệu mẫu trong Transaction", true, "Đã nạp subscriber, flow và flow state giả lập.");
     
