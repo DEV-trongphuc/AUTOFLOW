@@ -2645,8 +2645,21 @@ const Flows: React.FC = () => {
                     const steps = [...(selectedFlow.steps || []), waitStep, newStep];
                     const parentStep = steps?.find(s => s.id === parentId);
                     if (parentStep) {
-                        const linkKey = branch === 'yes' ? 'yesStepId' : (branch === 'no' ? 'noStepId' : (branch === 'A' ? 'pathAStepId' : (branch === 'B' ? 'pathBStepId' : 'nextStepId')));
-                        (parentStep as any)[linkKey] = waitStepId;
+                        if (parentStep.type === 'advanced_condition') {
+                            if (branch) {
+                                const branches = [...(parentStep.config.branches || [])];
+                                const branchIndex = branches.findIndex((b: any) => b.id === branch);
+                                if (branchIndex !== -1) {
+                                    branches[branchIndex] = { ...branches[branchIndex], stepId: waitStepId };
+                                    parentStep.config = { ...parentStep.config, branches };
+                                }
+                            } else {
+                                parentStep.config = { ...parentStep.config, defaultStepId: waitStepId };
+                            }
+                        } else {
+                            const linkKey = branch === 'yes' ? 'yesStepId' : (branch === 'no' ? 'noStepId' : (branch === 'A' ? 'pathAStepId' : (branch === 'B' ? 'pathBStepId' : 'nextStepId')));
+                            (parentStep as any)[linkKey] = waitStepId;
+                        }
                     }
 
                     // 4. Queue migration
@@ -2691,8 +2704,21 @@ const Flows: React.FC = () => {
                     const steps = [...(selectedFlow.steps || []), waitStep, newStep];
                     const parentStep = steps?.find(s => s.id === parentId);
                     if (parentStep) {
-                        const linkKey = branch === 'yes' ? 'yesStepId' : (branch === 'no' ? 'noStepId' : (branch === 'A' ? 'pathAStepId' : (branch === 'B' ? 'pathBStepId' : 'nextStepId')));
-                        (parentStep as any)[linkKey] = waitStepId;
+                        if (parentStep.type === 'advanced_condition') {
+                            if (branch) {
+                                const branches = [...(parentStep.config.branches || [])];
+                                const branchIndex = branches.findIndex((b: any) => b.id === branch);
+                                if (branchIndex !== -1) {
+                                    branches[branchIndex] = { ...branches[branchIndex], stepId: waitStepId };
+                                    parentStep.config = { ...parentStep.config, branches };
+                                }
+                            } else {
+                                parentStep.config = { ...parentStep.config, defaultStepId: waitStepId };
+                            }
+                        } else {
+                            const linkKey = branch === 'yes' ? 'yesStepId' : (branch === 'no' ? 'noStepId' : (branch === 'A' ? 'pathAStepId' : (branch === 'B' ? 'pathBStepId' : 'nextStepId')));
+                            (parentStep as any)[linkKey] = waitStepId;
+                        }
                     }
 
                     // Queue stop decision
