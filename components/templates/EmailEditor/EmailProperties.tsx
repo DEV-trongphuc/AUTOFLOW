@@ -1229,7 +1229,7 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                             {selectedBlock.type !== 'section' && <VisualMeasure label="Chiều rộng" value={getStyle('width')} onChange={(v) => updateStyle({ width: v })} max={600} canAuto />}
                             {selectedBlock.type === 'spacer' && <VisualMeasure label="Chiều cao" value={getStyle('height')} onChange={(v) => updateStyle({ height: v })} max={200} />}
                             <SpacingControl label="Padding" values={{ top: getStyle('paddingTop'), right: getStyle('paddingRight'), bottom: getStyle('paddingBottom'), left: getStyle('paddingLeft') }} onChange={(v: any) => updateStyle({ paddingTop: v.top, paddingRight: v.right, paddingBottom: v.bottom, paddingLeft: v.left })} />
-                            <SpacingControl label="Margin" values={{ top: getStyle('marginTop'), right: getStyle('marginRight'), bottom: getStyle('marginBottom'), left: getStyle('marginLeft') }} onChange={(v: any) => updateStyle({ marginTop: v.top, marginRight: v.right, marginBottom: v.bottom, marginLeft: v.left })} allowAuto />
+                            <SpacingControl label="Margin" values={{ top: getStyle('marginTop'), right: getStyle('marginRight'), bottom: getStyle('marginBottom'), left: getStyle('marginLeft') }} onChange={(v: any) => updateStyle({ marginTop: v.top, marginRight: v.right, marginBottom: v.bottom, marginLeft: v.left })} allowAuto isMargin />
                             <RadiusControl label="Bo góc" values={{ borderRadius: getStyle('borderRadius') }} onChange={(v: any) => updateStyle({ borderRadius: v.borderRadius })} />
                         </Accordion>
 

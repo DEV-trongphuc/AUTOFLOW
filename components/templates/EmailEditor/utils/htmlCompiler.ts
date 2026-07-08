@@ -371,12 +371,12 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
             const tableWidth = btnWidth === 'auto' ? '' : btnWidth.replace('px', '');
             const btnColor = s.color || '#ffffff';
             const btnPadding = `padding: ${s.paddingTop || '12px'} ${s.paddingRight || '24px'} ${s.paddingBottom || '12px'} ${s.paddingLeft || '24px'};`;
-            // Use inherited alignment if not explicitly set
-            const btnAlign = s.textAlign || parentAlign || 'center';
+            // Use inherited alignment if not explicitly set (default to center to match canvas editor)
+            const btnAlign = s.textAlign || 'center';
             const btnMarginTop = s.marginTop || '0px';
             const btnMarginBottom = s.marginBottom || '0px';
-            const btnMarginLeft = s.marginLeft || (btnAlign === 'center' ? 'auto' : (btnAlign === 'right' ? 'auto' : '0px'));
-            const btnMarginRight = s.marginRight || (btnAlign === 'center' ? 'auto' : (btnAlign === 'right' ? '0px' : 'auto'));
+            const btnMarginLeft = (btnAlign === 'center' || btnAlign === 'right') ? 'auto' : (s.marginLeft || '0px');
+            const btnMarginRight = (btnAlign === 'center' || btnAlign === 'left') ? 'auto' : (s.marginRight || '0px');
 
             // Use global sanitizeRadius utility
             const btnRadius = sanitizeRadius(s.borderRadius || '4px');
