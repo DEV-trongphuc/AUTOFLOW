@@ -286,7 +286,7 @@ const FlowCard = React.memo<FlowCardProps>((
                         </div>
                         <div className="flex-1 min-w-0 pr-4">
                             <div className="flex items-center gap-3 mb-1.5">
-                                <h3 className="text-base font-bold text-slate-800 dark:text-slate-200 leading-tight truncate group-hover:text-violet-600 transition-colors">
+                                <h3 className="text-base font-bold text-slate-800 dark:text-slate-200 leading-tight truncate transition-colors">
                                     {flow.name}
                                 </h3>
                             </div>
@@ -380,7 +380,7 @@ const FlowCard = React.memo<FlowCardProps>((
                         </div>
 
                         <div>
-                            <h3 className="text-base font-bold text-slate-800 dark:text-slate-200 leading-tight mb-1 line-clamp-2 group-hover:text-violet-600 transition-colors">
+                            <h3 className="text-base font-bold text-slate-800 dark:text-slate-200 leading-tight mb-1 line-clamp-2 transition-colors">
                                 {flow.name}
                             </h3>
                             <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
