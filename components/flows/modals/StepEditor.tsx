@@ -76,10 +76,11 @@ interface StepEditorProps {
   allFlows?: Flow[];
   validationErrors?: any[];
   isFlowArchived?: boolean;
+  isViewMode?: boolean;
 }
 
 const StepEditor: React.FC<StepEditorProps> = ({ 
-  step, onClose, onSave, onDelete, onUpdateFlow, flow, allFlows = [], validationErrors = [], isFlowArchived 
+  step, onClose, onSave, onDelete, onUpdateFlow, flow, allFlows = [], validationErrors = [], isFlowArchived, isViewMode = false
 }) => {
   const [localStep, setLocalStep] = useState<FlowStep | null>(step);
   const [showActiveWarning, setShowActiveWarning] = useState(false);
@@ -102,7 +103,7 @@ const StepEditor: React.FC<StepEditorProps> = ({
 
   const hasEnrollment = (flow?.stats?.enrolled || 0) > 0;
   const isTriggerLocked = localStep.type === 'trigger' && hasEnrollment;
-  const isDisabledForEditing = isFlowArchived || isTriggerLocked;
+  const isDisabledForEditing = isFlowArchived || isTriggerLocked || isViewMode;
 
   const renderConfig = () => {
     switch (localStep.type) {
@@ -176,10 +177,16 @@ const StepEditor: React.FC<StepEditorProps> = ({
             <div className="flex gap-3">
               <Button variant="ghost" size="md" onClick={onClose}>Hủy</Button>
               <Button 
+                variant="custom"
                 size="md" 
                 icon={Save} 
                 onClick={() => onSave(localStep)} 
                 disabled={isDisabledForEditing}
+                className={`flex items-center justify-center font-bold tracking-tight select-none rounded-2xl px-5 py-2.5 text-xs md:text-sm gap-2 transition-all active:scale-[0.95] ${
+                  isDisabledForEditing
+                    ? 'bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed shadow-none border-none'
+                    : 'bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-750 hover:to-indigo-750 text-white shadow-lg shadow-violet-500/20 hover:shadow-violet-500/30 border-none'
+                }`}
               >
                 Lưu thay đổi
               </Button>

@@ -2480,6 +2480,7 @@ const Flows: React.FC = () => {
                 }}
                 onDelete={handleDeleteStep}
                 isFlowArchived={selectedFlow?.status === 'archived'}
+                isViewMode={isViewMode}
                 onUpdateFlow={(configUpdates) => {
                     if (!selectedFlow) return;
                     handleUpdateFlow({

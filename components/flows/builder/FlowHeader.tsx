@@ -330,12 +330,14 @@ const FlowHeader: React.FC<FlowHeaderProps> = ({
             <Button icon={RefreshCw} onClick={onRestore} variant="primary" className="h-9 lg:h-10 rounded-full px-2 sm:px-4 lg:px-6 text-[9px] lg:text-[10px] uppercase font-black tracking-widest min-w-0"><span className="hidden sm:inline">Khôi phục</span></Button>
           ) : (
             <Button
+              variant="custom"
               icon={Save}
               onClick={onSave}
-              disabled={isViewMode || !canSave}
-              className={`h-9 lg:h-10 rounded-full px-2 sm:px-4 lg:px-6 text-[9px] lg:text-[10px] uppercase font-black tracking-widest transition-all min-w-0 ${isViewMode || !canSave
-                ? 'bg-emerald-600 text-white border-none cursor-not-allowed shadow-none'
-                : 'bg-[#ffa900] hover:bg-[#e69800] text-white shadow-lg shadow-orange-500/20 hover:shadow-orange-500/40 border-none'
+              disabled={isViewMode}
+              isLoading={isSaving}
+              className={`h-9 lg:h-10 rounded-full px-2 sm:px-4 lg:px-6 text-[9px] lg:text-[10px] uppercase font-black tracking-widest transition-all min-w-0 flex items-center justify-center gap-2 ${isViewMode || isSaving
+                ? 'bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed shadow-none border-none'
+                : 'bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-750 hover:to-indigo-750 text-white shadow-lg shadow-violet-500/20 hover:shadow-violet-500/30 border-none'
                 }`}
             >
               <span className="hidden sm:inline">Lưu</span>
