@@ -16,6 +16,11 @@ function validatePhoneNumber($phone)
     // Remove all spaces, dashes, and parentheses
     $phone = preg_replace('/[\s\-\(\)]/', '', $phone);
 
+    // Check if starts with +840 or 840 (e.g. 840912345678 -> 84912345678)
+    if (preg_match('/^\+?840(\d{9})$/', $phone, $matches)) {
+        return '84' . $matches[1];
+    }
+
     // Check if starts with +84
     if (preg_match('/^\+84(\d{9,10})$/', $phone, $matches)) {
         return '84' . $matches[1];
