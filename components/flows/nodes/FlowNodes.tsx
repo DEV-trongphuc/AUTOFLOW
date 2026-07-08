@@ -1,7 +1,7 @@
 
 import { EXTERNAL_ASSET_BASE } from '@/utils/config';
 import React, { memo } from 'react';
-import { Zap, Mail, Clock, GitMerge, Tag, Link as LinkIcon, MoreHorizontal, AlertOctagon, AlertTriangle, Beaker, Hourglass, MousePointer2, MailOpen, MessageSquare, UserMinus, Filter, ShoppingCart, Layers, Cake, Snowflake, Send, Plus, Minus, Trash2, List, ListPlus, Paperclip, FileInput } from 'lucide-react';
+import { Zap, Mail, Clock, GitMerge, Tag, Link as LinkIcon, MoreHorizontal, AlertOctagon, AlertTriangle, Beaker, Hourglass, MousePointer2, MailOpen, MessageSquare, UserMinus, Filter, ShoppingCart, Layers, Cake, Snowflake, Send, Plus, Minus, Trash2, List, ListPlus, Paperclip, FileInput, ArrowRight } from 'lucide-react';
 import { FlowStep, Flow, FormDefinition } from '../../../types';
 
 interface NodeProps {
@@ -42,11 +42,25 @@ const ValidationBadge = ({ type, title }: { type: 'error' | 'warning', title?: s
     </div>
 );
 
-export const GhostNode = memo(({ label }: { label: string }) => (
-    <div className="px-5 py-2.5 rounded-2xl bg-slate-50 border-2 border-slate-200 border-dashed text-slate-400 text-[10px] font-bold uppercase tracking-widest animate-in fade-in zoom-in duration-500">
-        {label}
-    </div>
-));
+export const GhostNode = memo(({ label, variant = 'default' }: { label: string; variant?: 'default' | 'link' | 'warning' }) => {
+    if (variant === 'link') {
+        return (
+            <div className="px-5 py-2 rounded-2xl bg-violet-50/30 border border-violet-100/70 border-dashed text-violet-600 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-sm animate-in fade-in zoom-in duration-500">
+                <ArrowRight className="w-3.5 h-3.5 animate-pulse" />
+                {label}
+            </div>
+        );
+    }
+    return (
+        <div className={`px-5 py-2.5 rounded-2xl border-2 border-dashed text-[10px] font-bold uppercase tracking-widest animate-in fade-in zoom-in duration-500 ${
+            variant === 'warning'
+                ? 'bg-rose-50 border-rose-200 text-rose-500'
+                : 'bg-slate-50 border-slate-200 text-slate-400'
+        }`}>
+            {label}
+        </div>
+    );
+});
 
 const ReportOverlay = ({ stats }: { stats: { total: number, waiting: number, processed: number, failed?: number } }) => (
     <div className="absolute -bottom-[2px] left-[15%] right-[15%] translate-y-full flex items-center justify-center bg-white px-4 py-2 rounded-b-xl border-x border-b border-slate-100 shadow-[0_12px_30px_-5px_rgba(0,0,0,0.12)] z-[100] animate-in slide-in-from-top-1 duration-300">
@@ -259,19 +273,34 @@ export const SplitTestNode: React.FC<NodeProps> = memo(({ step, onClick, isViewM
     );
 });
 
-export const LinkNode: React.FC<NodeProps> = memo(({ step, onClick, hasError, isViewMode, isReportMode, reportStats }) => (
-    <div onClick={(e) => { e.stopPropagation(); if (!isViewMode) onClick?.(); }} className={`flow-interactive relative z-20 group ${isViewMode ? 'cursor-default' : 'cursor-pointer'}`}>
-        <div className={`pl-2 pr-6 py-2 rounded-full border flex items-center gap-3 transition-all ${hasError ? 'bg-rose-50 border-rose-200 text-rose-600' : 'bg-slate-800 border-slate-700 text-white shadow-xl'}`}>
-            <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center"><LinkIcon className="w-4 h-4" /></div>
-            <div>
-                <span className="text-[8px] font-bold uppercase tracking-widest opacity-60 block">Jump to</span>
-                <span className="text-xs font-bold">{hasError ? 'Lỗi liên kết' : 'Flow khác'}</span>
+export const LinkNode: React.FC<NodeProps> = memo(({ step, onClick, hasError, isViewMode, isReportMode, reportStats, allFlows = [] }) => {
+    const linkedFlow = allFlows.find(f => f.id === step.config.linkedFlowId);
+    const flowLabel = linkedFlow ? linkedFlow.name : 'Chưa liên kết kịch bản';
+
+    return (
+        <div onClick={(e) => { e.stopPropagation(); if (!isViewMode) onClick?.(); }} className={`flow-interactive relative z-20 group ${isViewMode ? 'cursor-default' : 'cursor-pointer'}`}>
+            <div className={`pl-2 pr-6 py-2.5 rounded-full border flex items-center gap-3 transition-all duration-300 ${
+                hasError
+                    ? 'bg-rose-50 border-rose-200 text-rose-600 shadow-lg shadow-rose-500/5 hover:-translate-y-0.5'
+                    : 'bg-gradient-to-r from-violet-600 via-indigo-600 to-indigo-700 border-violet-500/30 text-white shadow-[0_10px_25px_-5px_rgba(99,102,241,0.35)] hover:shadow-[0_15px_30px_-5px_rgba(99,102,241,0.5)] hover:-translate-y-0.5 hover:scale-[1.03]'
+            }`}>
+                <div className={`w-9 h-9 rounded-full flex items-center justify-center transition-all ${
+                    hasError
+                        ? 'bg-rose-100 text-rose-600'
+                        : 'bg-white/15 text-white ring-2 ring-white/10 shadow-inner group-hover:bg-white/25 group-hover:scale-105'
+                }`}>
+                    <LinkIcon className="w-4 h-4" />
+                </div>
+                <div className="text-left">
+                    <span className={`text-[8px] font-bold uppercase tracking-widest block ${hasError ? 'text-rose-400' : 'text-violet-200/90'}`}>Chuyển tiếp</span>
+                    <span className="text-xs font-extrabold tracking-tight block max-w-[200px] truncate">{flowLabel}</span>
+                </div>
             </div>
+            {isReportMode && reportStats && <ReportOverlay stats={reportStats} />}
+            {!isViewMode && <QuickEdit onClick={onClick || (() => { })} />}
         </div>
-        {isReportMode && reportStats && <ReportOverlay stats={reportStats} />}
-        {!isViewMode && <QuickEdit onClick={onClick || (() => { })} />}
-    </div>
-));
+    );
+});
 
 export const ListActionNode: React.FC<NodeProps> = memo(({ step, onClick, isViewMode, isDraggable, isDragTarget, onDragStart, onDragEnter, onDragOver, onDragLeave, onDrop, isReportMode, reportStats }) => {
     const action = step.config.action || 'add';

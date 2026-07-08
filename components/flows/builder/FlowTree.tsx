@@ -234,7 +234,7 @@ const FlowTreeInner = memo(({
                     step.config.linkedFlowId && (
                         <div className="flex flex-col items-center">
                             <StraightConnector height={40} />
-                            <GhostNode label={`Kịch bản: ${allFlows.find(f => f.id === step.config.linkedFlowId)?.name || '...'}`} />
+                            <GhostNode variant="link" label={`Kịch bản: ${allFlows.find(f => f.id === step.config.linkedFlowId)?.name || '...'}`} />
                         </div>
                     )
                 ) : (isCondition || isSplitTest) ? (
