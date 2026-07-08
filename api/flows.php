@@ -3119,6 +3119,8 @@ switch ($method) {
             $stmtCurrent->execute([$path, $workspace_id]);
             $currentFlowStatus = strtolower($stmtCurrent->fetchColumn() ?: 'draft');
 
+            // Allow all users to save/edit/activate active flows
+            /*
             $isAdmin = is_super_admin();
             if (!$isAdmin) {
                 if (in_array($currentFlowStatus, ['active', 'sending', 'scheduled', 'processing'])) {
@@ -3131,6 +3133,7 @@ switch ($method) {
                     }
                 }
             }
+            */
 
             // [FIX] Bá»• sung trigger_type náº¿u null (frontend Ä‘Ã£ clean orphaned steps)
             $triggerType = $data['trigger_type'] ?? null;

@@ -83,11 +83,11 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
         },
         warning: {
             icon: AlertTriangle,
-            iconClass: '',
-            iconBg: '',
+            iconClass: 'text-[#d97706]',
+            iconBg: isDarkTheme ? 'bg-amber-950/20' : 'bg-amber-50',
             inlineIconBg: '#fef3c7',
             inlineIconColor: '#d97706',
-            button: 'bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 shadow-violet-500/20'
+            button: 'bg-gradient-to-r from-[#ffbe1a] to-[#ffa900] hover:from-[#ffa900] hover:to-[#e69800] text-white shadow-yellow-500/20'
         },
         info: {
             icon: Info,

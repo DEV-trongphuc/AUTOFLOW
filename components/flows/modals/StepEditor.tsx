@@ -244,7 +244,16 @@ const StepEditor: React.FC<StepEditorProps> = ({
           onClose={() => setShowActiveWarning(false)}
           title="KHÔNG THỂ XÓA BƯỚC"
           size="sm"
-          footer={<Button onClick={() => setShowActiveWarning(false)} size="md">Đã hiểu</Button>}
+          footer={
+            <Button
+              variant="custom"
+              size="md"
+              onClick={() => setShowActiveWarning(false)}
+              className="bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white shadow-lg shadow-rose-500/20 hover:shadow-rose-500/30 border-none transition-all active:scale-[0.95] rounded-2xl px-5 py-2.5 text-xs md:text-sm font-bold"
+            >
+              Đã hiểu
+            </Button>
+          }
         >
           <div className="p-6 text-center">
             <AlertCircle className="w-12 h-12 text-rose-500 mx-auto mb-4" />
