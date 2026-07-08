@@ -132,18 +132,14 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
                     <button
                         onClick={onClose}
                         disabled={activeLoading}
-                        className={`flex-1 py-2.5 text-xs font-black uppercase tracking-widest rounded-full border transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed ${isDarkTheme ? 'text-slate-400 bg-slate-800 border-slate-750 hover:bg-slate-700 hover:text-slate-200' : 'text-slate-500 bg-white border-slate-200 hover:bg-slate-50 hover:text-slate-700 hover:border-slate-300'} active:scale-95`}
+                        className={`flex-1 py-2.5 text-xs font-black uppercase tracking-widest rounded-full transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed ${isDarkTheme ? 'text-slate-300 bg-slate-800 hover:bg-slate-700 hover:text-slate-200' : 'text-slate-700 bg-slate-100 hover:bg-slate-200 hover:text-slate-900'} active:scale-95`}
                     >
                         {cancelText}
                     </button>
                     <button
                         onClick={handleConfirm}
                         disabled={isConfirmDisabled}
-                        className={`flex-1 py-2.5 text-xs font-black uppercase tracking-widest text-white rounded-full transition-all shadow-xl active:scale-[0.95] flex items-center justify-center gap-2 disabled:opacity-40 disabled:grayscale disabled:scale-100 disabled:cursor-not-allowed ${
-                            variant === 'danger'
-                                ? 'bg-gradient-to-b from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 shadow-rose-500/20'
-                                : 'bg-gradient-to-b from-amber-400 to-amber-550 shadow-amber-500/15 hover:brightness-[1.03] active:brightness-95'
-                        }`}
+                        className={`flex-1 py-2.5 text-xs font-black uppercase tracking-widest text-white rounded-full transition-all shadow-xl active:scale-[0.95] flex items-center justify-center gap-2 disabled:opacity-40 disabled:grayscale disabled:scale-100 disabled:cursor-not-allowed ${styles.button}`}
                     >
                         {activeLoading ? (
                             <>

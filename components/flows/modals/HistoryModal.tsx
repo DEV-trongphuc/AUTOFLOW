@@ -76,18 +76,18 @@ const FlowHistoryModal: React.FC<FlowHistoryModalProps> = ({ isOpen, onClose, sn
                     </div>
                 ) : (
                     safeSnapshots.map((snap, index) => (
-                        <div key={snap.id} className="group relative bg-white dark:bg-[#161b24] border border-slate-100 dark:border-slate-800/80 rounded-xl p-3.5 hover:border-amber-200 dark:hover:border-amber-500/30 hover:shadow-sm transition-all">
+                        <div key={snap.id} className="group relative bg-white dark:bg-[#161b24] border border-slate-100 dark:border-slate-800/80 rounded-xl p-3.5 hover:border-violet-200 dark:hover:border-violet-500/30 hover:shadow-sm transition-all">
                             <div className="flex justify-between items-start gap-3">
                                 <div className="flex gap-3 flex-1 min-w-0">
                                     <div className="flex flex-col items-center flex-shrink-0 mt-1">
-                                        <div className={`w-2 h-2 rounded-full ring-4 ${index === 0 ? 'bg-[#ffa900] ring-amber-50 dark:ring-amber-950/40' : 'bg-slate-300 dark:bg-slate-700 ring-slate-50 dark:ring-slate-800/50'}`} />
+                                        <div className={`w-2 h-2 rounded-full ring-4 ${index === 0 ? 'bg-violet-600 ring-violet-50 dark:ring-violet-950/40' : 'bg-slate-300 dark:bg-slate-700 ring-slate-50 dark:ring-slate-800/50'}`} />
                                         {index < safeSnapshots.length - 1 && <div className="w-px flex-1 bg-slate-100 dark:bg-slate-800 my-1" />}
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2 flex-wrap">
                                             <p className="text-xs font-black text-slate-700 dark:text-slate-200 truncate">{snap.label || 'Chỉnh sửa'}</p>
                                             {index === 0 && (
-                                                <span className="text-[9px] font-black text-white bg-[#ffa900] px-1.5 py-0.5 rounded-md shrink-0">
+                                                <span className="text-[9px] font-black text-white bg-violet-600 px-1.5 py-0.5 rounded-md shrink-0">
                                                     Mới nhất
                                                 </span>
                                             )}
@@ -96,7 +96,7 @@ const FlowHistoryModal: React.FC<FlowHistoryModalProps> = ({ isOpen, onClose, sn
                                             <span className="flex items-center gap-1 text-[10px] text-slate-400 dark:text-slate-500 font-medium">
                                                 <Clock size={9} /> {formatTime(snap.created_at)}
                                             </span>
-                                            <span className="text-[10px] text-[#ca7900] dark:text-amber-500 font-medium">
+                                            <span className="text-[10px] text-violet-600 dark:text-violet-400 font-medium">
                                                 {getRelativeTime(snap.created_at)}
                                             </span>
                                             {snap.created_by && (
@@ -110,7 +110,7 @@ const FlowHistoryModal: React.FC<FlowHistoryModalProps> = ({ isOpen, onClose, sn
 
                                 <button
                                     onClick={() => onRestore(snap)}
-                                    className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black text-[#ca7900] dark:text-amber-500 border border-amber-200 dark:border-amber-500/20 hover:bg-amber-50 dark:hover:bg-amber-950/20 rounded-lg shrink-0"
+                                    className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black text-violet-600 dark:text-violet-400 border border-violet-200 dark:border-violet-500/20 hover:bg-violet-50 dark:hover:bg-violet-950/20 rounded-lg shrink-0"
                                 >
                                     <RotateCcw size={11} />
                                     Khôi phục

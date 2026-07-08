@@ -300,7 +300,7 @@ const EmailActionConfig: React.FC<EmailActionConfigProps> = ({ config, onChange,
                                 disabled={disabled}
                             >
                                 <div className="flex items-center gap-3">
-                                    <div className={`p-2 rounded-xl ${config.senderEmail === email.value ? 'bg-[#ffa900] text-white' : 'bg-slate-100 text-slate-400'}`}>
+                                    <div className={`p-2 rounded-xl ${config.senderEmail === email.value ? 'bg-violet-600 text-white' : 'bg-slate-100 text-slate-400'}`}>
                                         <ShieldCheck className="w-4 h-4" />
                                     </div>
                                     <div>
@@ -311,7 +311,7 @@ const EmailActionConfig: React.FC<EmailActionConfigProps> = ({ config, onChange,
                                         </p>
                                     </div>
                                 </div>
-                                {config.senderEmail === email.value && <Zap className="w-4 h-4 text-[#ffa900] fill-[#ffa900]" />}
+                                {config.senderEmail === email.value && <Zap className="w-4 h-4 text-violet-600 fill-violet-600" />}
                             </button>
                         )) : (
                             <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-center gap-3 text-rose-600">
@@ -327,19 +327,19 @@ const EmailActionConfig: React.FC<EmailActionConfigProps> = ({ config, onChange,
             <div className="pt-4 border-t border-slate-100 space-y-4">
                 <div className="flex items-center gap-2 ml-1">
                     <label className="text-xs font-black text-slate-400 uppercase tracking-widest block">Nội dung Email</label>
-                    <span className="px-2 py-0.5 bg-orange-100 text-[#ca7900] text-[9px] font-black uppercase rounded-full tracking-widest">Thiết kế chuẩn</span>
+                    <span className="px-2 py-0.5 bg-violet-100 text-violet-700 text-[9px] font-black uppercase rounded-full tracking-widest">Thiết kế chuẩn</span>
                 </div>
                 <div className="flex bg-slate-100 p-1 rounded-xl">
                     <button
                         onClick={() => handleModeChange('template')}
-                        className={`flex-1 py-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-all ${sourceMode === 'template' ? 'bg-white text-[#ca7900] shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                        className={`flex-1 py-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-all ${sourceMode === 'template' ? 'bg-white text-violet-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                         disabled={disabled}
                     >
                         <Layout className="w-3.5 h-3.5" /> Chọn Mẫu (Visual)
                     </button>
                     <button
                         onClick={() => handleModeChange('html')}
-                        className={`flex-1 py-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-all ${sourceMode === 'html' ? 'bg-white text-[#ca7900] shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                        className={`flex-1 py-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-all ${sourceMode === 'html' ? 'bg-white text-violet-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                         disabled={disabled}
                     >
                         <Code className="w-3.5 h-3.5" /> HTML Code
@@ -406,7 +406,7 @@ const EmailActionConfig: React.FC<EmailActionConfigProps> = ({ config, onChange,
                                                         setPreviewData({ template: selectedTemplate });
                                                     }
                                                 }}
-                                                className="px-3 py-2 bg-[#ffa900] text-white rounded-xl text-[10px] font-black uppercase hover:bg-[#ca7900] transition-all flex items-center gap-1 shadow-sm whitespace-nowrap shrink-0"
+                                                className="px-3 py-2 bg-violet-600 text-white rounded-xl text-[10px] font-black uppercase hover:bg-violet-750 transition-all flex items-center gap-1 shadow-sm whitespace-nowrap shrink-0"
                                                 title="Xem trước mẫu"
                                             >
                                                 <Eye className="w-3.5 h-3.5" /> Xem
@@ -418,8 +418,8 @@ const EmailActionConfig: React.FC<EmailActionConfigProps> = ({ config, onChange,
                         ) : (
                             <button
                                 onClick={() => setShowPicker(true)}
-                                className={`w-full py-12 border-2 border-dashed border-slate-200 rounded-[28px] bg-slate-50/50 text-slate-400 flex flex-col items-center justify-center gap-3 hover:bg-white hover:border-[#ffa900] hover:text-[#ca7900] transition-all group shadow-inner ${disabled ? 'opacity-60 cursor-not-allowed' : ''}`}
-                                disabled={disabled}
+                                                                className={`w-full py-12 border-2 border-dashed border-slate-200 rounded-[28px] bg-slate-50/50 text-slate-400 flex flex-col items-center justify-center gap-3 hover:bg-white hover:border-violet-300 hover:text-violet-600 transition-all group shadow-inner ${disabled ? 'opacity-60 cursor-not-allowed' : ''}`}
+                                                                disabled={disabled}
                             >
                                 <div className="p-3 bg-white rounded-xl shadow-sm group-hover:scale-110 transition-transform"><Layout className="w-6 h-6" /></div>
                                 <span className="text-xs font-bold uppercase tracking-wider">Chọn mẫu từ thư viện</span>
@@ -470,14 +470,14 @@ const EmailActionConfig: React.FC<EmailActionConfigProps> = ({ config, onChange,
 
                                 <button
                                     onClick={() => setPreviewData({ template: null, html: config.customHtml })}
-                                    className="bg-[#ffa900] text-white px-3 py-1.5 rounded-bl-xl text-[10px] font-bold uppercase hover:bg-[#ca7900] transition-colors flex items-center gap-1"
+                                    className="bg-violet-600 text-white px-3 py-1.5 rounded-bl-xl text-[10px] font-bold uppercase hover:bg-violet-750 transition-colors flex items-center gap-1"
                                 >
                                     <Eye className="w-3 h-3" /> Preview HTML
                                 </button>
                             </div>
                             <textarea
                                 ref={textAreaRef}
-                                className="w-full h-64 bg-[#1e293b] text-indigo-100 font-mono text-xs p-4 pt-10 rounded-xl outline-none border-2 border-transparent focus:border-[#ffa900] transition-all resize-y leading-relaxed custom-scrollbar"
+                                className="w-full h-64 bg-[#1e293b] text-indigo-100 font-mono text-xs p-4 pt-10 rounded-xl outline-none border-2 border-transparent focus:border-violet-500 transition-all resize-y leading-relaxed custom-scrollbar"
                                 placeholder="<html><body><h1>Paste your HTML here...</h1></body></html>"
                                 value={config.customHtml || ''}
                                 onChange={(e) => onChange({ ...config, customHtml: e.target.value })}
