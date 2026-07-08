@@ -625,7 +625,7 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
             ]);
 
             if (tagsRes.success && tagsRes.data) {
-                setAvailableTags(Array.isArray(tagsRes.data) ? tagsRes.data : []);
+                setAvailableTags(Array.isArray(tagsRes.data) ? tagsRes.data : ((tagsRes.data as any).data || []));
             }
 
             if (listsRes.success && listsRes.data) {

@@ -116,7 +116,7 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ config, onChange, disable
             if (listRes.success) setLists(listRes.data);
             if (segRes.success) setSegments(segRes.data);
             if (campRes.success) setCampaigns(campRes.data);
-            if (tagRes.success) setTags(tagRes.data);
+            if (tagRes.success) setTags(Array.isArray(tagRes.data) ? tagRes.data : ((tagRes.data as any)?.data || []));
             if (formRes.success) setForms(formRes.data);
             if (purchRes.success) setPurchases(purchRes.data);
             if (chatbotsRes.success) setChatbots(chatbotsRes.data.filter((b: any) => b.ai_enabled || b.is_enabled || b.status === 'active' || !b.status));
