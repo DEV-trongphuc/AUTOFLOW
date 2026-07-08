@@ -64,7 +64,7 @@ const AddStepModal: React.FC<AddStepModalProps> = ({ isOpen, onClose, onAdd, par
                 flex flex-col items-center text-center p-6 rounded-3xl border-2 transition-all relative group
                 ${isDisabled
                   ? 'bg-slate-50 border-slate-100 opacity-50 cursor-not-allowed'
-                  : 'bg-white border-slate-100 hover:border-[#ffa900] hover:shadow-2xl hover:shadow-orange-500/10 hover:-translate-y-1'}
+                  : 'bg-white border-slate-100 hover:border-violet-400 hover:shadow-2xl hover:shadow-violet-500/10 hover:-translate-y-1'}
               `}
             >
               <div 

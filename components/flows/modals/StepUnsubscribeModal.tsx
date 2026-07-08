@@ -64,12 +64,12 @@ const StepUnsubscribeModal: React.FC<StepUnsubscribeModalProps> = ({
         <Modal isOpen={isOpen} onClose={onClose} title={`Hủy đăng kýtại: ${stepLabel}`} size="lg">
             <div className="space-y-4">
                 {/* Summary */}
-                <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 flex items-start gap-3">
-                    <UserMinus className="w-5 h-5 text-orange-600 shrink-0 mt-0.5" />
+                <div className="bg-rose-50/50 border border-rose-100 rounded-xl p-4 flex items-start gap-3">
+                    <UserMinus className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
                     <div className="flex-1">
-                        <h4 className="text-sm font-bold text-orange-900 mb-1">Tổng quan Hủy đăng ký</h4>
-                        <p className="text-xs text-orange-700">
-                            Có <strong>{users.length} người dùng</strong> đã Hủy đăng kýsau khi nhận email từ bước này.
+                        <h4 className="text-sm font-bold text-rose-800 mb-1">Tổng quan Hủy đăng ký</h4>
+                        <p className="text-xs text-rose-700">
+                            Có <strong>{users.length} người dùng</strong> đã Hủy đăng ký sau khi nhận email từ bước này.
                         </p>
                     </div>
                 </div>
@@ -116,7 +116,7 @@ const StepUnsubscribeModal: React.FC<StepUnsubscribeModalProps> = ({
                                             </div>
                                         </td>
                                         <td className="px-4 py-3">
-                                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold bg-orange-100 text-orange-700 border border-orange-200">
+                                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-100">
                                                 <ExternalLink className="w-3 h-3" />
                                                 {user.source}
                                             </span>

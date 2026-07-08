@@ -1,4 +1,4 @@
-﻿import * as React from 'react';
+import * as React from 'react';
 import { useState } from 'react';
 import { Users, CheckCircle2, XCircle, AlertTriangle, ArrowRight, GitBranch, Info } from 'lucide-react';
 import Modal from '../../common/Modal';
@@ -219,7 +219,11 @@ const FlowContinuationModal: React.FC<FlowContinuationModalProps> = ({
                 ) : (
                     /* Not Affected - Simple Continue */
                     <div className="pt-2">
-                        <Button variant="primary" onClick={handleConfirm} className="w-full justify-center">
+                        <Button
+                            variant="custom"
+                            onClick={handleConfirm}
+                            className="w-full justify-center bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-lg shadow-emerald-500/20 active:scale-[0.95] rounded-2xl px-5 py-2.5 text-xs md:text-sm font-bold border-none transition-all"
+                        >
                             Tiếp tục và Thêm bước
                         </Button>
                     </div>
@@ -231,7 +235,11 @@ const FlowContinuationModal: React.FC<FlowContinuationModalProps> = ({
                         <Button variant="secondary" onClick={onClose} className="flex-1">
                             Hủy
                         </Button>
-                        <Button variant="primary" onClick={handleConfirm} className="flex-1">
+                        <Button
+                            variant="custom"
+                            onClick={handleConfirm}
+                            className="flex-1 bg-gradient-to-r from-[#ffbe1a] to-[#ffa900] hover:from-[#ffa900] hover:to-[#e69800] text-white shadow-lg shadow-yellow-500/20 active:scale-[0.95] rounded-2xl px-5 py-2.5 text-xs md:text-sm font-bold border-none transition-all"
+                        >
                             Xác nhận
                         </Button>
                     </div>
