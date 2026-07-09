@@ -26,7 +26,7 @@ const ListRow = React.memo(({ list, isSelected, onView, onToggleSelect, onEdit, 
     return (
         <tr 
             onClick={() => onView(list)}
-            className={`group hover:bg-slate-50 transition-colors cursor-pointer ${isSelected ? 'bg-indigo-50/30' : ''}`}
+            className={`group/row hover:bg-slate-50 transition-colors cursor-pointer ${isSelected ? 'bg-indigo-50/30' : ''}`}
         >
             <td className="px-6 py-5 pl-8 text-center" onClick={(e) => e.stopPropagation()}>
                 <div className="relative flex items-center justify-center">
@@ -45,7 +45,7 @@ const ListRow = React.memo(({ list, isSelected, onView, onToggleSelect, onEdit, 
                         ? 'bg-[#ebfdf4] border-[#d4f7e3]'
                         : list.source === 'MISA CRM'
                             ? 'bg-blue-50 border-blue-100'
-                            : 'bg-indigo-50 text-indigo-600 border-indigo-100 group-hover:bg-indigo-600 group-hover:text-white'
+                            : 'bg-indigo-50 text-indigo-600 border-indigo-100 group-hover/row:bg-indigo-600 group-hover/row:text-white'
                         }`}>
                         {list.source === 'Google Sheets' ? (
                             <img src="https://mailmeteor.com/logos/assets/PNG/Google_Sheets_Logo_512px.png" className="w-5 h-5 object-contain" alt="GS" />
@@ -56,7 +56,7 @@ const ListRow = React.memo(({ list, isSelected, onView, onToggleSelect, onEdit, 
                         )}
                     </div>
                     <div>
-                        <p className="text-sm font-bold text-slate-800 group-hover:text-indigo-600 transition-colors">{list.name}</p>
+                        <p className="text-sm font-bold text-slate-800 group-hover/row:text-indigo-600 transition-colors">{list.name}</p>
                         <p className="text-[10px] text-slate-400 font-medium mt-0.5">
                             {list.type === 'sync' ? 'Sync List' : 'Static List'}
                         </p>
@@ -92,7 +92,7 @@ const ListRow = React.memo(({ list, isSelected, onView, onToggleSelect, onEdit, 
                         <button
                             type="button"
                             onClick={(e) => { e.stopPropagation(); onExport(list); }}
-                            className="p-2 text-slate-300 hover:text-emerald-600 hover:bg-emerald-50 rounded-full transition-all opacity-0 group-hover:opacity-100"
+                            className="p-2 text-slate-300 hover:text-emerald-600 hover:bg-emerald-50 rounded-full transition-all opacity-0 group-hover/row:opacity-100"
                             title="Xuất CSV"
                         >
                             <Download className="w-3.5 h-3.5" />
@@ -101,7 +101,7 @@ const ListRow = React.memo(({ list, isSelected, onView, onToggleSelect, onEdit, 
                     <button
                         type="button"
                         onClick={(e) => { e.stopPropagation(); onSplit && onSplit(list); }}
-                        className="p-2 text-slate-300 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-all opacity-0 group-hover:opacity-100"
+                        className="p-2 text-slate-300 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-all opacity-0 group-hover/row:opacity-100"
                         title={'\u0054\u00E1\u0063\u0068\u0020\u0064\u0061\u006E\u0068\u0020\u0073\u00E1\u0063\u0068'}
                     >
                         <Scissors className="w-3.5 h-3.5" />
@@ -109,7 +109,7 @@ const ListRow = React.memo(({ list, isSelected, onView, onToggleSelect, onEdit, 
                     <button
                         type="button"
                         onClick={(e) => { e.stopPropagation(); onEdit(list); }}
-                        className="p-2 text-slate-300 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-all opacity-0 group-hover:opacity-100"
+                        className="p-2 text-slate-300 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-all opacity-0 group-hover/row:opacity-100"
                         title={'\u0043\u0068\u1EC9\u006E\u0068\u0020\u0073\u1EED\u0061\u0020\u0063\u1EA5\u0075\u0020\u0068\u00EC\u006E\u0068'}
                     >
                         <Edit3 className="w-3.5 h-3.5" />
@@ -117,7 +117,7 @@ const ListRow = React.memo(({ list, isSelected, onView, onToggleSelect, onEdit, 
                     <button
                         type="button"
                         onClick={(e) => { e.stopPropagation(); onCleanup(list); }}
-                        className="p-2 text-slate-300 hover:text-amber-600 hover:bg-amber-50 rounded-full transition-all opacity-0 group-hover:opacity-100"
+                        className="p-2 text-slate-300 hover:text-amber-600 hover:bg-amber-50 rounded-full transition-all opacity-0 group-hover/row:opacity-100"
                         title={'\u0044\u1ECD\u006E\u0020\u0064\u1EB9\u0070\u0020\u0064\u0061\u006E\u0068\u0020\u0073\u00E1\u0063\u0068'}
                     >
                         <Eraser className="w-3.5 h-3.5" />
@@ -125,7 +125,7 @@ const ListRow = React.memo(({ list, isSelected, onView, onToggleSelect, onEdit, 
                     <button
                         type="button"
                         onClick={(e) => { e.stopPropagation(); onDelete(list.id); }}
-                        className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-full transition-all opacity-0 group-hover:opacity-100"
+                        className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-full transition-all opacity-0 group-hover/row:opacity-100"
                         title={'\u0058\u00F3\u0061\u0020\u0064\u0061\u006E\u0068\u0020\u0073\u00E1\u0063\u0068'}
                     >
                         <Trash2 className="w-3.5 h-3.5" />
