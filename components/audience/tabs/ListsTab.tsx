@@ -3,7 +3,8 @@ import { useState } from 'react';
 import { 
     Trash2, Edit3, Calendar, UserPlus, 
     List, Check, X, Scissors, Eraser, 
-    ChevronLeft, ChevronRight, Upload, GitMerge
+    ChevronLeft, ChevronRight, Upload, GitMerge,
+    Download
 } from 'lucide-react';
 import Card from '../../common/Card';
 import Skeleton from '../../common/Skeleton';
@@ -18,9 +19,10 @@ interface ListRowProps {
     onDelete: (id: string) => void;
     onCleanup: (list: any) => void;
     onSplit?: (list: any) => void;
+    onExport?: (list: any) => void;
 }
 
-const ListRow = React.memo(({ list, isSelected, onView, onToggleSelect, onEdit, onDelete, onCleanup, onSplit }: ListRowProps) => {
+const ListRow = React.memo(({ list, isSelected, onView, onToggleSelect, onEdit, onDelete, onCleanup, onSplit, onExport }: ListRowProps) => {
     return (
         <tr 
             onClick={() => onView(list)}
@@ -86,10 +88,20 @@ const ListRow = React.memo(({ list, isSelected, onView, onToggleSelect, onEdit, 
             </td>
             <td className="px-6 py-5 text-right pr-8">
                 <div className="flex items-center justify-end gap-1">
+                    {onExport && (
+                        <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); onExport(list); }}
+                            className="p-2 text-slate-300 hover:text-emerald-600 hover:bg-emerald-50 rounded-full transition-all opacity-0 group-hover:opacity-100"
+                            title="Xuất CSV"
+                        >
+                            <Download className="w-3.5 h-3.5" />
+                        </button>
+                    )}
                     <button
                         type="button"
                         onClick={(e) => { e.stopPropagation(); onSplit && onSplit(list); }}
-                        className="p-2 text-slate-300 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-all"
+                        className="p-2 text-slate-300 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-all opacity-0 group-hover:opacity-100"
                         title={'\u0054\u00E1\u0063\u0068\u0020\u0064\u0061\u006E\u0068\u0020\u0073\u00E1\u0063\u0068'}
                     >
                         <Scissors className="w-3.5 h-3.5" />
@@ -97,7 +109,7 @@ const ListRow = React.memo(({ list, isSelected, onView, onToggleSelect, onEdit, 
                     <button
                         type="button"
                         onClick={(e) => { e.stopPropagation(); onEdit(list); }}
-                        className="p-2 text-slate-300 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-all"
+                        className="p-2 text-slate-300 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-all opacity-0 group-hover:opacity-100"
                         title={'\u0043\u0068\u1EC9\u006E\u0068\u0020\u0073\u1EED\u0061\u0020\u0063\u1EA5\u0075\u0020\u0068\u00EC\u006E\u0068'}
                     >
                         <Edit3 className="w-3.5 h-3.5" />
@@ -105,7 +117,7 @@ const ListRow = React.memo(({ list, isSelected, onView, onToggleSelect, onEdit, 
                     <button
                         type="button"
                         onClick={(e) => { e.stopPropagation(); onCleanup(list); }}
-                        className="p-2 text-slate-300 hover:text-amber-600 hover:bg-amber-50 rounded-full transition-all"
+                        className="p-2 text-slate-300 hover:text-amber-600 hover:bg-amber-50 rounded-full transition-all opacity-0 group-hover:opacity-100"
                         title={'\u0044\u1ECD\u006E\u0020\u0064\u1EB9\u0070\u0020\u0064\u0061\u006E\u0068\u0020\u0073\u00E1\u0063\u0068'}
                     >
                         <Eraser className="w-3.5 h-3.5" />
@@ -113,7 +125,7 @@ const ListRow = React.memo(({ list, isSelected, onView, onToggleSelect, onEdit, 
                     <button
                         type="button"
                         onClick={(e) => { e.stopPropagation(); onDelete(list.id); }}
-                        className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-full transition-all"
+                        className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-full transition-all opacity-0 group-hover:opacity-100"
                         title={'\u0058\u00F3\u0061\u0020\u0064\u0061\u006E\u0068\u0020\u0073\u00E1\u0063\u0068'}
                     >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -162,9 +174,11 @@ interface ListsTabProps {
     onMerge?: (ids: string[]) => void;
     onCleanup: (list: any) => void;
     onSplit?: (list: any) => void;
+    onExport?: (list: any) => void;
+    onBulkExport?: (ids: string[]) => void;
 }
 
-const ListsTab: React.FC<ListsTabProps> = ({ loading, lists, currentPage = 1, totalPages = 1, totalCount = 0, itemsPerPage = 10, onPageChange, onView, onEdit, onDelete, onBulkDelete, onMerge, onCleanup, onSplit }) => {
+const ListsTab: React.FC<ListsTabProps> = ({ loading, lists, currentPage = 1, totalPages = 1, totalCount = 0, itemsPerPage = 10, onPageChange, onView, onEdit, onDelete, onBulkDelete, onMerge, onCleanup, onSplit, onExport, onBulkExport }) => {
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
     const toggleSelectAll = React.useCallback(() => {
@@ -200,6 +214,12 @@ const ListsTab: React.FC<ListsTabProps> = ({ loading, lists, currentPage = 1, to
         }
     }, [onMerge, selectedIds]);
 
+    const handleBulkExport = React.useCallback(() => {
+        if (onBulkExport) {
+            onBulkExport(Array.from(selectedIds));
+        }
+    }, [onBulkExport, selectedIds]);
+
     const handleCancelSelection = React.useCallback(() => {
         setSelectedIds(new Set());
     }, []);
@@ -233,6 +253,16 @@ const ListsTab: React.FC<ListsTabProps> = ({ loading, lists, currentPage = 1, to
                                                 >
                                                     <GitMerge className="w-3.5 h-3.5" />
                                                     <span>{'\u0047\u1ED9\u0070\u0020\u0064\u0061\u006E\u0068\u0020\u0073\u00E1\u0063\u0068'}</span>
+                                                </button>
+                                            )}
+                                            {onBulkExport && (
+                                                <button
+                                                    type="button"
+                                                    onClick={handleBulkExport}
+                                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-emerald-100 text-emerald-600 hover:bg-emerald-50 hover:border-emerald-200 rounded-lg text-xs font-bold shadow-sm transition-all"
+                                                >
+                                                    <Download className="w-3.5 h-3.5" />
+                                                    <span>Xuất CSV</span>
                                                 </button>
                                             )}
                                             <button
@@ -276,16 +306,17 @@ const ListsTab: React.FC<ListsTabProps> = ({ loading, lists, currentPage = 1, to
                             Array.from({ length: 8 }).map((_, i) => <ListSkeleton key={i} />)
                         ) : lists.map(list => (
                             <ListRow
-                                key={list.id}
-                                list={list}
-                                isSelected={selectedIds.has(list.id)}
-                                onView={onView}
-                                onToggleSelect={toggleSelectOne}
-                                onEdit={onEdit}
-                                onDelete={onDelete}
-                                onCleanup={onCleanup}
-                                onSplit={onSplit}
-                            />
+                                                                key={list.id}
+                                                                list={list}
+                                                                isSelected={selectedIds.has(list.id)}
+                                                                onView={onView}
+                                                                onToggleSelect={toggleSelectOne}
+                                                                onEdit={onEdit}
+                                                                onDelete={onDelete}
+                                                                onCleanup={onCleanup}
+                                                                onSplit={onSplit}
+                                                                onExport={onExport}
+                                                            />
                         ))}
                         {!loading && lists.length === 0 && (
                             <tr><td colSpan={6} className="py-12 text-center text-slate-400 text-sm">{'\u004B\u0068\u00F4\u006E\u0067\u0020\u0074\u00EC\u006D\u0020\u0074\u0068\u1EA5\u0079\u0020\u0064\u0061\u006E\u0068\u0020\u0073\u00E1\u0063\u0068\u0020\u006E\u00E0\u006F\u002E'}</td></tr>

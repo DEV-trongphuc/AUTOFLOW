@@ -821,6 +821,109 @@ const Audience: React.FC = () => {
         }
     };
 
+    const exportListContacts = async (list: any) => {
+        const toastId = toast.loading('Đang chuẩn bị xuất dữ liệu...', { position: 'top-center' });
+        try {
+            const query = new URLSearchParams({
+                page: '1',
+                limit: '1000000',
+                list_id: list.id
+            });
+            const res = await api.get<any>(`subscribers?${query.toString()}`);
+            if (res.success && res.data) {
+                const data = res.data.pagination ? res.data.data : (Array.isArray(res.data) ? res.data : []);
+                if (data.length === 0) {
+                    toast.error('Danh sách này chưa có liên hệ nào!', { id: toastId });
+                    return;
+                }
+                
+                const headers = ['Họ Tên', 'Số điện thoại', 'Email', 'Trạng thái', 'Nguồn', 'Ngày tham gia'];
+                const rows = data.map((sub: any) => {
+                    const fullName = `${sub.firstName || ''} ${sub.lastName || ''}`.trim() || 'Unknown';
+                    return [
+                        `"${fullName.replace(/"/g, '""')}"`,
+                        `"${(sub.phoneNumber || '').replace(/"/g, '""')}"`,
+                        `"${(sub.email || '').replace(/"/g, '""')}"`,
+                        `"${(sub.status || '').replace(/"/g, '""')}"`,
+                        `"${(sub.source || '').replace(/"/g, '""')}"`,
+                        `"${(sub.joinedAt || sub.createdAt || '').replace(/"/g, '""')}"`
+                    ].join(',');
+                });
+                
+                const csvContent = "\uFEFF" + [headers.join(','), ...rows].join('\n');
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement("a");
+                link.setAttribute("href", url);
+                link.setAttribute("download", `danh_sach_${list.name.toLowerCase().replace(/\s+/g, '_')}.csv`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                toast.success(`Đã xuất thành công ${data.length} liên hệ!`, { id: toastId });
+            } else {
+                toast.error('Không thể lấy dữ liệu danh sách.', { id: toastId });
+            }
+        } catch (err) {
+            console.error(err);
+            toast.error('Lỗi kết nối khi xuất danh sách.', { id: toastId });
+        }
+    };
+
+    const exportMultipleListsContacts = async (listIds: string[]) => {
+        if (listIds.length === 0) return;
+        const toastId = toast.loading('Đang chuẩn bị xuất dữ liệu từ các danh sách...', { position: 'top-center' });
+        try {
+            const allContactsMap = new Map();
+            for (const listId of listIds) {
+                const query = new URLSearchParams({
+                    page: '1',
+                    limit: '1000000',
+                    list_id: listId
+                });
+                const res = await api.get<any>(`subscribers?${query.toString()}`);
+                if (res.success && res.data) {
+                    const data = res.data.pagination ? res.data.data : (Array.isArray(res.data) ? res.data : []);
+                    data.forEach((sub: any) => {
+                        allContactsMap.set(sub.id, sub);
+                    });
+                }
+            }
+            
+            const combinedData = Array.from(allContactsMap.values());
+            if (combinedData.length === 0) {
+                toast.error('Các danh sách đã chọn không có liên hệ nào!', { id: toastId });
+                return;
+            }
+            
+            const headers = ['Họ Tên', 'Số điện thoại', 'Email', 'Trạng thái', 'Nguồn', 'Ngày tham gia'];
+            const rows = combinedData.map((sub: any) => {
+                const fullName = `${sub.firstName || ''} ${sub.lastName || ''}`.trim() || 'Unknown';
+                return [
+                    `"${fullName.replace(/"/g, '""')}"`,
+                    `"${(sub.phoneNumber || '').replace(/"/g, '""')}"`,
+                    `"${(sub.email || '').replace(/"/g, '""')}"`,
+                    `"${(sub.status || '').replace(/"/g, '""')}"`,
+                    `"${(sub.source || '').replace(/"/g, '""')}"`,
+                    `"${(sub.joinedAt || sub.createdAt || '').replace(/"/g, '""')}"`
+                ].join(',');
+            });
+            
+            const csvContent = "\uFEFF" + [headers.join(','), ...rows].join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", `danh_sach_tong_hop_${listIds.length}_lists.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            toast.success(`Đã xuất thành công ${combinedData.length} liên hệ (lọc trùng)!`, { id: toastId });
+        } catch (err) {
+            console.error(err);
+            toast.error('Lỗi kết nối khi xuất danh sách.', { id: toastId });
+        }
+    };
+
     const handleDeleteSubscriber = (id: string, name?: string) => {
         setConfirmModal({
             isOpen: true,
@@ -1424,6 +1527,8 @@ const Audience: React.FC = () => {
                                     }, 'gộp danh sách')}
                                     onCleanup={adminGuard((list) => setCleanupTarget({ id: list.id, name: list.name, type: 'list' }), 'dọn rác danh sách')}
                                     onSplit={adminGuard((list) => { setSplittingTarget({ id: list.id, name: list.name, type: 'list', count: list.count }); setSplitSelectedIds([]); }, 'tách danh sách')}
+                                    onExport={exportListContacts}
+                                    onBulkExport={exportMultipleListsContacts}
                                 />
                             </TabTransition>
                         )}

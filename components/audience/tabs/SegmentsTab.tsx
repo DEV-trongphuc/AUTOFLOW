@@ -84,29 +84,29 @@ const SegmentRow = React.memo<SegmentRowProps>(({ seg, isSelected, onView, onTog
                 <div className="flex items-center justify-end gap-1">
                     <button
                         onClick={(e) => { e.stopPropagation(); onSplit && onSplit(seg); }}
-                        className="p-2 text-slate-300 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-all"
+                        className="p-2 text-slate-300 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-all opacity-0 group-hover:opacity-100"
                         title="Tách phân khúc"
                     >
                         <Scissors className="w-3.5 h-3.5" />
                     </button>
                     <button
                         onClick={(e) => { e.stopPropagation(); onCleanup(seg); }}
-                        className="p-2 text-slate-300 hover:text-violet-600 hover:bg-violet-50 rounded-full transition-all"
+                        className="p-2 text-slate-300 hover:text-violet-600 hover:bg-violet-50 rounded-full transition-all opacity-0 group-hover:opacity-100"
                         title="Dọn dẹp phân khúc"
                     >
                         <Eraser className="w-3.5 h-3.5" />
                     </button>
-                    <div className="h-4 w-px bg-slate-200 mx-1"></div>
+                    <div className="h-4 w-px bg-slate-200 mx-1 opacity-0 group-hover:opacity-100 transition-all"></div>
                     <button
                         onClick={(e) => { e.stopPropagation(); onEdit(seg); }}
-                        className="p-2 text-slate-300 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-all"
+                        className="p-2 text-slate-300 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-all opacity-0 group-hover:opacity-100"
                         title="Chỉnh sửa cấu hình"
                     >
                         <Edit3 className="w-3.5 h-3.5" />
                     </button>
                     <button
                         onClick={(e) => { e.stopPropagation(); onDelete(seg.id); }}
-                        className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-full transition-all"
+                        className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-full transition-all opacity-0 group-hover:opacity-100"
                         title="Xóa phân khúc"
                     >
                         <Trash2 className="w-3.5 h-3.5" />

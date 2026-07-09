@@ -28,7 +28,7 @@ const Button: React.FC<ButtonProps> = ({
   const baseStyles = 'inline-flex items-center justify-center font-bold transition-all duration-200 active:scale-[0.95] disabled:opacity-50 disabled:pointer-events-none focus:outline-none focus:ring-2 focus:ring-amber-500/20 tracking-tight select-none';
 
   const variants = {
-    primary: 'bg-gradient-to-b from-amber-400 to-amber-550 text-white border border-amber-500/10 shadow-[0_6px_18px_-4px_rgba(104,61,242,0.22),inset_0_1.5px_0_rgba(255,255,255,0.3)] hover:brightness-[1.03] active:brightness-95',
+    primary: 'bg-gradient-to-b from-amber-500 to-amber-600 text-white border border-amber-600/10 shadow-[0_6px_18px_-4px_rgba(104,61,242,0.22),inset_0_1.5px_0_rgba(255,255,255,0.3)] hover:brightness-[1.03] active:brightness-95',
     secondary: isDarkTheme
       ? 'bg-slate-800/80 backdrop-blur-md text-slate-200 border border-slate-700/80 hover:bg-slate-700/80 hover:border-slate-650 hover:text-white shadow-sm shadow-[inset_0_1px_rgba(255,255,255,0.05)]'
       : 'bg-white text-slate-700 border border-slate-200/80 hover:bg-slate-50 hover:border-slate-300 hover:text-slate-900 shadow-[0_2px_8px_rgba(0,0,0,0.02)] shadow-[inset_0_1.5px_rgba(255,255,255,1)]',
