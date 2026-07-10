@@ -656,10 +656,17 @@ const Flows: React.FC = () => {
         const trigger = cleanedSteps?.find(s => s.type === 'trigger');
         const triggerType = trigger?.config?.type || null;
 
+        const user = JSON.parse(localStorage.getItem('user') || localStorage.getItem('currentUser') || '{}');
+        const creatorInfo = user.name ? { name: user.name, picture: user.picture || "/imgs/ICON.png" } : null;
+
         const flowToSave = {
             ...updated,
             steps: cleanedSteps,
-            trigger_type: triggerType
+            trigger_type: triggerType,
+            config: {
+                ...updated.config,
+                creator: creatorInfo || (updated.config as any)?.creator || { name: 'Hệ thống', picture: '/imgs/ICON.png' }
+            }
         };
 
         console.log(`[FlowSave] Saving flow ${flowToSave.id} with ${cleanedSteps.length} reachable steps (Original: ${updated.steps?.length})`);
@@ -1128,12 +1135,18 @@ const Flows: React.FC = () => {
             confirmLabel: 'Nhân bản ngay',
             onConfirm: async () => {
                 setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                const user = JSON.parse(localStorage.getItem('user') || localStorage.getItem('currentUser') || '{}');
+                const creatorInfo = user.name ? { name: user.name, picture: user.picture || "/imgs/ICON.png" } : null;
                 const { id, stats, status, createdAt, archivedAt, ...rest } = flow;
                 const newFlow = {
                     ...rest,
                     name: `${flow.name} (Bản sao)`,
                     status: 'draft' as const,
-                    stats: { enrolled: 0, completed: 0, totalSent: 0, totalOpened: 0, uniqueOpened: 0, totalClicked: 0, uniqueClicked: 0 }
+                    stats: { enrolled: 0, completed: 0, totalSent: 0, totalOpened: 0, uniqueOpened: 0, totalClicked: 0, uniqueClicked: 0 },
+                    config: {
+                        ...flow.config,
+                        creator: creatorInfo || { name: 'Hệ thống', picture: '/imgs/ICON.png' }
+                    }
                 };
 
                 setLoading(true);
@@ -2420,6 +2433,9 @@ const Flows: React.FC = () => {
                         const triggerType = data.steps?.find((s: any) => s.type === 'trigger')?.config?.type || 'segment';
                         const isPriorityTrigger = ['form', 'purchase', 'custom_event'].includes(triggerType);
 
+                        const user = JSON.parse(localStorage.getItem('user') || localStorage.getItem('currentUser') || '{}');
+                        const creatorInfo = user.name ? { name: user.name, picture: user.picture || "/imgs/ICON.png" } : null;
+
                         const newFlow: Flow = {
                             ...data,
                             name: data.name || 'Flow mới',
@@ -2436,7 +2452,8 @@ const Flows: React.FC = () => {
                                 type: 'realtime',
                                 frequency: isPriorityTrigger ? 'recurring' : 'one-time',
                                 allowMultiple: isPriorityTrigger ? true : false,
-                                enrollmentCooldownHours: isPriorityTrigger ? 0 : 12
+                                enrollmentCooldownHours: isPriorityTrigger ? 0 : 12,
+                                creator: creatorInfo || { name: 'Hệ thống', picture: '/imgs/ICON.png' }
                             }
                         };
                         const res = await api.post<Flow>('flows', newFlow);

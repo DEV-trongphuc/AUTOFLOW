@@ -285,10 +285,22 @@ const FlowCard = React.memo<FlowCardProps>((
                             <Icon className="w-5 h-5" />
                         </div>
                         <div className="flex-1 min-w-0 pr-4">
-                            <div className="flex items-center gap-3 mb-1.5">
+                            <div className="flex items-center gap-3 mb-1.5 min-w-0">
                                 <h3 className="text-base font-bold text-slate-800 dark:text-slate-200 leading-tight truncate transition-colors">
                                     {flow.name}
                                 </h3>
+                                {/* Creator Pill */}
+                                <div className="flex items-center gap-1 shrink-0 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800/60 px-1.5 py-0.5 rounded-full">
+                                    <img 
+                                        src={(flow.config as any)?.creator?.picture || "/imgs/ICON.png"} 
+                                        className="w-3.5 h-3.5 rounded-full object-cover shrink-0" 
+                                        alt="" 
+                                        onError={(e) => { (e.target as HTMLImageElement).src = "/imgs/ICON.png"; }}
+                                    />
+                                    <span className="text-[9px] text-slate-500 font-bold max-w-[80px] truncate">
+                                        {(flow.config as any)?.creator?.name || 'Hệ thống'}
+                                    </span>
+                                </div>
                             </div>
                             <div className="flex items-center gap-2 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
                                 {!(theme as any).isLink && <span className={`w-1.5 h-1.5 rounded-full bg-${theme.accent}-500 shrink-0`}></span>}
@@ -397,7 +409,7 @@ const FlowCard = React.memo<FlowCardProps>((
                         </div>
                     </div>
 
-                    <div className="px-4 pb-4 pt-1 relative z-10">
+                    <div className="px-4 pb-4 pt-1 relative z-10 space-y-3">
                         <div className="grid grid-cols-3 gap-1 p-0.5 bg-slate-50 dark:bg-slate-950/80 rounded-xl border border-slate-100 dark:border-slate-800/50">
                             <div className="flex flex-col items-center justify-center py-1.5 px-1 group/stat">
                                 <div className="flex items-center gap-1.5 mb-0.5">
@@ -419,6 +431,26 @@ const FlowCard = React.memo<FlowCardProps>((
                                     <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Complete</span>
                                 </div>
                                 <span className={`text-xs font-black ${completionRate > 0 ? 'text-emerald-600' : 'text-slate-400'}`}>{completionRate}%</span>
+                            </div>
+                        </div>
+
+                        {/* Creator Footer */}
+                        <div className="pt-2.5 border-t border-slate-100 dark:border-slate-800/50 flex items-center gap-2">
+                            <div className="w-5 h-5 rounded-full overflow-hidden border border-slate-200 dark:border-slate-700/60 bg-slate-50 dark:bg-slate-950 shrink-0">
+                                <img 
+                                    src={(flow.config as any)?.creator?.picture || "/imgs/ICON.png"} 
+                                    className="w-full h-full object-cover" 
+                                    alt="" 
+                                    onError={(e) => { (e.target as HTMLImageElement).src = "/imgs/ICON.png"; }}
+                                />
+                            </div>
+                            <div className="flex items-center justify-between flex-1 min-w-0">
+                                <span className="text-[10px] text-slate-600 dark:text-slate-300 font-bold truncate max-w-[120px]">
+                                    {(flow.config as any)?.creator?.name || 'Hệ thống'}
+                                </span>
+                                <span className="text-[9px] text-slate-400 font-medium">
+                                    {flow.createdAt ? new Date(flow.createdAt).toLocaleDateString('vi-VN') : 'Chưa rõ'}
+                                </span>
                             </div>
                         </div>
                     </div>
