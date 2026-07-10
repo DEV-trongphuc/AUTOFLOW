@@ -30,6 +30,7 @@ import { usePermissionGuard } from '../components/common/PermissionGuard';
 import { useSettings } from '../components/contexts/SettingsContext';
 import { useTheme } from '../contexts/ThemeContext';
 import Modal from '../components/common/Modal';
+import { logAction } from '../services/historyService';
 
 
 import SesQuotaWidget from '../components/common/SesQuotaWidget';
@@ -339,7 +340,18 @@ const Campaigns: React.FC = () => {
     const handleSaveDraft = React.useCallback(async (data: Partial<Campaign>) => {
         if (isSavingDraft) return null; // [GUARD] Prevent double-submit
         setIsSavingDraft(true);
-        const payload = { ...data, status: CampaignStatus.DRAFT, stats: data.id ? undefined : { sent: 0, opened: 0, clicked: 0, bounced: 0, spam: 0, unsubscribed: 0, failed: 0 } };
+        const user = JSON.parse(localStorage.getItem('user') || localStorage.getItem('currentUser') || '{}');
+        const creatorInfo = user.name ? { name: user.name, picture: user.picture || "/imgs/ICON.png" } : null;
+
+        const payload = { 
+            ...data, 
+            status: CampaignStatus.DRAFT, 
+            stats: data.id ? undefined : { sent: 0, opened: 0, clicked: 0, bounced: 0, spam: 0, unsubscribed: 0, failed: 0 },
+            config: {
+                ...data.config,
+                creator: creatorInfo || (data.config as any)?.creator || { name: 'Hệ thống', picture: '/imgs/ICON.png' }
+            }
+        };
         try {
             let res;
             if (data.id) res = await api.put<Campaign>(`campaigns/${data.id}`, payload);
@@ -347,6 +359,7 @@ const Campaigns: React.FC = () => {
 
             if (res.success) {
                 showToast('Đã lưu nháp chiến dịch!', 'success');
+                logAction(data.id ? "Cập nhật chiến dịch nháp" : "Tạo chiến dịch nháp mới", `Chiến dịch: ${data.name || res.data.name}`);
                 // [OPTIMISTIC UI] Update list immediately without full reload
                 if (data.id) {
                     setCampaigns(prev => prev.map(c => c.id === data.id ? { ...c, ...res.data } : c));
@@ -381,11 +394,18 @@ const Campaigns: React.FC = () => {
             finalStatus = CampaignStatus.SENDING;
         }
 
+        const user = JSON.parse(localStorage.getItem('user') || localStorage.getItem('currentUser') || '{}');
+        const creatorInfo = user.name ? { name: user.name, picture: user.picture || "/imgs/ICON.png" } : null;
+
         const payload = {
             ...data,
             status: finalStatus,
             sentAt: finalStatus === CampaignStatus.SENDING ? new Date().toISOString() : data.sentAt,
-            scheduledAt: scheduleTime
+            scheduledAt: scheduleTime,
+            config: {
+                ...data.config,
+                creator: creatorInfo || (data.config as any)?.creator || { name: 'Hệ thống', picture: '/imgs/ICON.png' }
+            }
         };
 
         try {
@@ -394,6 +414,7 @@ const Campaigns: React.FC = () => {
             else res = await api.post<Campaign>('campaigns', payload);
 
             if (res.success) {
+                logAction(data.id ? "Cập nhật chiến dịch" : "Khởi tạo chiến dịch", `Chiến dịch: ${data.name || res.data.name} (Trạng thái: ${finalStatus})`);
                 const campId = data.id || res.data.id;
 
                 if (finalStatus === CampaignStatus.SENDING) {
@@ -469,6 +490,8 @@ const Campaigns: React.FC = () => {
             const res = await api.delete(`campaigns/${id}?delete_flow=${deleteFlowMode}`);
             if (res.success) {
                 showToast('Đã xóa chiến dịch thành công!');
+                const deletedCamp = snapshot.find(c => c.id === id);
+                logAction("Xóa chiến dịch", `Đã xóa chiến dịch: ${deletedCamp ? deletedCamp.name : id}`);
                 // Refresh flows list if flows were deleted too
                 if (deleteFlowMode === 1) {
                     api.get<any>('flows').then(r => { if (r.success) { const raw = r.data as any; setAllFlows(Array.isArray(raw) ? raw : (raw?.data || [])); } });

@@ -206,7 +206,8 @@ const Templates: React.FC = () => {
                     ...data,
                     bodyStyle: updatedBodyStyle,
                     category: data.category || 'promotional',
-                    thumbnail: data.thumbnail || 'https://placehold.co/600x400/f1f5f9/94a3b8?text=Email+Template'
+                    thumbnail: data.thumbnail || 'https://placehold.co/600x400/f1f5f9/94a3b8?text=Email+Template',
+                    lastModified: new Date().toISOString()
                 });
                 if (res.success) {
                     showToast('Đã tạo mẫu email mới');
@@ -645,7 +646,14 @@ const Templates: React.FC = () => {
                                                                 {(template.bodyStyle as any)?.creator?.name || 'Hệ thống'}
                                                             </span>
                                                             <span className="text-[9px] text-slate-400 font-medium">
-                                                                {template.id.startsWith('sys_') ? 'Mẫu hệ thống' : new Date(template.lastModified).toLocaleDateString('vi-VN')}
+                                                                {template.id.startsWith('sys_') 
+                                                                    ? 'Mẫu hệ thống' 
+                                                                    : (() => {
+                                                                        if (!template.lastModified) return new Date().toLocaleDateString('vi-VN');
+                                                                        const d = new Date(template.lastModified);
+                                                                        return isNaN(d.getTime()) ? new Date().toLocaleDateString('vi-VN') : d.toLocaleDateString('vi-VN');
+                                                                      })()
+                                                                }
                                                             </span>
                                                         </div>
                                                     </div>

@@ -82,7 +82,22 @@ const CampaignTableRow = React.memo(React.forwardRef<HTMLTableRowElement, Campai
                     </div>
                     <div className="min-w-0">
                         <p className="font-bold text-slate-800 text-sm leading-tight mb-1 group-hover:text-amber-600 transition-colors truncate pr-4">{c.name}</p>
-                        <p className="text-[11px] text-slate-500 font-medium truncate max-w-xs">{c.subject || (c.type === 'zalo_zns' ? `Template: ${c.templateId}` : '')}</p>
+                        <div className="flex items-center gap-1.5 mt-0.5 min-w-0">
+                            {/* Creator Avatar & Name */}
+                            <div className="flex items-center gap-1 shrink-0 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-850 px-1.5 py-0.5 rounded-full">
+                                <img 
+                                    src={(c.config as any)?.creator?.picture || "/imgs/ICON.png"} 
+                                    className="w-3.5 h-3.5 rounded-full object-cover shrink-0" 
+                                    alt="" 
+                                    onError={(e) => { (e.target as HTMLImageElement).src = "/imgs/ICON.png"; }}
+                                />
+                                <span className="text-[9px] text-slate-500 font-bold max-w-[80px] truncate">
+                                    {(c.config as any)?.creator?.name || 'Hệ thống'}
+                                </span>
+                            </div>
+                            <span className="text-slate-300 dark:text-slate-700 font-normal text-[10px]">|</span>
+                            <span className="text-[11px] text-slate-500 font-medium truncate max-w-[150px]">{c.subject || (c.type === 'zalo_zns' ? `Template: ${c.templateId}` : 'Bản nháp')}</span>
+                        </div>
                     </div>
                 </div>
             </td>
@@ -287,7 +302,21 @@ const CampaignMobileCard = React.memo<CampaignRowProps>(({ c, onSelect, onEdit, 
                     </div>
                     <div className="min-w-0">
                         <p className="font-bold text-slate-800 text-[13px] leading-tight truncate">{c.name}</p>
-                        <p className="text-[9px] text-slate-500 font-medium truncate mt-0.5">{c.subject || (c.type === 'zalo_zns' ? `Template: ${c.templateId}` : 'Bản nháp')}</p>
+                        <div className="flex items-center gap-1.5 mt-0.5 min-w-0">
+                            <div className="flex items-center gap-1 shrink-0 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-850 px-1.5 py-0.5 rounded-full">
+                                <img 
+                                    src={(c.config as any)?.creator?.picture || "/imgs/ICON.png"} 
+                                    className="w-3.5 h-3.5 rounded-full object-cover shrink-0" 
+                                    alt="" 
+                                    onError={(e) => { (e.target as HTMLImageElement).src = "/imgs/ICON.png"; }}
+                                />
+                                <span className="text-[8px] text-slate-500 font-bold max-w-[60px] truncate">
+                                    {(c.config as any)?.creator?.name || 'Hệ thống'}
+                                </span>
+                            </div>
+                            <span className="text-slate-300 dark:text-slate-700 font-normal text-[9px]">|</span>
+                            <span className="text-[9px] text-slate-500 font-medium truncate max-w-[120px]">{c.subject || (c.type === 'zalo_zns' ? `Template: ${c.templateId}` : 'Bản nháp')}</span>
+                        </div>
                     </div>
                 </div>
                 <div className="flex gap-1" onClick={e => e.stopPropagation()}>
