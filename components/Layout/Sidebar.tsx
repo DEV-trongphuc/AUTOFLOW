@@ -131,9 +131,20 @@ const NavItem: React.FC<{ item: NavItemConfig; onClose: () => void; isCollapsed:
           </div>
 
           {!isCollapsed && (badgeOverride !== undefined ? badgeOverride !== null : item.badge) && (
-            <span className={`text-[8px] px-1.5 py-0.5 rounded-md font-bold uppercase tracking-wider ${isActive ? 'bg-violet-500/20 text-violet-300' : badgeOverride !== undefined ? 'bg-emerald-500/25 text-emerald-300' : 'bg-white/10 text-white/50'} ml-auto`}>
-              {badgeOverride !== undefined ? badgeOverride : item.badge}
-            </span>
+            badgeOverride !== undefined ? (
+              <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-black ml-auto shrink-0 transition-all duration-200
+                ${isActive 
+                  ? 'bg-white/20 text-white' 
+                  : 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20'
+                }`}
+              >
+                {badgeOverride}
+              </span>
+            ) : (
+              <span className={`text-[8px] px-1.5 py-0.5 rounded-md font-bold uppercase tracking-wider ${isActive ? 'bg-violet-500/20 text-violet-300' : 'bg-white/10 text-white/50'} ml-auto`}>
+                {item.badge}
+              </span>
+            )
           )}
         </>
       )}
