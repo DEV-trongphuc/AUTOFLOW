@@ -9,12 +9,20 @@ export interface HistoryLog {
 }
 
 export const logAction = (action: string, details: string, flowId?: string): HistoryLog[] => {
+  let userName = 'Admin';
+  try {
+    const savedUser = JSON.parse(localStorage.getItem('user') || localStorage.getItem('currentUser') || '{}');
+    if (savedUser && savedUser.name) {
+      userName = savedUser.name;
+    }
+  } catch {}
+
   const newLog: HistoryLog = {
     id: crypto.randomUUID(),
     action,
     details,
     timestamp: new Date().toISOString(),
-    user: 'Admin',
+    user: userName,
     flowId
   };
 

@@ -2,6 +2,7 @@ import * as React from 'react';
 import { useEffect, useState, useMemo, useDeferredValue, memo } from 'react';
 import { api } from '../services/storageAdapter';
 import { Template, TemplateGroup } from '../types';
+import { logAction } from '../services/historyService';
 import { Edit3, Copy, Trash2, Plus, Layout, Eye, Sparkles, FolderOpen, Globe, Search, FolderPlus, Check, X, AlertCircle, ChevronRight, ChevronLeft, Image as ImageIcon } from 'lucide-react';
 import PageHero from '../components/common/PageHero';
 import ImageLibraryModal from '../components/templates/EmailEditor/components/Properties/ImageLibraryModal';
@@ -176,21 +177,40 @@ const Templates: React.FC = () => {
     const handleSaveTemplate = adminGuard(async (data: Partial<Template>, shouldExit: boolean = false) => {
         try {
             let res;
+            const user = JSON.parse(localStorage.getItem('user') || localStorage.getItem('currentUser') || '{}');
+            const creatorInfo = user.name ? { name: user.name, picture: user.picture || "/imgs/ICON.png" } : null;
+
             if (editingTemplate && editingTemplate.id && !editingTemplate.id.startsWith('sys_')) {
-                res = await api.put(`templates/${editingTemplate.id}`, { ...editingTemplate, ...data, lastModified: new Date().toISOString() });
+                const updatedBodyStyle = {
+                    ...data.bodyStyle,
+                    creator: creatorInfo || (editingTemplate.bodyStyle as any)?.creator || { name: 'Hệ thống', picture: '/imgs/ICON.png' }
+                };
+                res = await api.put(`templates/${editingTemplate.id}`, { 
+                    ...editingTemplate, 
+                    ...data, 
+                    bodyStyle: updatedBodyStyle,
+                    lastModified: new Date().toISOString() 
+                });
                 if (res.success) {
                     showToast('Đã cập nhật mẫu email');
+                    logAction("Cập nhật mẫu email", `Mẫu: ${data.name || editingTemplate.name}`);
                     // [OPTIMISTIC UI] Update in-place, no network round-trip
                     setUserTemplates(prev => prev.map(t => t.id === editingTemplate.id ? { ...t, ...res.data } : t));
                 }
             } else {
+                const updatedBodyStyle = {
+                    ...data.bodyStyle,
+                    creator: creatorInfo || { name: 'Hệ thống', picture: '/imgs/ICON.png' }
+                };
                 res = await api.post('templates', {
                     ...data,
+                    bodyStyle: updatedBodyStyle,
                     category: data.category || 'promotional',
                     thumbnail: data.thumbnail || 'https://placehold.co/600x400/f1f5f9/94a3b8?text=Email+Template'
                 });
                 if (res.success) {
                     showToast('Đã tạo mẫu email mới');
+                    logAction("Tạo mẫu email mới", `Mẫu: ${data.name}`);
                     setEditingTemplate(res.data);
                     // [OPTIMISTIC UI] Prepend new template to list
                     setUserTemplates(prev => [res.data, ...prev]);
@@ -217,6 +237,8 @@ const Templates: React.FC = () => {
             if (type === 'group') {
                 const res = await api.delete(`template_groups/${ids[0]}`);
                 if (res.success) {
+                    const groupName = groups.find(g => g.id === ids[0])?.name || ids[0];
+                    logAction("Xóa nhóm mẫu", `Đã xóa nhóm: ${groupName}`);
                     setGroups(prev => prev.filter(g => g.id !== ids[0]));
                     if (filterGroupId === ids[0]) setFilterGroupId('all');
                     showToast('Đã xóa nhóm', 'info');
@@ -228,6 +250,8 @@ const Templates: React.FC = () => {
             } else {
                 const res = await api.delete('templates', { ids });
                 if (res.success) {
+                    const deletedNames = userTemplates.filter(t => ids.includes(t.id)).map(t => t.name).join(', ');
+                    logAction("Xóa mẫu email", `Đã xóa: ${deletedNames || ids.join(', ')}`);
                     setUserTemplates(prev => prev.filter(t => !ids.includes(t.id)));
                     setSelectedIds(prev => prev.filter(id => !ids.includes(id)));
                     showToast(res.message || 'Đã xóa mẫu email', 'info');
@@ -298,6 +322,7 @@ const Templates: React.FC = () => {
 
             if (res.success) {
                 showToast(editingGroup ? 'Đã cập nhật nhóm' : 'Đã tạo nhóm mới');
+                logAction(editingGroup ? "Cập nhật nhóm mẫu" : "Tạo nhóm mẫu mới", `Nhóm: ${newGroupName}`);
                 fetchGroups();
                 setIsGroupModalOpen(false);
                 setEditingGroup(null);
@@ -322,12 +347,18 @@ const Templates: React.FC = () => {
                 htmlContent = compileHTML(tpl.blocks, tpl.bodyStyle, tpl.name);
             }
 
+            const user = JSON.parse(localStorage.getItem('user') || localStorage.getItem('currentUser') || '{}');
+            const creatorInfo = user.name ? { name: user.name, picture: user.picture || "/imgs/ICON.png" } : null;
+
             const newTpl = {
                 name: newName,
                 category: tpl.category,
                 thumbnail: tpl.thumbnail,
                 blocks: tpl.blocks,
-                bodyStyle: tpl.bodyStyle,
+                bodyStyle: {
+                    ...tpl.bodyStyle,
+                    creator: creatorInfo || { name: 'Hệ thống', picture: '/imgs/ICON.png' }
+                },
                 htmlContent: htmlContent
             };
 
@@ -337,6 +368,7 @@ const Templates: React.FC = () => {
                 setUserTemplates(prev => [res.data as Template, ...prev]);
                 setCurrentPage(1);
                 showToast('Đã nhân bản mẫu thành công', 'success');
+                logAction("Nhân bản mẫu email", `Nhân bản mẫu "${tpl.name}" thành "${newName}"`);
             } else {
                 showToast(res.message || 'Lỗi khi nhân bản mẫu', 'error');
             }
@@ -599,13 +631,25 @@ const Templates: React.FC = () => {
                                                 </div>
 
                                                 <div className="pt-4 border-t border-slate-100 dark:border-slate-800/60 flex justify-between items-center mt-auto">
-                                                    <div className="flex flex-col">
-                                                        <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mb-1 opacity-60">Lần cuối cập nhật</span>
-                                                        <span className="text-[11px] text-slate-600 dark:text-slate-300 font-bold">
-                                                            {template.id.startsWith('sys_') ? 'System Template' : new Date(template.lastModified).toLocaleDateString('vi-VN')}
-                                                        </span>
+                                                    <div className="flex items-center gap-2.5 min-w-0">
+                                                        <div className="w-7 h-7 rounded-full overflow-hidden border border-slate-200 dark:border-slate-700/60 bg-slate-50 dark:bg-slate-950 shrink-0">
+                                                            <img 
+                                                                src={(template.bodyStyle as any)?.creator?.picture || "/imgs/ICON.png"} 
+                                                                className="w-full h-full object-cover" 
+                                                                alt="" 
+                                                                onError={(e) => { (e.target as HTMLImageElement).src = "/imgs/ICON.png"; }}
+                                                            />
+                                                        </div>
+                                                        <div className="flex flex-col min-w-0">
+                                                            <span className="text-[10px] text-slate-700 dark:text-slate-200 font-bold truncate max-w-[120px]" title={(template.bodyStyle as any)?.creator?.name || 'Hệ thống'}>
+                                                                {(template.bodyStyle as any)?.creator?.name || 'Hệ thống'}
+                                                            </span>
+                                                            <span className="text-[9px] text-slate-400 font-medium">
+                                                                {template.id.startsWith('sys_') ? 'Mẫu hệ thống' : new Date(template.lastModified).toLocaleDateString('vi-VN')}
+                                                            </span>
+                                                        </div>
                                                     </div>
-                                                    <div className="w-8 h-8 bg-slate-50 dark:bg-slate-950 rounded-xl flex items-center justify-center text-slate-400 group-hover:bg-amber-100 group-hover:text-amber-600 transition-all">
+                                                    <div className="w-8 h-8 bg-slate-50 dark:bg-slate-950 rounded-xl flex items-center justify-center text-slate-400 group-hover:bg-amber-100 group-hover:text-amber-600 transition-all shrink-0">
                                                         <ChevronRight className="w-4 h-4" />
                                                     </div>
                                                 </div>

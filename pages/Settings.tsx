@@ -5,7 +5,8 @@ import {
     Save, Database, Mail, ShieldCheck, Globe,
     Loader2, Play, FileText, CheckCircle2, AlertTriangle,
     Server, Lock, Key, KeyRound, Zap, Cake, History, Inbox, Hash,
-    FlaskConical, ArrowRight, UserPlus, Info, ShoppingCart, RefreshCcw, Terminal, MessageSquare, Users, BrainCircuit, Sparkles
+    FlaskConical, ArrowRight, UserPlus, Info, ShoppingCart, RefreshCcw, Terminal, MessageSquare, Users, BrainCircuit, Sparkles,
+    Clock, Search, Trash2
 } from 'lucide-react';
 import { FormDefinition, PurchaseEvent, CustomEvent } from '../types';
 import toast from 'react-hot-toast';
@@ -17,6 +18,7 @@ import Tabs from '../components/common/Tabs';
 // @ts-ignore: Added missing import for api from storageAdapter
 import { api } from '../services/storageAdapter';
 import { useIsAdmin } from '../hooks/useAuthUser';
+import { logAction, getLogs, HistoryLog } from '../services/historyService';
 
 
 
@@ -76,9 +78,17 @@ const Settings: React.FC = () => {
     const [isCheckingHealth, setIsCheckingHealth] = useState(false);
     const [healthResults, setHealthResults] = useState<any | null>(null);
 
+    // Audit logs state
+    const [auditLogs, setAuditLogs] = useState<HistoryLog[]>([]);
+    const [auditSearch, setAuditSearch] = useState('');
+
     useEffect(() => {
         fetchInitialData();
     }, []);
+
+    useEffect(() => {
+        setAuditLogs(getLogs());
+    }, [activeTab]);
 
     const fetchInitialData = async () => {
         // FIX: Add missing api import
@@ -114,6 +124,7 @@ const Settings: React.FC = () => {
         const res = await api.post('settings', smtp);
         if (res.success) {
             toast.success('Đã lưu cấu hình hệ thống!');
+            logAction("Cập nhật cấu hình hệ thống", "Cập nhật SMTP, API Key và cấu hình chung");
         } else {
             toast.error('Lỗi khi lưu cấu hình server.');
         }
@@ -374,6 +385,7 @@ const Settings: React.FC = () => {
                         { id: 'system', label: 'Máy chủ & Mail', icon: Server },
                         { id: 'ai', label: 'Cấu hình AI', icon: Sparkles },
                         { id: 'logs', label: 'Nhật ký gửi', icon: History },
+                        { id: 'audit', label: 'Nhật ký tác vụ', icon: Terminal },
                         { id: 'health', label: 'Tình trạng API', icon: ShieldCheck },
                     ]}
                 />
@@ -810,6 +822,134 @@ const Settings: React.FC = () => {
                                 ))}
                             </tbody>
                         </table>
+                    </div>
+                </div>
+            )}
+
+            {activeTab === 'audit' && (
+                <div className="space-y-6 animate-in fade-in duration-500">
+                    <div className="flex flex-col sm:flex-row justify-between sm:items-center px-4 gap-4">
+                        <div>
+                            <h3 className="text-lg font-black text-slate-800">Nhật ký hoạt động hệ thống</h3>
+                            <p className="text-xs text-slate-500 font-medium">Ghi lại toàn bộ thao tác thêm, sửa, xóa, cấu hình của người dùng.</p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <Input
+                                placeholder="Tìm kiếm tác vụ, user..."
+                                value={auditSearch}
+                                onChange={(e) => setAuditSearch(e.target.value)}
+                                className="w-64 h-10 text-xs bg-white border-slate-200"
+                                icon={Search}
+                            />
+                            <Button
+                                variant="secondary"
+                                icon={RefreshCcw}
+                                onClick={() => setAuditLogs(getLogs())}
+                                size="sm"
+                                className="h-10 px-4 rounded-xl"
+                            >
+                                Làm mới
+                            </Button>
+                            {isAdmin && (
+                                <Button
+                                    variant="danger"
+                                    icon={Trash2}
+                                    onClick={() => {
+                                        if (window.confirm("Bạn có chắc chắn muốn xóa toàn bộ nhật ký hệ thống không? Hành động này không thể khôi phục.")) {
+                                            localStorage.removeItem('mailflow_logs');
+                                            setAuditLogs([]);
+                                            toast.success("Đã xóa sạch nhật ký hệ thống!");
+                                        }
+                                    }}
+                                    size="sm"
+                                    className="h-10 px-4 rounded-xl bg-rose-500/10 hover:bg-rose-500 hover:text-white border-none text-rose-500 font-bold text-xs"
+                                >
+                                    Xóa sạch
+                                </Button>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="bg-white rounded-2xl lg:rounded-3xl border border-slate-100 shadow-sm overflow-hidden p-6">
+                        {auditLogs.filter(log => {
+                            const term = auditSearch.toLowerCase();
+                            return !term || 
+                                (log.action && log.action.toLowerCase().includes(term)) ||
+                                (log.user && log.user.toLowerCase().includes(term)) ||
+                                (log.details && log.details.toLowerCase().includes(term));
+                        }).length === 0 ? (
+                            <div className="text-center py-16 opacity-40">
+                                <History className="w-16 h-16 mx-auto mb-4 text-slate-300" />
+                                <p className="text-sm text-slate-500 font-black">Chưa có nhật ký hoạt động nào</p>
+                                <p className="text-xs text-slate-400 mt-1">Các hành động thay đổi dữ liệu sẽ được ghi nhận tại đây.</p>
+                            </div>
+                        ) : (
+                            <div className="relative pl-6 border-l-2 border-slate-100 space-y-6">
+                                {auditLogs
+                                    .filter(log => {
+                                        const term = auditSearch.toLowerCase();
+                                        return !term || 
+                                            (log.action && log.action.toLowerCase().includes(term)) ||
+                                            (log.user && log.user.toLowerCase().includes(term)) ||
+                                            (log.details && log.details.toLowerCase().includes(term));
+                                    })
+                                    .map((log) => {
+                                        let badgeColor = 'bg-slate-100 text-slate-600 border-slate-200';
+                                        let iconColor = 'text-slate-500 bg-slate-50 border-slate-200';
+                                        
+                                        const act = log.action || '';
+                                        if (act.includes('Tạo') || act.includes('Thêm') || act.includes('Khôi phục')) {
+                                            badgeColor = 'bg-emerald-50 text-emerald-700 border-emerald-200/50';
+                                            iconColor = 'text-emerald-500 bg-emerald-50/50 border-emerald-100';
+                                        } else if (act.includes('Xóa')) {
+                                            badgeColor = 'bg-rose-50 text-rose-700 border-rose-200/50';
+                                            iconColor = 'text-rose-500 bg-rose-50/50 border-rose-100';
+                                        } else if (act.includes('Cập nhật') || act.includes('Sửa') || act.includes('Cấu hình')) {
+                                            badgeColor = 'bg-blue-50 text-blue-700 border-blue-200/50';
+                                            iconColor = 'text-blue-500 bg-blue-50/50 border-blue-100';
+                                        } else if (act.includes('Kích hoạt') || act.includes('Nhân bản')) {
+                                            badgeColor = 'bg-violet-50 text-violet-700 border-violet-200/50';
+                                            iconColor = 'text-violet-500 bg-violet-50/50 border-violet-100';
+                                        }
+
+                                        return (
+                                            <div key={log.id} className="relative group/log flex items-start gap-4">
+                                                {/* Timeline dot */}
+                                                <div className={`absolute -left-[31px] top-1.5 w-4.5 h-4.5 rounded-full border-2 bg-white flex items-center justify-center transition-all group-hover/log:scale-110 z-10 ${iconColor.split(' ')[0]}`}>
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-current"></div>
+                                                </div>
+
+                                                <div className="flex-1 bg-slate-50/60 dark:bg-slate-900/20 border border-slate-100 dark:border-slate-800 rounded-2xl p-4 hover:border-slate-200 hover:bg-white transition-all shadow-sm">
+                                                    <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
+                                                        <div className="flex items-center gap-2.5">
+                                                            <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-black uppercase tracking-wider border ${badgeColor}`}>
+                                                                {log.action}
+                                                            </span>
+                                                            <span className="flex items-center gap-1 text-[11px] font-bold text-slate-700">
+                                                                Tạo bởi: <span className="text-[#683df2]">{log.user || 'Hệ thống'}</span>
+                                                            </span>
+                                                        </div>
+                                                        <span className="text-[10px] text-slate-400 font-bold flex items-center gap-1.5 bg-slate-100/50 px-2 py-0.5 rounded-lg">
+                                                            <Clock className="w-3 h-3" />
+                                                            {new Date(log.timestamp).toLocaleString('vi-VN', { 
+                                                                hour: '2-digit', 
+                                                                minute: '2-digit',
+                                                                second: '2-digit',
+                                                                day: '2-digit', 
+                                                                month: '2-digit', 
+                                                                year: 'numeric' 
+                                                            })}
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-xs text-slate-600 dark:text-slate-400 font-medium leading-relaxed bg-white/40 dark:bg-black/10 p-2.5 rounded-xl border border-slate-100/50">
+                                                        {log.details}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                            </div>
+                        )}
                     </div>
                 </div>
             )}

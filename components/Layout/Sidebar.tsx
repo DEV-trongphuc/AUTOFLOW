@@ -191,15 +191,17 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose, isCollapsed, onToggleCollaps
   }, [location.pathname]);
 
   useEffect(() => {
-    api.get<any[]>('flows')
+    api.get<any>('flows')
       .then(res => {
-        if (Array.isArray(res)) {
-          const count = res.filter(f => f.status === 'active').length;
+        if (res && res.success) {
+          const raw = res.data;
+          const flowList = Array.isArray(raw) ? raw : (raw?.data || []);
+          const count = flowList.filter((f: any) => f.status === 'active').length;
           setActiveFlowCount(count > 0 ? count : null);
         }
       })
       .catch(err => console.error("Error fetching flows in sidebar", err));
-  }, []);
+  }, [location.pathname]);
 
 
 
