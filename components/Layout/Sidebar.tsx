@@ -120,7 +120,7 @@ const NavItem: React.FC<{ item: NavItemConfig; onClose: () => void; isCollapsed:
                 strokeWidth={2}
               />
               {isCollapsed && badgeOverride && (
-                <span className="absolute -top-1 -right-1 w-2 h-2 bg-emerald-500 rounded-full border border-[#0d0331] shadow-sm animate-pulse"></span>
+                <span className="absolute -top-1 -right-1 w-2 h-2 bg-amber-500 rounded-full border border-[#0d0331] shadow-sm animate-pulse"></span>
               )}
             </div>
             {!isCollapsed && (
@@ -135,7 +135,7 @@ const NavItem: React.FC<{ item: NavItemConfig; onClose: () => void; isCollapsed:
               <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-black ml-auto shrink-0 transition-all duration-200
                 ${isActive 
                   ? 'bg-white/20 text-white' 
-                  : 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20'
+                  : 'bg-amber-500/15 text-amber-400 border border-amber-500/20'
                 }`}
               >
                 {badgeOverride}
