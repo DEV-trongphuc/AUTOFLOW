@@ -1,11 +1,12 @@
 import * as React from 'react';
 import { useState, useMemo, useEffect } from 'react';
 import { api } from '../../services/storageAdapter';
-import { Search, Users, Layers, List, Plus, CheckCircle2, Upload, FileText, X, ArrowRight, Sparkles, Tag, RefreshCw, Zap, ChevronDown, Check } from 'lucide-react';
+import { Search, Users, Layers, List, Plus, CheckCircle2, Upload, FileText, X, ArrowRight, Sparkles, Tag, RefreshCw, Zap, ChevronDown, Check, AlertTriangle } from 'lucide-react';
 import Button from '../common/Button';
 import Input from '../common/Input';
 import Badge from '../common/Badge';
 import { isManualList, isSyncList } from '../../utils/listHelpers';
+import toast from 'react-hot-toast';
 
 interface Option {
     value: string;
@@ -142,6 +143,7 @@ const AudienceSelector: React.FC<AudienceSelectorProps> = ({
     const [stats, setStats] = useState({ valid: 0, duplicates: 0, total: 0 });
     // Fix: Declare inputMethod state
     const [inputMethod, setInputMethod] = useState<'paste' | 'file'>('paste');
+    const [importWarnings, setImportWarnings] = useState<string[]>([]);
     const fileInputRef = React.useRef<HTMLInputElement>(null);
 
     const downloadSampleCSV = () => {
@@ -193,6 +195,7 @@ const AudienceSelector: React.FC<AudienceSelectorProps> = ({
             // It's likely intended for the ImportSubscribersModal.
             // Fix: `setInputMethod` is a state setter, ensuring it's available.
             setInputMethod('paste');
+            setImportWarnings([]);
         }
     }, [isImporting]);
 
@@ -311,6 +314,45 @@ const AudienceSelector: React.FC<AudienceSelectorProps> = ({
         const headerRow = lines[0].split(delimiter).map(h => h.trim().replace(/['"]+/g, ''));
         // Fix: Use setHeaders for state update
         setHeaders(headerRow);
+
+        let hasEmail = false;
+        let hasPhone = false;
+        let hasName = false;
+
+        headerRow.forEach(header => {
+            const key = header.toLowerCase().trim();
+            if (key.includes('phone') || key.includes('sđt') || key.includes('số điện thoại') || key.includes('dien thoai')) hasPhone = true;
+            else if (key.includes('mail')) hasEmail = true;
+            else if (key.includes('full') || key.includes('tên') || key === 'name' || key.includes('first') || key.includes('last') || key.includes('họ')) hasName = true;
+        });
+
+        // Check if first row contains data instead of headers
+        const isHeaderRowData = headerRow.some(header => {
+            if (header.includes('@') && header.includes('.')) return true;
+            const cleanPhone = header.replace(/[^0-9]/g, '');
+            if ((cleanPhone.startsWith('0') || cleanPhone.startsWith('84')) && cleanPhone.length >= 9 && cleanPhone.length <= 12) return true;
+            return false;
+        });
+
+        if (!hasEmail && !hasPhone) {
+            toast.error('Thiếu cả hai cột tiêu đề quan trọng: Email và Số điện thoại. Vui lòng bổ sung ít nhất một trong hai cột này.');
+            return;
+        }
+
+        const currentWarnings: string[] = [];
+        if (isHeaderRowData) {
+            currentWarnings.push('Phát hiện dòng tiêu đề đầu tiên có thể chứa dữ liệu khách hàng (Email/SĐT). Có vẻ như tệp của bạn đang thiếu hàng tiêu đề cột.');
+        }
+        if (!hasEmail) {
+            currentWarnings.push('Thiếu cột tiêu đề Email.');
+        }
+        if (!hasPhone) {
+            currentWarnings.push('Thiếu cột tiêu đề Số điện thoại.');
+        }
+        if (!hasName) {
+            currentWarnings.push('Thiếu cột tiêu đề Họ & Tên.');
+        }
+        setImportWarnings(currentWarnings);
 
         const dataRows = lines.slice(1).map(line => {
             if (!line.trim()) return null;
@@ -584,6 +626,20 @@ const AudienceSelector: React.FC<AudienceSelectorProps> = ({
                                             <p className="text-[10px] text-emerald-600 font-medium">Tìm thấy {stats.total} dòng, có {parsedRows.length} liên hệ hợp lệ mới.</p>
                                         </div>
                                     </div>
+
+                                    {importWarnings.length > 0 && (
+                                        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex gap-3 text-amber-800">
+                                            <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5 animate-bounce" />
+                                            <div className="space-y-1">
+                                                <h4 className="text-[10px] font-black uppercase tracking-wider text-amber-900">Cảnh báo tiêu đề cột</h4>
+                                                <ul className="list-disc pl-4 text-[10px] font-medium space-y-1">
+                                                    {importWarnings.map((w, idx) => (
+                                                        <li key={idx}>{w}</li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    )}
 
                                     <div className="space-y-4 bg-white p-2">
                                         <div className="bg-slate-50 p-4 rounded-xl space-y-3">

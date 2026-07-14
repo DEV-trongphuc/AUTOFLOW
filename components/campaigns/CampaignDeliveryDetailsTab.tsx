@@ -63,7 +63,7 @@ const CampaignDeliveryDetailsTab: React.FC<Props> = ({ campaign, allLists, allTa
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
     // Pagination State
-    const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, totalPages: 1 });
+    const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, totalPages: 1 });
 
     // Stats State (fetched from API)
     const [stats, setStats] = useState({ total: 0, sent: 0, failed: 0, opened: 0 });
@@ -109,18 +109,22 @@ const CampaignDeliveryDetailsTab: React.FC<Props> = ({ campaign, allLists, allTa
     // Actually, when Filter/Search changes, we MUST reset to Page 1.
     // So we use a separate effect for that? Or just call fetch with page 1.
 
+    // Pagination limit state change trigger
+    const [limit, setLimit] = useState(20);
+
     useEffect(() => {
         fetchRecipients(1);
-    }, [campaign, filter, typeFilter, debouncedSearch, minOpens, minClicks]);
+    }, [campaign, filter, typeFilter, debouncedSearch, minOpens, minClicks, limit]);
 
 
-    const fetchRecipients = async (page = 1) => {
+    const fetchRecipients = async (page = 1, customLimit?: number) => {
         setLoading(true);
+        const currentLimit = customLimit !== undefined ? customLimit : limit;
         const query = new URLSearchParams({
             route: 'recipients',
             id: campaign.id,
             page: page.toString(),
-            limit: '10',
+            limit: currentLimit.toString(),
             status: filter,
             type: typeFilter,
             search: debouncedSearch,
@@ -131,7 +135,7 @@ const CampaignDeliveryDetailsTab: React.FC<Props> = ({ campaign, allLists, allTa
         const res = await api.get<any>(`campaigns?${query.toString()}`);
         if (res.success) {
             setRecipients(res.data.data || []);
-            setPagination(res.data.pagination || { page: 1, limit: 10, total: 0, totalPages: 1 });
+            setPagination(res.data.pagination || { page: 1, limit: currentLimit, total: 0, totalPages: 1 });
             if (res.data.stats) {
                 setStats(res.data.stats);
             }
@@ -600,13 +604,34 @@ const CampaignDeliveryDetailsTab: React.FC<Props> = ({ campaign, allLists, allTa
                 </div>
 
                 {/* Result Count and Pagination Footer */}
-                <Pagination
-                    currentPage={pagination.page}
-                    totalPages={pagination.totalPages}
-                    totalCount={pagination.total}
-                    itemsPerPage={pagination.limit}
-                    onPageChange={(p) => fetchRecipients(p)}
-                />
+                <div className="flex flex-col sm:flex-row justify-between items-center gap-4 px-6 py-4 border-t border-slate-100 bg-slate-50/50">
+                    <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
+                        <span>Hiển thị</span>
+                        <select
+                            value={limit}
+                            onChange={(e) => {
+                                const newLimit = parseInt(e.target.value);
+                                setLimit(newLimit);
+                                fetchRecipients(1, newLimit);
+                            }}
+                            className="bg-white border border-slate-200 rounded-lg px-2 py-1 outline-none text-slate-700 font-bold focus:border-[#ffa900] cursor-pointer"
+                        >
+                            <option value={10}>10 dòng</option>
+                            <option value={20}>20 dòng</option>
+                            <option value={50}>50 dòng</option>
+                            <option value={100}>100 dòng</option>
+                            <option value={200}>200 dòng</option>
+                        </select>
+                        <span>trên mỗi trang</span>
+                    </div>
+                    <Pagination
+                        currentPage={pagination.page}
+                        totalPages={pagination.totalPages}
+                        totalCount={pagination.total}
+                        itemsPerPage={pagination.limit}
+                        onPageChange={(p) => fetchRecipients(p)}
+                    />
+                </div>
             </Card>
 
             <ConfirmModal

@@ -31,40 +31,91 @@ function processTrackingEvent($pdo, $type, $payload)
         // 'zalo_clicked' was a legacy type name from older Zalo CS path; both must be debounced.
         if (in_array($subType, ['open_email', 'click_link', 'zalo_clicked', 'click_zns'])) {
             try {
-                // [FIX] Buffer Gap: Check both main activity table AND the pending activity buffer.
-                // Without checking the buffer, multiple events in the same queue batch will all pass
-                // the check because the first one's activity record hasn't been flushed yet.
-                $stmtSpam = $pdo->prepare("
-                    SELECT 1 FROM subscriber_activity 
-                    WHERE subscriber_id = ? AND type = ? AND (reference_id = ? OR (reference_id IS NULL AND ? IS NULL)) AND created_at >= DATE_SUB(NOW(), INTERVAL 1 MINUTE)
-                    LIMIT 1
-                ");
-                $stmtSpam->execute([$sid, $subType, $rid, $rid]);
-                if ($stmtSpam->fetchColumn()) {
-                    return true;
+                // A. IN-MEMORY BUFFER DEBOUNCE (to avoid race conditions within the same batch)
+                global $GLOBAL_ACTIVITY_BUFFER;
+                if (is_array($GLOBAL_ACTIVITY_BUFFER)) {
+                    foreach ($GLOBAL_ACTIVITY_BUFFER as $buf) {
+                        // $buf: [$subscriberId, $type, $details, $referenceId, $flowId, $campaignId, $jsonData]
+                        if ($buf[0] === $sid && $buf[1] === $subType) {
+                            if ($subType === 'click_link' || $subType === 'click_zns') {
+                                // Rate-limit: block parallel click events in the same batch
+                                return true; 
+                            } elseif ($buf[3] === $rid) {
+                                // For opens, block duplicates on the same email step in the same batch
+                                return true;
+                            }
+                        }
+                    }
                 }
 
-                // [FIX P8-M1] Check activity_buffer in a SEPARATE try/catch.
-                // If the table doesn't exist yet (migrate_optimizations.php not run),
-                // we log a hint but DO NOT bypass debouncing entirely — we already
-                // checked the main activity table above, which is sufficient.
-                try {
-                    $stmtBuf = $pdo->prepare("
-                        SELECT 1 FROM activity_buffer
-                        WHERE subscriber_id = ? AND type = ? AND (reference_id = ? OR (reference_id IS NULL AND ? IS NULL))
+                // B. RATE LIMIT FOR CLICKS: Max 1 click per 3 seconds (helps filter out bot parallel link scans)
+                if ($subType === 'click_link' || $subType === 'click_zns') {
+                    $stmtRate = $pdo->prepare("
+                        SELECT 1 FROM subscriber_activity 
+                        WHERE subscriber_id = ? AND type = ? AND created_at >= DATE_SUB(NOW(), INTERVAL 3 SECOND)
                         LIMIT 1
                     ");
-                    $stmtBuf->execute([$sid, $subType, $rid, $rid]);
-                    if ($stmtBuf->fetchColumn()) {
+                    $stmtRate->execute([$sid, $subType]);
+                    if ($stmtRate->fetchColumn()) {
                         return true;
                     }
-                } catch (Exception $eBuf) {
-                    if (strpos($eBuf->getMessage(), "doesn't exist") !== false) {
-                        // activity_buffer table not yet provisioned. Run migrate_optimizations.php.
-                        // Debounce is still partially effective via the subscriber_activity check above.
-                        error_log('[tracking_processor] activity_buffer table missing — run migrate_optimizations.php for full debounce coverage.');
+                }
+
+                // C. DEBOUNCE BY URL OR TYPE (1 Minute)
+                if ($subType === 'click_link' || $subType === 'click_zns') {
+                    $currentUrl = $extra['url'] ?? '';
+                    if (!empty($currentUrl)) {
+                        $urlQuery = '%' . $currentUrl . '%';
+                        
+                        // Check main DB for the same URL click
+                        $stmtSpam = $pdo->prepare("
+                            SELECT 1 FROM subscriber_activity 
+                            WHERE subscriber_id = ? AND type = ? AND (reference_id = ? OR (reference_id IS NULL AND ? IS NULL)) 
+                            AND details LIKE ? AND created_at >= DATE_SUB(NOW(), INTERVAL 1 MINUTE)
+                            LIMIT 1
+                        ");
+                        $stmtSpam->execute([$sid, $subType, $rid, $rid, $urlQuery]);
+                        if ($stmtSpam->fetchColumn()) {
+                            return true;
+                        }
+
+                        // Check pending database buffer for the same URL click
+                        try {
+                            $stmtBuf = $pdo->prepare("
+                                SELECT 1 FROM activity_buffer
+                                WHERE subscriber_id = ? AND type = ? AND (reference_id = ? OR (reference_id IS NULL AND ? IS NULL))
+                                AND payload LIKE ?
+                                LIMIT 1
+                            ");
+                            $stmtBuf->execute([$sid, $subType, $rid, $rid, $urlQuery]);
+                            if ($stmtBuf->fetchColumn()) {
+                                return true;
+                            }
+                        } catch (Exception $eBuf) {}
                     }
-                    // Continue processing regardless
+                } else {
+                    // Standard open/interaction debounce (any open in 1 minute)
+                    $stmtSpam = $pdo->prepare("
+                        SELECT 1 FROM subscriber_activity 
+                        WHERE subscriber_id = ? AND type = ? AND (reference_id = ? OR (reference_id IS NULL AND ? IS NULL)) AND created_at >= DATE_SUB(NOW(), INTERVAL 1 MINUTE)
+                        LIMIT 1
+                    ");
+                    $stmtSpam->execute([$sid, $subType, $rid, $rid]);
+                    if ($stmtSpam->fetchColumn()) {
+                        return true;
+                    }
+
+                    try {
+                        $stmtBuf = $pdo->prepare("
+                            SELECT 1 FROM activity_buffer
+                            WHERE subscriber_id = ? AND type = ? AND (reference_id = ? OR (reference_id IS NULL AND ? IS NULL))
+                            LIMIT 1
+                        ");
+                        $stmtBuf->execute([$sid, $subType, $rid, $rid]);
+                        if ($stmtBuf->fetchColumn()) {
+                            return true;
+                        }
+                    } catch (Exception $eBuf) {}
                 }
             } catch (Exception $e) {
                 // Ignore DB check error

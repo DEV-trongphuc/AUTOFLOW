@@ -6,7 +6,8 @@ import {
     Send, Plus, Calendar, Image as ImageIcon,
     Eye, MessageCircle, CheckCircle,
     RefreshCw, BarChart2, UploadCloud, X, Search, Filter,
-    Share2, MousePointer2, Users, MailOpen, MousePointerClick, MessageSquare, Trash2, Info
+    Share2, MousePointer2, Users, MailOpen, MousePointerClick, MessageSquare, Trash2, Info,
+    ArrowLeft
 } from 'lucide-react';
 import Button from '../common/Button';
 import Badge from '../common/Badge';
@@ -506,8 +507,25 @@ const ZaloBroadcastTab: React.FC<ZaloBroadcastTabProps> = ({ initialSelectedIds,
 
             {/* DETAIL MODAL (DRAWER) */}
             {selectedCampaign && (
-                <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex justify-end animate-in fade-in duration-300">
-                    <div className="bg-white w-[900px] h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-500 rounded-none overflow-hidden">
+                <div className="fixed inset-0 z-[100] flex justify-end">
+                    <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity duration-300" onClick={() => setSelectedCampaign(null)} />
+                    
+                    {/* Floating Back Button on Backdrop */}
+                    <div 
+                        className="hidden lg:flex absolute left-0 top-0 bottom-0 right-[900px] items-center justify-center z-40"
+                        style={{ pointerEvents: 'none' }}
+                    >
+                        <button
+                            onClick={() => setSelectedCampaign(null)}
+                            className="w-12 h-12 rounded-full bg-slate-900/60 hover:bg-slate-900/80 text-white flex items-center justify-center shadow-2xl border border-slate-700/50 backdrop-blur-md transition-all duration-300 hover:scale-110 active:scale-95 cursor-pointer"
+                            style={{ pointerEvents: 'auto' }}
+                            title="Quay lại"
+                        >
+                            <ArrowLeft className="w-6 h-6" />
+                        </button>
+                    </div>
+
+                    <div className="relative bg-white w-full max-w-[900px] h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-500 rounded-none overflow-hidden">
                         <div className="p-5 border-b border-slate-50 flex justify-between items-center bg-slate-50/30">
                             <div className="flex items-center gap-3">
                                 <BarChart2 className="w-5 h-5 text-blue-600" />

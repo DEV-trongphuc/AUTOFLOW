@@ -5,7 +5,7 @@ import {
     Plus, TrendingUp, MousePointerClick,
     CheckCircle2, GitMerge, GitBranch, RefreshCw, FileText, CalendarClock, PieChart, Send, MailOpen, Paperclip, File as FileIcon,
     Search, ChevronLeft, ChevronRight, X, BarChart2, Calendar, Users, MailCheck, Activity, Zap, ExternalLink, Mail, Bell, Clock, Activity as ActivityIcon, MousePointer2, BadgeCheck, FileBarChart, MousePointerClick as ClickIcon,
-    Layers, List, AlertOctagon, UserMinus, History, Tag, Loader2, ShieldCheck, Smartphone, Globe, Laptop, Trash2, Monitor, Flame, Link as LinkIcon, PauseCircle, PlayCircle
+    Layers, List, AlertOctagon, UserMinus, History, Tag, Loader2, ShieldCheck, Smartphone, Globe, Laptop, Trash2, Monitor, Flame, Link as LinkIcon, PauseCircle, PlayCircle, ArrowLeft
 } from 'lucide-react';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart as RePieChart, Pie, AreaChart, Area, FunnelChart, Funnel, LabelList
@@ -439,6 +439,22 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
     return ReactDOM.createPortal(
         <div className={`fixed inset-0 z-[9999] flex justify-end ${isVisible ? 'pointer-events-auto' : 'pointer-events-none'}`}>
             <div className={`absolute inset-0 bg-slate-950/70 transition-opacity duration-500 ${animateIn ? 'opacity-100' : 'opacity-0'}`} onClick={onClose} />
+            
+            {/* Floating Back Button on Backdrop */}
+            <div 
+                className={`hidden lg:flex absolute left-0 top-0 bottom-0 w-[260px] items-center justify-center z-40 transition-opacity duration-500 ${animateIn ? 'opacity-100' : 'opacity-0'}`}
+                style={{ pointerEvents: 'none' }}
+            >
+                <button
+                    onClick={onClose}
+                    className="w-12 h-12 rounded-full bg-slate-900/60 hover:bg-slate-900/80 text-white flex items-center justify-center shadow-2xl border border-slate-700/50 backdrop-blur-md transition-all duration-300 hover:scale-110 active:scale-95 cursor-pointer"
+                    style={{ pointerEvents: 'auto' }}
+                    title="Quay lại"
+                >
+                    <ArrowLeft className="w-6 h-6" />
+                </button>
+            </div>
+
             <div
                 className={`relative w-full lg:max-w-[calc(100vw-260px)] bg-[#f8fafc] shadow-2xl h-full lg:h-screen flex flex-col transition-all duration-500 cubic-bezier(0.16, 1, 0.3, 1) ${animateIn ? 'translate-x-0 opacity-100' : 'translate-x-full lg:translate-x-[100px] opacity-0'}`}
             >

@@ -2540,16 +2540,16 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
                         {
                             selectedConv?.email && (
                                 <div className={`p-6 border-t ${isDarkTheme ? 'bg-slate-800/40 border-slate-700/50' : 'bg-slate-50 border-t border-slate-100'}`}>
-                                    <div className="flex items-center gap-3 mb-3">
-                                        <div className="w-8 h-8 rounded-xl bg-slate-600 flex items-center justify-center text-white shadow-lg shadow-slate-600/30">
+                                    <div className="flex items-center gap-3 mb-3 min-w-0">
+                                        <div className="w-8 h-8 rounded-xl bg-slate-600 flex items-center justify-center text-white shadow-lg shadow-slate-600/30 shrink-0">
                                             <UserCheck className="w-4 h-4" />
                                         </div>
-                                        <div>
+                                        <div className="min-w-0">
                                             <h4 className="text-[10px] font-black text-slate-700 dark:text-slate-400 uppercase tracking-widest leading-none mb-1">Lead Synced</h4>
-                                            <div className="flex items-center gap-2">
-                                                <p className={`text-[11px] font-black ${isDarkTheme ? 'text-slate-200' : 'text-slate-700'}`}>{selectedConv.email}</p>
+                                            <div className="flex items-center gap-2 min-w-0">
+                                                <p className={`text-[11px] font-black truncate ${isDarkTheme ? 'text-slate-200' : 'text-slate-700'}`} title={selectedConv.email}>{selectedConv.email}</p>
                                                 {selectedConv.lead_score !== undefined && selectedConv.lead_score > 0 && (
-                                                    <div className={`inline-flex items-center justify-center gap-1 px-2 py-0.5 border rounded-lg text-xs font-bold ${isDarkTheme ? 'bg-slate-800/60 text-slate-300 border-slate-700' : 'bg-slate-100 text-slate-600 border-slate-200'}`}>
+                                                    <div className={`inline-flex items-center justify-center gap-1 px-2 py-0.5 border rounded-lg text-xs font-bold shrink-0 ${isDarkTheme ? 'bg-slate-800/60 text-slate-300 border-slate-700' : 'bg-slate-100 text-slate-600 border-slate-200'}`}>
                                                         <Zap className="w-3 h-3 fill-slate-500 text-slate-500" />
                                                         {selectedConv.lead_score}
                                                     </div>

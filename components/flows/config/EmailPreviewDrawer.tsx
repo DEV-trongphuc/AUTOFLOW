@@ -1,6 +1,6 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
-import { X, Smartphone, Monitor, SmartphoneNfc, Code, Check, Edit3, Copy } from 'lucide-react';
+import { X, Smartphone, Monitor, SmartphoneNfc, Code, Check, Edit3, Copy, ArrowLeft } from 'lucide-react';
 import { Template } from '../../../types';
 
 interface EmailPreviewDrawerProps {
@@ -52,6 +52,22 @@ const EmailPreviewDrawer: React.FC<EmailPreviewDrawerProps> = ({ template, htmlC
         className={`absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-500 ${animateIn ? 'opacity-100' : 'opacity-0'}`}
         onClick={onClose}
       />
+      
+      {/* Floating Back Button on Backdrop */}
+      <div 
+        className={`hidden lg:flex absolute left-0 top-0 bottom-0 right-[1024px] items-center justify-center z-40 transition-opacity duration-500 ${animateIn ? 'opacity-100' : 'opacity-0'}`}
+        style={{ pointerEvents: 'none' }}
+      >
+        <button
+          onClick={onClose}
+          className="w-12 h-12 rounded-full bg-slate-900/60 hover:bg-slate-900/80 text-white flex items-center justify-center shadow-2xl border border-slate-700/50 backdrop-blur-md transition-all duration-300 hover:scale-110 active:scale-95 cursor-pointer"
+          style={{ pointerEvents: 'auto' }}
+          title="Quay lại"
+        >
+          <ArrowLeft className="w-6 h-6" />
+        </button>
+      </div>
+
       <div className={`relative w-full max-w-5xl bg-slate-50 shadow-2xl flex flex-col h-full border-l border-white/10 transform transition-all duration-500 ease-in-out ${animateIn ? 'translate-x-0 opacity-100' : 'translate-x-[100px] opacity-0'}`}>
         <div className="px-6 py-4 bg-white border-b border-slate-200 flex justify-between items-center shrink-0">
           <div>

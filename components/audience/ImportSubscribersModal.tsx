@@ -43,6 +43,7 @@ const ImportSubscribersModal: React.FC<ImportSubscribersModalProps> = ({
     const [stats, setStats] = useState({ valid: 0, duplicates: 0, total: 0, missingPhone: 0, virtualCandidates: 0 });
     const [createVirtualEmail, setCreateVirtualEmail] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [importWarnings, setImportWarnings] = useState<string[]>([]);
 
     useEffect(() => {
         if (isOpen) {
@@ -55,6 +56,7 @@ const ImportSubscribersModal: React.FC<ImportSubscribersModalProps> = ({
             setNewListName('');
             setImportMode('new');
             setInputMethod(defaultTab);
+            setImportWarnings([]);
         }
     }, [isOpen, defaultTab]);
 
@@ -187,6 +189,39 @@ const ImportSubscribersModal: React.FC<ImportSubscribersModalProps> = ({
                 columnMapping[index] = header;
             }
         });
+
+        const mappedKeys = Object.values(columnMapping);
+        const hasEmail = mappedKeys.includes('email');
+        const hasPhone = mappedKeys.includes('phoneNumber');
+        const hasName = mappedKeys.includes('firstName') || mappedKeys.includes('lastName');
+
+        // Check if first row contains data instead of headers
+        const isHeaderRowData = headerRow.some(header => {
+            if (header.includes('@') && header.includes('.')) return true;
+            const cleanPhone = header.replace(/[^0-9]/g, '');
+            if ((cleanPhone.startsWith('0') || cleanPhone.startsWith('84')) && cleanPhone.length >= 9 && cleanPhone.length <= 12) return true;
+            return false;
+        });
+
+        if (!hasEmail && !hasPhone) {
+            toast.error('Thiếu cả hai cột tiêu đề quan trọng: Email và Số điện thoại. Vui lòng bổ sung ít nhất một trong hai cột này.');
+            return;
+        }
+
+        const currentWarnings: string[] = [];
+        if (isHeaderRowData) {
+            currentWarnings.push('Phát hiện dòng tiêu đề đầu tiên có thể chứa dữ liệu khách hàng (Email/SĐT). Có vẻ như tệp của bạn đang thiếu hàng tiêu đề cột.');
+        }
+        if (!hasEmail) {
+            currentWarnings.push('Thiếu cột tiêu đề Email (hệ thống sẽ không thể gửi email cho các liên hệ này).');
+        }
+        if (!hasPhone) {
+            currentWarnings.push('Thiếu cột tiêu đề Số điện thoại (hệ thống sẽ không thể gửi tin nhắn ZNS/SMS cho các liên hệ này).');
+        }
+        if (!hasName) {
+            currentWarnings.push('Thiếu cột tiêu đề Họ & Tên (liên hệ sẽ được đặt tên tạm thời dựa trên Email/SĐT).');
+        }
+        setImportWarnings(currentWarnings);
 
         const dataRows = parsedAll.slice(1).map(values => {
             const trimmedValues = values.map(v => v.trim());
@@ -398,6 +433,20 @@ const ImportSubscribersModal: React.FC<ImportSubscribersModalProps> = ({
                             <p className="text-[10px] font-bold text-orange-700 uppercase tracking-widest">Thiếu SĐT (ZNS sẽ Bỏ qua)</p>
                         </div>
                     </div>
+
+                    {importWarnings.length > 0 && (
+                        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex gap-3 text-amber-800">
+                            <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5 animate-bounce" />
+                            <div className="space-y-1">
+                                <h4 className="text-xs font-black uppercase tracking-wider text-amber-900">Cảnh báo tiêu đề cột</h4>
+                                <ul className="list-disc pl-4 text-xs font-medium space-y-1">
+                                    {importWarnings.map((w, idx) => (
+                                        <li key={idx}>{w}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </div>
+                    )}
 
                     <div className="bg-white border-2 border-slate-100 rounded-[24px] p-5 space-y-4">
                         <h4 className="text-sm font-bold text-slate-800 flex items-center gap-2">
