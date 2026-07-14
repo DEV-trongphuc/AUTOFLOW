@@ -72,7 +72,7 @@ const SelectBranchModal: React.FC<SelectBranchModalProps> = ({
                         disabled={!selectedBranch}
                         className={`px-7 py-3 rounded-xl font-black uppercase tracking-widest text-[11px] transition-all shadow-lg active:scale-95
                             ${selectedBranch
-                                ? 'bg-slate-800 text-white hover:bg-slate-900 shadow-slate-200'
+                                ? 'bg-gradient-to-r from-[#683df2] to-violet-600 text-white hover:from-[#561dd0] hover:to-violet-700 shadow-[#683df2]/20'
                                 : `${isDarkTheme ? 'bg-slate-800/40 text-slate-600 border border-slate-800' : 'bg-slate-100 text-slate-300'} cursor-not-allowed shadow-none`
                             }`}
                     >

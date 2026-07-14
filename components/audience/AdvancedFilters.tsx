@@ -331,7 +331,7 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
                                 onClick={handleApply}
                                 disabled={!hasChanges && activeFiltersCount > 0}
                                 className={`w-full py-2.5 rounded-xl text-sm font-black shadow-lg transition-all flex items-center justify-center gap-2 active:scale-[0.98] ${hasChanges || activeFiltersCount === 0
-                                    ? 'bg-[#ffa900] hover:bg-[#e69800] text-white shadow-orange-500/20'
+                                    ? 'bg-gradient-to-r from-[#683df2] to-violet-600 hover:from-[#561dd0] hover:to-violet-700 text-white shadow-[#683df2]/20'
                                     : 'bg-slate-200 text-slate-500 cursor-not-allowed shadow-none'
                                     }`}
                             >

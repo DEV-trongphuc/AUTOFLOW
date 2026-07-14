@@ -1222,10 +1222,10 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                                         </div>
 
                                         {/* Notification Settings */}
-                                        <div className={`space-y-4 px-6 py-6 rounded-2xl relative overflow-hidden transition-all duration-500 ${settings.notification_enabled ? 'ring-1 shadow-sm' : ''} ${isDarkTheme ? 'bg-slate-800/40 border-slate-700' : 'bg-amber-50/20 border border-amber-100'} ${settings.notification_enabled && !isDarkTheme ? 'ring-amber-200' : ''}`}>
+                                        <div className={`space-y-4 px-6 py-6 rounded-2xl relative overflow-hidden transition-all duration-500 ${settings.notification_enabled ? 'ring-1 shadow-sm' : ''} ${isDarkTheme ? 'bg-slate-800/40 border-slate-700' : 'bg-slate-50/40 border border-slate-200/50'} ${settings.notification_enabled && !isDarkTheme ? 'ring-slate-200/60' : ''}`}>
                                             <div className="flex justify-between items-start relative z-10">
                                                 <div className="flex items-center gap-4">
-                                                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm transition-all duration-500 ${settings.notification_enabled ? 'bg-gradient-to-br from-[#ffa900] to-amber-600 text-white shadow-amber-200' : (isDarkTheme ? 'bg-slate-800 text-amber-500 border border-slate-700' : 'bg-amber-50 text-[#ffa900]')}`}>
+                                                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm transition-all duration-500 ${settings.notification_enabled ? 'bg-gradient-to-br from-[#683df2] to-violet-600 text-white shadow-lg shadow-[#683df2]/20' : (isDarkTheme ? 'bg-slate-800 text-slate-500 border border-slate-700' : 'bg-slate-100 text-slate-400')}`}>
                                                         <BellRing className="w-6 h-6" />
                                                     </div>
                                                     <div>
@@ -1235,17 +1235,17 @@ const AITrainingDetail: React.FC<AITrainingDetailProps> = (props) => {
                                                 </div>
                                                 <div
                                                     onClick={() => setSettings({ ...settings, notification_enabled: settings.notification_enabled ? 0 : 1 })}
-                                                    className={`flex items-center gap-3 cursor-pointer select-none p-1.5 px-3 rounded-xl border shadow-sm hover:shadow-md transition-all active:scale-95 ${isDarkTheme ? 'bg-slate-800 border-slate-700 hover:border-slate-600' : 'bg-white border-slate-100 hover:border-amber-200'}`}
+                                                    className={`flex items-center gap-3 cursor-pointer select-none p-1.5 px-3 rounded-xl border shadow-sm hover:shadow-md transition-all active:scale-95 ${isDarkTheme ? 'bg-slate-800 border-slate-700 hover:border-slate-600' : 'bg-white border-slate-100 hover:border-slate-200'}`}
                                                 >
-                                                    <div className={`w-9 h-5 rounded-full p-0.5 transition-all duration-300 flex items-center ${settings.notification_enabled ? 'bg-[#ffa900] justify-end' : 'bg-slate-200 justify-start'}`}>
+                                                    <div className={`w-9 h-5 rounded-full p-0.5 transition-all duration-300 flex items-center ${settings.notification_enabled ? 'bg-emerald-500 justify-end' : 'bg-slate-200 justify-start'}`}>
                                                         <div className="w-4 h-4 bg-white rounded-full shadow-sm" />
                                                     </div>
-                                                    <span className={`text-[9px] font-black uppercase tracking-widest ${settings.notification_enabled ? 'text-[#ffa900]' : 'text-slate-400'}`}>{settings.notification_enabled ? 'Đang bật' : 'Đang tắt'}</span>
+                                                    <span className={`text-[9px] font-black uppercase tracking-widest ${settings.notification_enabled ? 'text-emerald-500' : 'text-slate-400'}`}>{settings.notification_enabled ? 'Đang bật' : 'Đang tắt'}</span>
                                                 </div>
                                             </div>
 
                                             {settings.notification_enabled ? (
-                                                <div className={`space-y-6 mt-6 pt-6 border-t relative z-10 animate-in fade-in slide-in-from-top-4 duration-500 ${isDarkTheme ? 'border-slate-700/50' : 'border-amber-100/50'}`}>
+                                                <div className={`space-y-6 mt-6 pt-6 border-t relative z-10 animate-in fade-in slide-in-from-top-4 duration-500 ${isDarkTheme ? 'border-slate-700/50' : 'border-slate-200/50'}`}>
                                                     <Input
                                                         label="Tiêu đề (Subject) gửi thông báo"
                                                         icon={Edit3}

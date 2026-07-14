@@ -667,7 +667,7 @@ const SegmentBuilderModal: React.FC<SegmentBuilderModalProps> = ({ isOpen, onClo
                         <button
                             onClick={handleSave}
                             disabled={isLoading}
-                            className={`px-6 py-2.5 rounded-xl text-white text-xs font-bold shadow-lg shadow-orange-500/20 flex items-center gap-2 transition-all hover:scale-[1.02] active:scale-95 ${isLoading ? 'bg-slate-400 cursor-not-allowed shadow-none' : 'bg-[#ffa900] hover:bg-[#e69900]'}`}
+                            className={`px-6 py-2.5 rounded-xl text-white text-xs font-bold shadow-lg shadow-[#683df2]/20 flex items-center gap-2 transition-all hover:scale-[1.02] active:scale-95 ${isLoading ? 'bg-slate-400 cursor-not-allowed shadow-none' : 'bg-gradient-to-r from-[#683df2] to-violet-600 hover:from-[#561dd0] hover:to-violet-700'}`}
                         >
                             {isLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
                             {initialSegment ? 'Lưu thay đổi' : 'Tạo phân khúc'}

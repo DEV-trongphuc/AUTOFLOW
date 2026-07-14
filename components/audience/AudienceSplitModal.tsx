@@ -1,4 +1,4 @@
-﻿import * as React from 'react';
+import * as React from 'react';
 import { useState, useEffect, useRef } from 'react';
 import { X, Scissors, Loader2, Phone, CheckCircle2, Filter, Plus, FileText, ArrowRight, Trash2, Zap, ChevronDown, Check, Calculator, ArrowDown, Shuffle } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -501,7 +501,7 @@ const AudienceSplitModal: React.FC<AudienceSplitModalProps> = ({ sourceId, sourc
                     <button
                         onClick={handleSplit}
                         disabled={isLoading}
-                        className="px-8 py-2.5 rounded-xl bg-[#ffa900] hover:bg-[#e69900] text-white text-xs font-bold shadow-lg shadow-orange-500/20 flex items-center gap-2 transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-8 py-2.5 rounded-xl bg-gradient-to-r from-[#683df2] to-violet-600 hover:from-[#561dd0] hover:to-violet-700 text-white text-xs font-bold shadow-lg shadow-[#683df2]/20 flex items-center gap-2 transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Scissors className="w-4 h-4" />}
                         Thực hiện Tách

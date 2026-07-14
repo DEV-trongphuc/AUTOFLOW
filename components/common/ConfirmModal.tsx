@@ -87,7 +87,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
             iconBg: isDarkTheme ? 'bg-amber-950/20' : 'bg-amber-50',
             inlineIconBg: '#fef3c7',
             inlineIconColor: '#d97706',
-            button: 'bg-gradient-to-r from-[#ffbe1a] to-[#ffa900] hover:from-[#ffa900] hover:to-[#e69800] text-white shadow-yellow-500/20'
+            button: 'bg-gradient-to-r from-[#683df2] to-violet-600 hover:from-[#561dd0] hover:to-violet-700 shadow-[#683df2]/20'
         },
         info: {
             icon: Info,
@@ -95,7 +95,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
             iconBg: isDarkTheme ? 'bg-blue-900/30' : 'bg-blue-50',
             inlineIconBg: undefined,
             inlineIconColor: undefined,
-            button: 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-blue-500/20'
+            button: 'bg-gradient-to-r from-[#683df2] to-violet-600 hover:from-[#561dd0] hover:to-violet-700 shadow-[#683df2]/20'
         },
         success: {
             icon: CheckCircle2,
@@ -103,7 +103,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
             iconBg: 'bg-emerald-50',
             inlineIconBg: undefined,
             inlineIconColor: undefined,
-            button: 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-emerald-500/20'
+            button: 'bg-gradient-to-r from-[#683df2] to-violet-600 hover:from-[#561dd0] hover:to-violet-700 shadow-[#683df2]/20'
         }
     };
 

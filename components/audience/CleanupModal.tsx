@@ -1,4 +1,4 @@
-﻿import * as React from 'react';
+import * as React from 'react';
 import { useState, useEffect, useRef } from 'react';
 import { X, Trash2, ArrowRight, Loader2, Eraser, CheckCircle2, Moon, AlertTriangle, Calculator, ChevronDown, Check, AlertCircle, Plus } from 'lucide-react';
 import { api } from '../../services/storageAdapter';
@@ -553,7 +553,7 @@ const CleanupModal: React.FC<CleanupModalProps> = ({ target, onClose: _onClose, 
                         disabled={isLoading}
                         className={`px-6 py-2.5 rounded-xl text-white font-bold hover:shadow-lg transition-all flex items-center gap-2 shadow-md text-xs ${isLoading ? 'bg-slate-400 cursor-not-allowed shadow-none' :
                             action === 'delete' ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-500/20' :
-                                'bg-[#ffa900] hover:bg-[#e69900] shadow-orange-500/20'
+                                'bg-gradient-to-r from-[#683df2] to-violet-600 hover:from-[#561dd0] hover:to-violet-700 shadow-[#683df2]/20'
                             }`}
                     >
                         {isLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}

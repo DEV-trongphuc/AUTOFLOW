@@ -172,7 +172,7 @@ export const SystemConnectionsModal: React.FC<Props> = ({ isOpen, onClose, isDar
                                 <button
                                     onClick={() => handleNavigate(item.path)}
                                     disabled={!revealed[item.id]}
-                                    className={`flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-lg transition-colors ${!revealed[item.id] ? (isDarkTheme ? 'opacity-40 cursor-not-allowed bg-slate-800 text-slate-500' : 'opacity-50 cursor-not-allowed bg-slate-100 text-slate-400') : item.status ? (isDarkTheme ? 'text-slate-300 hover:bg-slate-850 hover:text-slate-100' : 'text-slate-600 hover:bg-slate-100') : 'bg-[#ffa900] hover:bg-[#e69800] text-white shadow-md shadow-orange-500/20'}`}
+                                    className={`flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-lg transition-all active:scale-[0.97] ${!revealed[item.id] ? (isDarkTheme ? 'opacity-40 cursor-not-allowed bg-slate-800 text-slate-500' : 'opacity-50 cursor-not-allowed bg-slate-100 text-slate-400') : item.status ? (isDarkTheme ? 'text-slate-300 hover:bg-slate-850 hover:text-slate-100' : 'text-slate-600 hover:bg-slate-100') : 'bg-gradient-to-r from-[#683df2] to-violet-600 hover:from-[#561dd0] hover:to-violet-700 text-white shadow-md shadow-[#683df2]/20'}`}
                                 >
                                     {item.status ? 'Cấu hình' : 'Thiết lập ngay'} <ArrowRight className="w-3.5 h-3.5" />
                                 </button>

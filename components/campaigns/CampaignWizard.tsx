@@ -1824,7 +1824,7 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                                         setIsSubmitting(false);
                                     }
                                 }}
-                                className="w-full py-3 bg-[#ffa900] hover:bg-[#ca7900] text-white rounded-xl font-bold transition-colors"
+                                className="w-full py-3 bg-gradient-to-r from-[#683df2] to-violet-600 hover:from-[#561dd0] hover:to-violet-700 text-white rounded-xl font-bold transition-all active:scale-[0.98] shadow-md shadow-[#683df2]/15"
                             >
                                 Lưu thành Bản nháp
                             </button>

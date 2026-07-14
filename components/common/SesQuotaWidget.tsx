@@ -315,7 +315,7 @@ const SesQuotaWidget: React.FC<Props> = ({ mode = 'sidebar', className = '', sta
                             </div>
                             <div className="px-6 md:px-8 py-5 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3 rounded-b-[28px]">
                                 <button className="px-6 py-2.5 text-xs font-black text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-colors tracking-wide" onClick={() => setShowIamModal(false)}>HỦY</button>
-                                <Button className="px-8 py-2.5 text-xs h-11 bg-[#ffa900] hover:bg-[#ca7900] shadow-lg shadow-orange-500/20 text-white rounded-xl font-black tracking-widest border-none" isLoading={isSavingIam} onClick={handleSaveIam} icon={Save}>CẬP NHẬT KẾT NỐI</Button>
+                                <Button className="px-8 py-2.5 text-xs h-11 bg-gradient-to-r from-[#683df2] to-violet-600 hover:from-[#561dd0] hover:to-violet-700 shadow-lg shadow-[#683df2]/20 text-white rounded-xl font-black tracking-widest border-none" isLoading={isSavingIam} onClick={handleSaveIam} icon={Save}>CẬP NHẬT KẾT NỐI</Button>
                             </div>
                         </div>
                     </div>

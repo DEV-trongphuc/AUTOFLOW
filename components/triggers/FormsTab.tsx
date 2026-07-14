@@ -316,10 +316,10 @@ const FormsTab: React.FC = () => {
                     </div>
 
                     {/* SECTION 1.5: Email Notification */}
-                    <div className={`space-y-4 bg-amber-50/20 border border-amber-100 px-6 py-6 rounded-[32px] relative overflow-hidden transition-all duration-500 ${formData.notificationEnabled ? 'ring-1 ring-amber-200' : ''}`}>
+                    <div className={`space-y-4 bg-slate-50/40 border border-slate-200/50 px-6 py-6 rounded-[32px] relative overflow-hidden transition-all duration-500 ${formData.notificationEnabled ? 'ring-1 ring-slate-200/60' : ''}`}>
                         <div className="flex justify-between items-start relative z-10">
                             <div className="flex items-center gap-4">
-                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm transition-all duration-500 ${formData.notificationEnabled ? 'bg-gradient-to-br from-[#683df2] to-amber-600 text-white shadow-amber-200' : 'bg-amber-50 text-[#683df2]'}`}>
+                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm transition-all duration-500 ${formData.notificationEnabled ? 'bg-gradient-to-br from-[#683df2] to-violet-600 text-white shadow-lg shadow-[#683df2]/20' : 'bg-slate-100 text-slate-400'}`}>
                                     <BellRing className="w-6 h-6" />
                                 </div>
                                 <div>
@@ -329,17 +329,17 @@ const FormsTab: React.FC = () => {
                             </div>
                             <div
                                 onClick={() => setFormData({ ...formData, notificationEnabled: !formData.notificationEnabled })}
-                                className="flex items-center gap-3 cursor-pointer select-none bg-white p-1.5 px-3 rounded-xl border border-slate-100 shadow-sm hover:shadow-md hover:border-amber-200 transition-all active:scale-95"
+                                className="flex items-center gap-3 cursor-pointer select-none bg-white p-1.5 px-3 rounded-xl border border-slate-100 shadow-sm hover:shadow-md hover:border-slate-200 transition-all active:scale-95"
                             >
-                                <div className={`w-9 h-5 rounded-full p-0.5 transition-all duration-300 flex items-center ${formData.notificationEnabled ? 'bg-[#683df2] justify-end' : 'bg-slate-200 justify-start'}`}>
+                                <div className={`w-9 h-5 rounded-full p-0.5 transition-all duration-300 flex items-center ${formData.notificationEnabled ? 'bg-emerald-500 justify-end' : 'bg-slate-200 justify-start'}`}>
                                     <div className="w-4 h-4 bg-white rounded-full shadow-sm" />
                                 </div>
-                                <span className={`text-[9px] font-black uppercase tracking-widest ${formData.notificationEnabled ? 'text-[#683df2]' : 'text-slate-400'}`}>{formData.notificationEnabled ? 'Đang bật' : 'Đang tắt'}</span>
+                                <span className={`text-[9px] font-black uppercase tracking-widest ${formData.notificationEnabled ? 'text-emerald-500' : 'text-slate-400'}`}>{formData.notificationEnabled ? 'Đang bật' : 'Đang tắt'}</span>
                             </div>
                         </div>
 
                         {formData.notificationEnabled && (
-                            <div className="space-y-6 mt-6 pt-6 border-t border-amber-100/50 relative z-10 animate-in fade-in slide-in-from-top-4 duration-500">
+                            <div className="space-y-6 mt-6 pt-6 border-t border-slate-200/50 relative z-10 animate-in fade-in slide-in-from-top-4 duration-500">
                                 <Input
                                     label="Tiêu đề (Subject) gửi thông báo"
                                     icon={Edit3}
