@@ -618,6 +618,7 @@ try {
                         'workspace_id' => $form_ws_id
                     ];
 
+                    error_log("TRACE: Form notification trigger started. Recipients: " . implode(',', $notifEmails));
                     $cronSecret = getenv('CRON_SECRET') ?: 'autoflow_cron_2026';
                     $notifyUrl = API_BASE_URL . "/worker_notify.php?secret=" . urlencode($cronSecret);
                     $chNotif = curl_init($notifyUrl);
@@ -625,13 +626,16 @@ try {
                     curl_setopt($chNotif, CURLOPT_POSTFIELDS, json_encode($notifyPayload));
                     curl_setopt($chNotif, CURLOPT_HTTPHEADER, ['Content-Type: application/json', 'X-Cron-Secret: ' . $cronSecret]);
                     curl_setopt($chNotif, CURLOPT_RETURNTRANSFER, true);
-                    curl_setopt($chNotif, CURLOPT_TIMEOUT, 1);
+                    curl_setopt($chNotif, CURLOPT_TIMEOUT, 5); // Increase timeout for debugging
                     curl_setopt($chNotif, CURLOPT_NOSIGNAL, 1);
                     curl_setopt($chNotif, CURLOPT_SSL_VERIFYPEER, true);
                     curl_setopt($chNotif, CURLOPT_SSL_VERIFYHOST, 2); // [FIX P12-C1]
                     $resNotif = curl_exec($chNotif);
+                    $httpCode = curl_getinfo($chNotif, CURLINFO_HTTP_CODE);
                     if ($resNotif === false) {
-                        error_log("Form cURL Notification Error: " . curl_error($chNotif));
+                        error_log("TRACE: Form cURL Notification Error: " . curl_error($chNotif));
+                    } else {
+                        error_log("TRACE: Form notification cURL success. HTTP Code: $httpCode. Response: " . substr($resNotif, 0, 200));
                     }
                     curl_close($chNotif);
                 } catch (Exception $eNotif) {
