@@ -9,22 +9,26 @@ if (!hash_equals($cronSecret, $passedSecret)) {
     exit;
 }
 
-function tailFile($filepath, $lines = 100) {
-    if (!file_exists($filepath)) return "File not found: " . $filepath . "\n";
-    $data = file($filepath);
-    $lineCount = count($data);
-    $start = max(0, $lineCount - $lines);
-    return implode("", array_slice($data, $start));
-}
-
-echo "--- LAST 100 LINES OF mail_api/error_log --- \n";
-echo tailFile(__DIR__ . '/error_log', 100);
-
-echo "\n\n--- LAST 20 MAIL DELIVERY LOGS --- \n";
+echo "--- AI TRIAL FORM DETAILS --- \n";
 try {
-    $stmt = $pdo->query("SELECT id, recipient, subject, status, error_message, sent_at, workspace_id FROM mail_delivery_logs ORDER BY id DESC LIMIT 20");
-    $logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    print_r($logs);
+    $stmt = $pdo->prepare("SELECT id, name, workspace_id, status, notification_enabled, notification_emails, notification_cc_emails FROM forms WHERE name LIKE ?");
+    $stmt->execute(['%AI Trial%']);
+    $forms = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    print_r($forms);
+    
+    if (!empty($forms)) {
+        $wsId = $forms[0]['workspace_id'];
+        echo "\n--- SMTP SETTINGS FOR WORKSPACE $wsId --- \n";
+        $stmt2 = $pdo->prepare("SELECT `key`, `value` FROM system_settings WHERE workspace_id = ? AND `key` LIKE 'smtp%'");
+        $stmt2->execute([$wsId]);
+        $settings = $stmt2->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($settings as &$s) {
+            if (strpos($s['key'], 'pass') !== false) {
+                $s['value'] = '********';
+            }
+        }
+        print_r($settings);
+    }
 } catch (Exception $e) {
-    echo "Error querying mail_delivery_logs: " . $e->getMessage() . "\n";
+    echo "Database Error: " . $e->getMessage() . "\n";
 }
