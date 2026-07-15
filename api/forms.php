@@ -456,25 +456,22 @@ try {
                 }
             }
 
-            // Priority trigger worker
-            $cronSecret = getenv('CRON_SECRET') ?: 'autoflow_cron_2026';
-            $workerUrl = API_BASE_URL . "/worker_priority.php?" . http_build_query([
-                'trigger_type' => 'form', 
-                'target_id' => $formId, 
-                'subscriber_id' => $sid,
-                'secret' => $cronSecret
-            ]);
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, $workerUrl);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 2); // Safe to increase slightly in background
-            curl_setopt($ch, CURLOPT_NOSIGNAL, 1);
-            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, ['X-Cron-Secret: ' . $cronSecret]);
-            @curl_exec($ch);
-            curl_close($ch);
+            // Priority trigger worker (Direct local execution to bypass WAF/firewall 403 blocks)
+            try {
+                $cronSecret = getenv('CRON_SECRET') ?: 'autoflow_cron_2026';
+                $_GET['trigger_type'] = 'form';
+                $_GET['target_id'] = $formId;
+                $_GET['subscriber_id'] = $sid;
+                $_GET['secret'] = $cronSecret;
+                
+                $backupMailer = isset($mailer) ? $mailer : null;
+                require __DIR__ . '/worker_priority.php';
+                if ($backupMailer) {
+                    $mailer = $backupMailer;
+                }
+            } catch (Exception $ePriority) {
+                error_log("Form Priority Trigger Local Error: " . $ePriority->getMessage());
+            }
 
             // (Moved fast flush and release lock to top of background execution block)
 
@@ -619,25 +616,20 @@ try {
                     ];
 
                     error_log("TRACE: Form notification trigger started. Recipients: " . implode(',', $notifEmails));
-                    $cronSecret = getenv('CRON_SECRET') ?: 'autoflow_cron_2026';
-                    $notifyUrl = API_BASE_URL . "/worker_notify.php?secret=" . urlencode($cronSecret);
-                    $chNotif = curl_init($notifyUrl);
-                    curl_setopt($chNotif, CURLOPT_POST, true);
-                    curl_setopt($chNotif, CURLOPT_POSTFIELDS, json_encode($notifyPayload));
-                    curl_setopt($chNotif, CURLOPT_HTTPHEADER, ['Content-Type: application/json', 'X-Cron-Secret: ' . $cronSecret]);
-                    curl_setopt($chNotif, CURLOPT_RETURNTRANSFER, true);
-                    curl_setopt($chNotif, CURLOPT_TIMEOUT, 5); // Increase timeout for debugging
-                    curl_setopt($chNotif, CURLOPT_NOSIGNAL, 1);
-                    curl_setopt($chNotif, CURLOPT_SSL_VERIFYPEER, true);
-                    curl_setopt($chNotif, CURLOPT_SSL_VERIFYHOST, 2); // [FIX P12-C1]
-                    $resNotif = curl_exec($chNotif);
-                    $httpCode = curl_getinfo($chNotif, CURLINFO_HTTP_CODE);
-                    if ($resNotif === false) {
-                        error_log("TRACE: Form cURL Notification Error: " . curl_error($chNotif));
-                    } else {
-                        error_log("TRACE: Form notification cURL success. HTTP Code: $httpCode. Response: " . substr($resNotif, 0, 200));
+                    // Direct local execution of worker_notify.php to bypass loopback firewall 403 blocks
+                    try {
+                        $data = $notifyPayload;
+                        $backupMailer = isset($mailer) ? $mailer : null;
+                        
+                        require __DIR__ . '/worker_notify.php';
+                        
+                        if ($backupMailer) {
+                            $mailer = $backupMailer;
+                        }
+                        error_log("TRACE: Form notification local require SUCCESS.");
+                    } catch (Exception $eNotifyLocal) {
+                        error_log("TRACE: Form notification local require FAILED. Error: " . $eNotifyLocal->getMessage());
                     }
-                    curl_close($chNotif);
                 } catch (Exception $eNotif) {
                     error_log("Form Notification Error: " . $eNotif->getMessage());
                 }

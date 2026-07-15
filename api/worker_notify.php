@@ -15,16 +15,20 @@ if (!$data || empty($data['emails']) || empty($data['html'])) {
 }
 
 // 1. Phản hồi cho người gửi (API script) ngay lập tức để ngắt kết nối cURL
-if (session_id()) session_write_close();
-ob_start();
-echo json_encode(["status" => "processing", "message" => "Background notification queued."]);
-header("Content-Length: " . ob_get_length());
-header("Connection: close");
-ob_end_flush();
-if (ob_get_level() > 0) ob_flush();
-flush();
-if (function_exists('fastcgi_finish_request')) {
-    fastcgi_finish_request();
+// Only run response headers if not included directly by another script
+$isIncluded = (basename($_SERVER['SCRIPT_FILENAME']) !== 'worker_notify.php');
+if (!$isIncluded) {
+    if (session_id()) session_write_close();
+    ob_start();
+    echo json_encode(["status" => "processing", "message" => "Background notification queued."]);
+    header("Content-Length: " . ob_get_length());
+    header("Connection: close");
+    ob_end_flush();
+    if (ob_get_level() > 0) ob_flush();
+    flush();
+    if (function_exists('fastcgi_finish_request')) {
+        fastcgi_finish_request();
+    }
 }
 
 // 2. Bắt đầu gửi email ngầm (Mất 2-10 giây)

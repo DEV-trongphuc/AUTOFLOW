@@ -255,25 +255,22 @@ try {
                 }
             }
 
-            // Priority trigger worker
-            $cronSecret = getenv('CRON_SECRET') ?: 'autoflow_cron_2026';
-            $workerUrl = API_BASE_URL . "/worker_priority.php?" . http_build_query([
-                'trigger_type' => 'custom_event', 
-                'target_id' => $eventId, 
-                'subscriber_id' => $sid,
-                'secret' => $cronSecret
-            ]);
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, $workerUrl);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 2); // Safe to increase slightly in background
-            curl_setopt($ch, CURLOPT_NOSIGNAL, 1);
-            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, ['X-Cron-Secret: ' . $cronSecret]);
-            @curl_exec($ch);
-            curl_close($ch);
+            // Priority trigger worker (Direct local execution to bypass WAF/firewall 403 blocks)
+            try {
+                $cronSecret = getenv('CRON_SECRET') ?: 'autoflow_cron_2026';
+                $_GET['trigger_type'] = 'custom_event';
+                $_GET['target_id'] = $eventId;
+                $_GET['subscriber_id'] = $sid;
+                $_GET['secret'] = $cronSecret;
+                
+                $backupMailer = isset($mailer) ? $mailer : null;
+                require __DIR__ . '/worker_priority.php';
+                if ($backupMailer) {
+                    $mailer = $backupMailer;
+                }
+            } catch (Exception $ePriority) {
+                error_log("Custom Event Priority Trigger Local Error: " . $ePriority->getMessage());
+            }
 
             // ---- [NOTIFICATION EMAIL] Gửi thông báo khi có sự kiện mới (CHẠY THỰC THI NGẦM) ----
             if (!empty($eventRow['notification_enabled']) && !empty($eventRow['notification_emails'])) {
