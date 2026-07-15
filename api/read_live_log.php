@@ -9,7 +9,10 @@ if (!hash_equals($cronSecret, $passedSecret)) {
     exit;
 }
 
-function tailFile($filepath, $lines = 40) {
+// Test writing to php error log
+error_log("--- TEST ERROR LOG ENTRY AT " . date('Y-m-d H:i:s') . " ---");
+
+function tailFile($filepath, $lines = 15) {
     if (!file_exists($filepath)) return "File not found: " . $filepath . "\n";
     $data = file($filepath);
     $lineCount = count($data);
@@ -17,20 +20,13 @@ function tailFile($filepath, $lines = 40) {
     return implode("", array_slice($data, $start));
 }
 
-echo "--- LAST 40 LINES OF error_log --- \n";
-echo tailFile(__DIR__ . '/error_log', 40);
+echo "--- LAST 15 LINES OF error_log --- \n";
+echo tailFile(__DIR__ . '/error_log', 15);
 
-echo "\n--- SMTP CONFIGURATION FOR WS 1 --- \n";
-try {
-    $stmt = $pdo->prepare("SELECT `key`, `value` FROM system_settings WHERE workspace_id = 1 AND `key` LIKE 'smtp%'");
-    $stmt->execute();
-    $settings = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    foreach ($settings as &$s) {
-        if (strpos($s['key'], 'pass') !== false) {
-            $s['value'] = '********';
-        }
-    }
-    print_r($settings);
-} catch (Exception $e) {
-    echo "Database Error: " . $e->getMessage() . "\n";
+echo "\n--- CPANEL GIT REPOSITORIES --- \n";
+$repoDir = '/home/vhvxoigh/repositories';
+if (is_dir($repoDir)) {
+    print_r(scandir($repoDir));
+} else {
+    echo "Directory not found: " . $repoDir . "\n";
 }
