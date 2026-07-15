@@ -9,7 +9,13 @@ if (!hash_equals($cronSecret, $passedSecret)) {
     exit;
 }
 
-echo "--- FILE MTOMES --- \n";
-echo "forms.php: " . date("Y-m-d H:i:s", filemtime(__DIR__ . '/forms.php')) . "\n";
-echo "worker_notify.php: " . date("Y-m-d H:i:s", filemtime(__DIR__ . '/worker_notify.php')) . "\n";
-echo "read_live_log.php: " . date("Y-m-d H:i:s", filemtime(__FILE__)) . "\n";
+function tailFile($filepath, $lines = 40) {
+    if (!file_exists($filepath)) return "File not found: " . $filepath . "\n";
+    $data = file($filepath);
+    $lineCount = count($data);
+    $start = max(0, $lineCount - $lines);
+    return implode("", array_slice($data, $start));
+}
+
+echo "--- LAST 40 LINES OF error_log --- \n";
+echo tailFile(__DIR__ . '/error_log', 40);
