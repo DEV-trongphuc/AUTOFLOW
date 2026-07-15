@@ -9,13 +9,17 @@ if (!hash_equals($cronSecret, $passedSecret)) {
     exit;
 }
 
-function tailFile($filepath, $lines = 100) {
-    if (!file_exists($filepath)) return "File not found: " . $filepath . "\n";
-    $data = file($filepath);
-    $lineCount = count($data);
-    $start = max(0, $lineCount - $lines);
-    return implode("", array_slice($data, $start));
+echo "--- TESTING SHELL_EXEC --- \n";
+$output = shell_exec('php -v');
+if ($output === null) {
+    echo "shell_exec returned null or is disabled.\n";
+} else {
+    echo "shell_exec works! Output:\n$output\n";
 }
 
-echo "--- LAST 100 LINES OF error_log --- \n";
-echo tailFile(__DIR__ . '/error_log', 100);
+echo "\n--- TESTING EXEC --- \n";
+$outArr = [];
+$retVal = -1;
+exec('php -v', $outArr, $retVal);
+echo "exec return code: $retVal\n";
+echo "exec output:\n" . implode("\n", $outArr) . "\n";
