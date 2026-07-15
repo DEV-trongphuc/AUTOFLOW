@@ -27,7 +27,8 @@ if (function_exists('fastcgi_finish_request')) {
 
 // 2. Bắt đầu gửi email ngầm (Mất 2-10 giây)
 try {
-    $mailer = new Mailer($pdo);
+    $workspaceId = isset($data['workspace_id']) ? (int)$data['workspace_id'] : 0;
+    $mailer = new Mailer($pdo, API_BASE_URL, 'marketing@ka-en.com.vn', $workspaceId);
     $errTmp = '';
     
     $subject = $data['subject'] ?? 'System Notification';
@@ -44,7 +45,8 @@ try {
             $html, 
             [], 
             $errTmp, 
-            $ccEmails
+            $ccEmails,
+            $workspaceId
         );
     }
 } catch (Exception $e) {

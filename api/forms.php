@@ -609,11 +609,12 @@ try {
                         'emails' => array_values($notifEmails),
                         'cc_emails' => array_values($ccEmails),
                         'subject' => $subject,
-                        'html' => $html
+                        'html' => $html,
+                        'workspace_id' => $form_ws_id
                     ];
 
-                    $notifyUrl = API_BASE_URL . "/worker_notify.php";
                     $cronSecret = getenv('CRON_SECRET') ?: 'autoflow_cron_2026';
+                    $notifyUrl = API_BASE_URL . "/worker_notify.php?secret=" . urlencode($cronSecret);
                     $chNotif = curl_init($notifyUrl);
                     curl_setopt($chNotif, CURLOPT_POST, true);
                     curl_setopt($chNotif, CURLOPT_POSTFIELDS, json_encode($notifyPayload));

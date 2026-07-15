@@ -136,9 +136,10 @@ if ($action === 'generate') {
         ";
     }
 
-    $mailer = new Mailer($pdo);
+    $workspaceId = isset($profile['workspace_id']) ? (int)$profile['workspace_id'] : 0;
+    $mailer = new Mailer($pdo, API_BASE_URL, 'marketing@ka-en.com.vn', $workspaceId);
     $err = '';
-    if (!$mailer->dispatchRaw($email, $subject, $html, [], $err)) {
+    if (!$mailer->dispatchRaw($email, $subject, $html, [], $err, [], $workspaceId)) {
         // Even if email fails, we might still want to return success but log it?
         // Let's return error so frontend knows it failed
         $stmtDel = $pdo->prepare("DELETE FROM otp_codes WHERE id = ?");
