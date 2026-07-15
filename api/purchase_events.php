@@ -255,11 +255,16 @@ try {
             }
 
             // Priority trigger worker
-            $workerUrl = API_BASE_URL . "/worker_priority.php?" . http_build_query(['trigger_type' => 'purchase', 'target_id' => $eventId, 'subscriber_id' => $sid]);
             $cronSecret = getenv('CRON_SECRET') ?: 'autoflow_cron_2026';
+            $workerUrl = API_BASE_URL . "/worker_priority.php?" . http_build_query([
+                'trigger_type' => 'purchase', 
+                'target_id' => $eventId, 
+                'subscriber_id' => $sid,
+                'secret' => $cronSecret
+            ]);
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, $workerUrl);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, false);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_TIMEOUT, 2); // Safe to increase slightly now that it's in background
             curl_setopt($ch, CURLOPT_NOSIGNAL, 1);
             curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
