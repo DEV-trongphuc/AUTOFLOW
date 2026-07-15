@@ -7,6 +7,7 @@
 $errorLogFile = __DIR__ . '/worker_error.log';
 $debugLogFile = __DIR__ . '/debug_priority.log';
 
+$isIncluded = (basename($_SERVER['SCRIPT_FILENAME']) !== 'worker_priority.php');
 try {
     // PREVENT SCRIPT ABORTION WHEN CURL DISCONNECTS
     ignore_user_abort(true);
@@ -55,7 +56,7 @@ require_once __DIR__ . '/worker_guard.php';
     if ($priorityDepth > 8) {
         traceLog("[Priority] ABORT: Max depth (8) exceeded. Possible infinite loop.");
         file_put_contents($debugLogFile, "Aborting: Max depth reached (8)\n", FILE_APPEND);
-        exit;
+        if ($isIncluded) return; else exit;
     }
 
     // [MONITOR] Warn at depth 6+ without hard-failing — helps detect unexpectedly deep chains
@@ -528,7 +529,7 @@ try {
             $logs[] = "[Priority-Enroll] No matching active flow for $priorityTriggerType ID $priorityTargetId. Exiting.";
             $pdo->commit();
             file_put_contents($debugLogFile, "No matching flow found - committed and exiting\n", FILE_APPEND | LOCK_EX);
-            exit;
+            if ($isIncluded) return; else exit;
         }
 
         // FIX: COMMIT THE TRANSACTION AFTER SUCCESSFUL ENROLLMENT!
@@ -575,7 +576,7 @@ try {
             if ($initialStatus === 'processing') {
                 $logs[] = "[Priority-Chain] Item $priorityQueueId already 'processing' (race condition guard). Skipping to prevent duplicate.";
                 $pdo->commit();
-                exit;
+                if ($isIncluded) return; else exit;
             }
 
             $pdo->prepare("UPDATE subscriber_flow_states SET status = 'processing', updated_at = NOW() WHERE id = ? AND workspace_id = ?")->execute([$priorityQueueId, $priorityWorkspaceId]);
@@ -590,7 +591,7 @@ try {
         } else {
             $logs[] = "[Priority-Chain] Item $priorityQueueId not found, locked by another worker, or not in 'waiting'/'processing' state. Exiting without further action.";
             $pdo->commit();
-            exit;
+            if ($isIncluded) return; else exit;
         }
 
     }
@@ -620,7 +621,7 @@ try {
         if (empty($batchItems)) {
             $logs[] = "[Priority-Batch] No waiting items found. Exiting.";
             $pdo->commit();
-            exit;
+            if ($isIncluded) return; else exit;
         }
 
         // [FIX] Replace 50 sequential cURL calls with curl_multi_exec with concurrency cap.
@@ -679,7 +680,7 @@ try {
 
         $logs[] = "[Priority-Batch] Triggered workers for " . count($batchItems) . " items (concurrency: $CONCURRENCY).";
         $pdo->commit();
-        exit;
+        if ($isIncluded) return; else exit;
     }
     // Scenario C: Triggered for immediate CAMPAIGN sending - DEPRECATED/REDIRECTED
     else if ((isset($_GET['type']) && $_GET['type'] === 'campaign') && !empty($_GET['id'])) {
@@ -689,11 +690,11 @@ try {
         // Optional: We could trigger worker_campaign.php here as a fail-safe, but seeing the logs is better for debugging.
         $pdo->commit();
         echo json_encode(['status' => 'redirected', 'message' => 'Campaign triggering via priority is deprecated', 'logs' => $logs]);
-        exit;
+        if ($isIncluded) return; else exit;
     } else {
         $logs[] = "[Priority] No valid priority trigger parameters or queue ID received. Exiting.";
         $pdo->commit();
-        exit;
+        if ($isIncluded) return; else exit;
     }
 
     // --- SHARED DATA FETCHING (PRE-CHAIN) ---
@@ -708,7 +709,7 @@ try {
         $pdo->prepare("UPDATE subscriber_flow_states SET status = 'unsubscribed', updated_at = NOW() WHERE id = ? AND workspace_id = ?")->execute([$queueId, $priorityWorkspaceId]);
         $logs[] = "[Priority-Exit] Sub {$subscriberId} is unsubscribed. Marking unsubscribed and skipping chain.";
         $pdo->commit();
-        exit;
+        if ($isIncluded) return; else exit;
     }
 
     // Optimization: Cache frequency check (GLOBAL)
