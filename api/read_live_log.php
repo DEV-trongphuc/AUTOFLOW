@@ -9,13 +9,16 @@ if (!hash_equals($cronSecret, $passedSecret)) {
     exit;
 }
 
-function tailFile($filepath, $lines = 15) {
-    if (!file_exists($filepath)) return "File not found: " . $filepath . "\n";
-    $data = file($filepath);
-    $lineCount = count($data);
-    $start = max(0, $lineCount - $lines);
-    return implode("", array_slice($data, $start));
-}
+try {
+    // Force update the notification email in the DB
+    $stmtUp = $pdo->prepare("UPDATE forms SET notification_emails = 'phucht@ideas.edu.vn' WHERE name = 'AI Trial'");
+    $stmtUp->execute();
+    echo "SUCCESS: Updated form notification_emails to phucht@ideas.edu.vn in database.\n\n";
 
-echo "--- LAST 15 LINES OF error_log --- \n";
-echo tailFile(__DIR__ . '/error_log', 15);
+    echo "--- UPDATED AI TRIAL FORM DETAILS --- \n";
+    $stmt = $pdo->prepare("SELECT id, name, workspace_id, status, notification_enabled, notification_emails, notification_cc_emails FROM forms WHERE name LIKE ?");
+    $stmt->execute(['%AI Trial%']);
+    print_r($stmt->fetchAll(PDO::FETCH_ASSOC));
+} catch (Exception $e) {
+    echo "Database Error: " . $e->getMessage() . "\n";
+}
