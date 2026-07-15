@@ -624,7 +624,10 @@ try {
                     curl_setopt($chNotif, CURLOPT_NOSIGNAL, 1);
                     curl_setopt($chNotif, CURLOPT_SSL_VERIFYPEER, true);
                     curl_setopt($chNotif, CURLOPT_SSL_VERIFYHOST, 2); // [FIX P12-C1]
-                    @curl_exec($chNotif);
+                    $resNotif = curl_exec($chNotif);
+                    if ($resNotif === false) {
+                        error_log("Form cURL Notification Error: " . curl_error($chNotif));
+                    }
                     curl_close($chNotif);
                 } catch (Exception $eNotif) {
                     error_log("Form Notification Error: " . $eNotif->getMessage());

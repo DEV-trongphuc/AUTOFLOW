@@ -39,7 +39,7 @@ try {
     foreach ($emails as $to) {
         if (!filter_var($to, FILTER_VALIDATE_EMAIL)) continue;
         
-        $mailer->dispatchRaw(
+        $resMail = $mailer->dispatchRaw(
             $to, 
             $subject, 
             $html, 
@@ -48,6 +48,9 @@ try {
             $ccEmails,
             $workspaceId
         );
+        if (!$resMail) {
+            error_log("Worker_Notify dispatchRaw failed for $to. Error: " . $errTmp);
+        }
     }
 } catch (Exception $e) {
     error_log("Worker_Notify Error: " . $e->getMessage());
