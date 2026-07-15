@@ -1,5 +1,4 @@
 <?php
-// Secure this script with the cron secret so unauthorized users cannot read logs
 require_once 'db_connect.php';
 $cronSecret = getenv('CRON_SECRET') ?: 'autoflow_cron_2026';
 $passedSecret = $_GET['secret'] ?? '';
@@ -10,18 +9,21 @@ if (!hash_equals($cronSecret, $passedSecret)) {
     exit;
 }
 
-$logFile = __DIR__ . '/error_log';
-if (file_exists($logFile)) {
-    echo "--- ERROR LOG --- \n";
-    echo file_get_contents($logFile);
-} else {
-    echo "No error_log file found at: " . $logFile;
+function tailFile($filepath, $lines = 100) {
+    if (!file_exists($filepath)) return "File not found: " . $filepath . "\n";
+    $data = file($filepath);
+    $lineCount = count($data);
+    $start = max(0, $lineCount - $lines);
+    return implode("", array_slice($data, $start));
 }
 
+echo "--- LAST 100 LINES OF mail_api/error_log --- \n";
+echo tailFile(__DIR__ . '/error_log', 100);
+
 $phpErrorLog = ini_get('error_log');
-if ($phpErrorLog && file_exists($phpErrorLog)) {
-    echo "\n\n--- PHP INI ERROR LOG ($phpErrorLog) --- \n";
-    echo file_get_contents($phpErrorLog);
+echo "\n\n--- LAST 100 LINES OF PHP INI ERROR LOG ($phpErrorLog) --- \n";
+if ($phpErrorLog) {
+    echo tailFile($phpErrorLog, 100);
 } else {
-    echo "\n\nNo PHP ini error log found or not readable: " . $phpErrorLog;
+    echo "No ini error_log path defined.\n";
 }
