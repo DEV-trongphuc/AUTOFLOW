@@ -9,26 +9,18 @@ if (!hash_equals($cronSecret, $passedSecret)) {
     exit;
 }
 
-echo "--- AI TRIAL FORM DETAILS --- \n";
+echo "--- RECENT SUBSCRIBERS --- \n";
 try {
-    $stmt = $pdo->prepare("SELECT id, name, workspace_id, status, notification_enabled, notification_emails, notification_cc_emails FROM forms WHERE name LIKE ?");
-    $stmt->execute(['%AI Trial%']);
-    $forms = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    print_r($forms);
-    
-    if (!empty($forms)) {
-        $wsId = $forms[0]['workspace_id'];
-        echo "\n--- SMTP SETTINGS FOR WORKSPACE $wsId --- \n";
-        $stmt2 = $pdo->prepare("SELECT `key`, `value` FROM system_settings WHERE workspace_id = ? AND `key` LIKE 'smtp%'");
-        $stmt2->execute([$wsId]);
-        $settings = $stmt2->fetchAll(PDO::FETCH_ASSOC);
-        foreach ($settings as &$s) {
-            if (strpos($s['key'], 'pass') !== false) {
-                $s['value'] = '********';
-            }
-        }
-        print_r($settings);
-    }
+    $stmt = $pdo->query("SELECT email, status, source, joined_at FROM subscribers ORDER BY joined_at DESC LIMIT 5");
+    print_r($stmt->fetchAll(PDO::FETCH_ASSOC));
+} catch (Exception $e) {
+    echo "Database Error: " . $e->getMessage() . "\n";
+}
+
+echo "\n--- RECENT ACTIVITY LOGS --- \n";
+try {
+    $stmt = $pdo->query("SELECT a.created_at, a.type, a.reference_id, s.email FROM subscriber_activity a LEFT JOIN subscribers s ON a.subscriber_id = s.id ORDER BY a.id DESC LIMIT 10");
+    print_r($stmt->fetchAll(PDO::FETCH_ASSOC));
 } catch (Exception $e) {
     echo "Database Error: " . $e->getMessage() . "\n";
 }
