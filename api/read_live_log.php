@@ -9,11 +9,17 @@ if (!hash_equals($cronSecret, $passedSecret)) {
     exit;
 }
 
-echo "--- FORM SUBMISSIONS IN DB --- \n";
+echo "--- SMTP SETTINGS FOR WORKSPACE 0 (GLOBAL) --- \n";
 try {
-    $stmt = $pdo->prepare("SELECT a.created_at, a.type, a.reference_id, s.email, a.workspace_id FROM subscriber_activity a LEFT JOIN subscribers s ON a.subscriber_id = s.id WHERE a.type = 'form_submit' AND a.reference_id = ?");
-    $stmt->execute(['15bc1263ceaec6fc77fa8b475c8aaf4e']);
-    print_r($stmt->fetchAll(PDO::FETCH_ASSOC));
+    $stmt = $pdo->prepare("SELECT `key`, `value` FROM system_settings WHERE workspace_id = 0 AND `key` LIKE 'smtp%'");
+    $stmt->execute();
+    $settings = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    foreach ($settings as &$s) {
+        if (strpos($s['key'], 'pass') !== false) {
+            $s['value'] = '********';
+        }
+    }
+    print_r($settings);
 } catch (Exception $e) {
     echo "Database Error: " . $e->getMessage() . "\n";
 }
