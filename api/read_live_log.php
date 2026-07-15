@@ -20,10 +20,11 @@ function tailFile($filepath, $lines = 100) {
 echo "--- LAST 100 LINES OF mail_api/error_log --- \n";
 echo tailFile(__DIR__ . '/error_log', 100);
 
-$phpErrorLog = ini_get('error_log');
-echo "\n\n--- LAST 100 LINES OF PHP INI ERROR LOG ($phpErrorLog) --- \n";
-if ($phpErrorLog) {
-    echo tailFile($phpErrorLog, 100);
-} else {
-    echo "No ini error_log path defined.\n";
+echo "\n\n--- LAST 20 MAIL DELIVERY LOGS --- \n";
+try {
+    $stmt = $pdo->query("SELECT id, recipient, subject, status, error_message, sent_at, workspace_id FROM mail_delivery_logs ORDER BY id DESC LIMIT 20");
+    $logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    print_r($logs);
+} catch (Exception $e) {
+    echo "Error querying mail_delivery_logs: " . $e->getMessage() . "\n";
 }
