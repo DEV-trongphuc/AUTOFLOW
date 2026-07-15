@@ -2,16 +2,21 @@
 // api/worker_notify.php
 // Background worker để gửi Notification Emails bất đồng bộ (tránh block luồng API chính)
 require_once 'db_connect.php';
-error_log("TRACE: worker_notify.php hit. IP: " . ($_SERVER['REMOTE_ADDR'] ?? 'none') . ", payload size: " . strlen(file_get_contents("php://input")));
-require_once __DIR__ . '/worker_guard.php';
+$isIncluded = (basename($_SERVER['SCRIPT_FILENAME']) !== 'worker_notify.php');
+if (!$isIncluded) {
+    error_log("TRACE: worker_notify.php hit. IP: " . ($_SERVER['REMOTE_ADDR'] ?? 'none') . ", payload size: " . strlen(file_get_contents("php://input")));
+    require_once __DIR__ . '/worker_guard.php';
+}
 require_once 'Mailer.php';
 
-$data = json_decode(file_get_contents("php://input"), true);
+if (!isset($data)) {
+    $data = json_decode(file_get_contents("php://input"), true);
+}
 if (!$data || empty($data['emails']) || empty($data['html'])) {
     error_log("TRACE: worker_notify.php validation failed: missing emails or html");
     http_response_code(400);
     echo "Thiếu dữ liệu: emails, html";
-    exit;
+    if ($isIncluded) return; else exit;
 }
 
 // 1. Phản hồi cho người gửi (API script) ngay lập tức để ngắt kết nối cURL
