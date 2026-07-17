@@ -465,6 +465,7 @@ const EmailCanvas: React.FC<EmailCanvasProps> = ({
                 }}
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={(e) => handleDrop(e, 'root')}
+                onClick={() => handleSelectBlock(null)}
             >
                 <div className={`transition-all duration-500 ease-out mx-auto flex flex-col ${isMobile ? 'py-10 h-full' : 'p-8 pb-24'} ${!isMobile ? 'w-full' : ''}`}>
                     <div

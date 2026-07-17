@@ -233,7 +233,7 @@ const CampaignTableRow = React.memo(React.forwardRef<HTMLTableRowElement, Campai
                         <button
                             onClick={(e) => { e.stopPropagation(); onPlayFlow(c); }}
                             disabled={c.linkedFlow?.status !== 'active'}
-                            className={`p-2 rounded-xl transition-all shadow-sm border ${c.linkedFlow?.status !== 'active'
+                            className={`p-2 rounded-xl transition-all shadow-sm border flex items-center justify-center ${c.linkedFlow?.status !== 'active'
                                 ? 'text-slate-300 bg-slate-50 border-slate-100 cursor-not-allowed'
                                 : 'text-amber-600 hover:text-white bg-amber-50 hover:bg-amber-600 hover:shadow-md border-amber-100'
                                 }`}
@@ -242,7 +242,7 @@ const CampaignTableRow = React.memo(React.forwardRef<HTMLTableRowElement, Campai
                             <Play className="w-4 h-4 fill-current" />
                         </button>
                     )}
-                    <button onClick={(e) => { e.stopPropagation(); onDelete(c.id); }} className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all duration-500" title="Xóa">
+                    <button onClick={(e) => { e.stopPropagation(); onDelete(c.id); }} className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all duration-500 flex items-center justify-center" title="Xóa">
                         <Trash2 className="w-4 h-4" />
                     </button>
                     {!isWaiting && (

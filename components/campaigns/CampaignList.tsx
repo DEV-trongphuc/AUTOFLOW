@@ -229,7 +229,7 @@ const CampaignList: React.FC<CampaignListProps> = ({ campaigns, loading, onSelec
                                             <button 
                                                 onClick={() => isAdmin && onPlayFlow(c)} 
                                                 disabled={!isAdmin}
-                                                className={`p-2 rounded-xl transition-all shadow-sm border ${isAdmin ? 'text-emerald-600 hover:text-white bg-emerald-50 hover:bg-emerald-500 hover:shadow-md border-emerald-100' : 'text-slate-300 bg-slate-50 border-slate-100 cursor-not-allowed'}`} 
+                                                className={`p-2 rounded-xl transition-all shadow-sm border flex items-center justify-center ${isAdmin ? 'text-emerald-600 hover:text-white bg-emerald-50 hover:bg-emerald-500 hover:shadow-md border-emerald-100' : 'text-slate-300 bg-slate-50 border-slate-100 cursor-not-allowed'}`} 
                                                 title={isAdmin ? "Khởi chạy ngay" : "Chỉ Admin mới có quyền thực hiện thao tác này"}
                                             >
                                                 <Play className="w-4 h-4 fill-current" />
@@ -238,7 +238,7 @@ const CampaignList: React.FC<CampaignListProps> = ({ campaigns, loading, onSelec
                                         <button 
                                             onClick={() => isAdmin && onDelete(c.id)} 
                                             disabled={!isAdmin}
-                                            className={`p-2 rounded-xl transition-all ${isAdmin ? 'text-slate-400 hover:text-rose-600 hover:bg-rose-50' : 'text-slate-200 cursor-not-allowed hidden'}`} 
+                                            className={`p-2 rounded-xl transition-all flex items-center justify-center ${isAdmin ? 'text-slate-400 hover:text-rose-600 hover:bg-rose-50' : 'text-slate-200 cursor-not-allowed hidden'}`} 
                                             title={isAdmin ? "Xóa" : "Chỉ Admin mới có quyền thực hiện thao tác này"}
                                         >
                                             <Trash2 className="w-4 h-4" />

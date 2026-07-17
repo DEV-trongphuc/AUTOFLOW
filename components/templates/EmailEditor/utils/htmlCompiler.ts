@@ -709,15 +709,7 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
                     const isHeader = headerRow && ri === 0;
                     const bg = getCellBg(ri, ci);
                     const color = getCellColor(ri, ci);
-                    const formattedContent = cell.content
-                        ? cell.content
-                            .replace(/&/g, '&amp;')
-                            .replace(/</g, '&lt;')
-                            .replace(/>/g, '&gt;')
-                            .replace(/"/g, '&quot;')
-                            .replace(/'/g, '&#039;')
-                            .replace(/\n/g, '<br />')
-                        : '&nbsp;';
+                    const formattedContent = cell.content || '&nbsp;';
                     return `<td align="${cellAlign}" valign="middle" style="padding: ${cellPad}; border: ${borderStyle}; font-family: ${bodyStyle.fontFamily || "'Roboto', Arial, sans-serif"}; font-size: ${fontSize}; font-weight: ${isHeader ? 'bold' : 'normal'}; color: ${color}; text-align: ${cellAlign}; background-color: ${bg}; white-space: pre-wrap; word-break: break-word;">${formattedContent}</td>`;
                 }).join('');
                 return `<tr>${tds}</tr>`;

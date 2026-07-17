@@ -319,7 +319,7 @@ const MetaAutomation: React.FC = () => {
                                 <div className="flex gap-1" onClick={e => e.stopPropagation()}>
                                     <button
                                         onClick={() => toggleStatus(scenario)}
-                                        className={`p-2.5 rounded-xl transition-all ${scenario.status === 'active' ? 'bg-emerald-50 text-emerald-500 hover:bg-emerald-100' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}
+                                        className={`p-2.5 rounded-xl transition-all flex items-center justify-center ${scenario.status === 'active' ? 'bg-emerald-50 text-emerald-500 hover:bg-emerald-100' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}
                                         title={scenario.status === 'active' ? 'Dừng' : 'Kích hoạt'}
                                     >
                                         <Play className={`w-4 h-4 ${scenario.status === 'active' ? 'hidden' : ''}`} />
@@ -327,7 +327,7 @@ const MetaAutomation: React.FC = () => {
                                     </button>
                                     <button
                                         onClick={() => handleDelete(scenario.id)}
-                                        className="p-2.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all"
+                                        className="p-2.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all flex items-center justify-center"
                                     >
                                         <Trash2 className="w-4 h-4" />
                                     </button>

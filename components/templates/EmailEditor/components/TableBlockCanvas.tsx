@@ -3,10 +3,11 @@ import React, { useRef, useState, useCallback, useEffect } from 'react';
 import {
     Plus, Trash2, ChevronUp, ChevronDown, ChevronLeft, ChevronRight,
     AlignLeft, AlignCenter, AlignRight, ChevronsLeftRight, Palette,
-    List, ListOrdered
+    List, ListOrdered, Link as LinkIcon
 } from 'lucide-react';
 import { EmailBlock, TableCell } from '../../../../types';
 import { useEditorContext } from '../contexts/EditorContext';
+import InputModal from '../../../common/InputModal';
 
 // Fallback swatches nếu usedColors chưa có giá trị
 const FALLBACK_SWATCHES = [
@@ -160,6 +161,47 @@ const TableBlockCanvas: React.FC<Props> = ({ block, onUpdate, isSelected }) => {
     const dragWidths = useRef<number[]>([]);
     const lastContent = useRef(block.content);
     const blurTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    
+    const [showLinkModal, setShowLinkModal] = useState(false);
+    const savedRange = useRef<Range | null>(null);
+    const keepEditingRef = useRef(false);
+
+    const saveSelection = () => {
+        const sel = window.getSelection();
+        if (sel && sel.rangeCount > 0) {
+            savedRange.current = sel.getRangeAt(0).cloneRange();
+        }
+    };
+
+    const restoreSelection = () => {
+        const sel = window.getSelection();
+        if (sel && savedRange.current) {
+            sel.removeAllRanges();
+            sel.addRange(savedRange.current);
+        }
+    };
+
+    const handleLinkClick = () => {
+        keepEditingRef.current = true;
+        saveSelection();
+        setShowLinkModal(true);
+    };
+
+    const handleLinkConfirm = (url: string) => {
+        restoreSelection();
+        if (url) {
+            document.execCommand('createLink', false, url.startsWith('http') ? url : 'https://' + url);
+            if (editCell) {
+                const el = document.getElementById(`cell-editor-${editCell.r}-${editCell.c}`);
+                if (el) {
+                    patchCell(editCell.r, editCell.c, { content: el.innerHTML });
+                    el.focus();
+                }
+            }
+        }
+        keepEditingRef.current = false;
+        setShowLinkModal(false);
+    };
 
     // Sync from props when block.content changes externally
     useEffect(() => {
@@ -306,41 +348,16 @@ const TableBlockCanvas: React.FC<Props> = ({ block, onUpdate, isSelected }) => {
     }, []);
 
     const insertListInCell = (r: number, c: number, type: 'bullet' | 'number') => {
-        const activeEl = document.activeElement as HTMLTextAreaElement;
-        if (activeEl && activeEl.tagName === 'TEXTAREA') {
-            const start = activeEl.selectionStart;
-            const end = activeEl.selectionEnd;
-            const text = activeEl.value;
-            
-            let prefix = '';
-            if (type === 'bullet') {
-                prefix = '\n- ';
-                if (start === 0 || text[start - 1] === '\n') {
-                    prefix = '- ';
-                }
-            } else {
-                prefix = '\n1. ';
-                if (start === 0 || text[start - 1] === '\n') {
-                    prefix = '1. ';
-                }
-            }
-            
-            const newContent = text.substring(0, start) + prefix + text.substring(end);
-            patchCell(r, c, { content: newContent });
-            
-            setTimeout(() => {
-                activeEl.focus();
-                const newCursorPos = start + prefix.length;
-                activeEl.setSelectionRange(newCursorPos, newCursorPos);
-                activeEl.style.height = 'auto';
-                activeEl.style.height = activeEl.scrollHeight + 'px';
-            }, 50);
+        const activeEl = document.activeElement as HTMLElement;
+        if (activeEl && activeEl.id === `cell-editor-${r}-${c}`) {
+            document.execCommand(type === 'bullet' ? 'insertUnorderedList' : 'insertOrderedList');
+            patchCell(r, c, { content: activeEl.innerHTML });
         } else {
             const cell = cells[r]?.[c];
             if (cell) {
                 const current = cell.content || '';
-                const prefix = current === '' ? '' : '\n';
-                const suffix = type === 'bullet' ? '- ' : '1. ';
+                const prefix = current === '' ? '' : '<br />';
+                const suffix = type === 'bullet' ? '<ul><li>&nbsp;</li></ul>' : '<ol><li>&nbsp;</li></ol>';
                 patchCell(r, c, { content: current + prefix + suffix });
             }
         }
@@ -386,6 +403,7 @@ const TableBlockCanvas: React.FC<Props> = ({ block, onUpdate, isSelected }) => {
     };
 
     return (
+        <>
         <div style={{ position: 'relative', userSelect: 'none', overflow: 'visible' }}>
             {/* Auto-equalize */}
             {isSelected && (
@@ -531,6 +549,21 @@ const TableBlockCanvas: React.FC<Props> = ({ block, onUpdate, isSelected }) => {
                                                 <div style={{ width: 1, height: 16, background: '#334155', margin: '0 2px' }} />
 
                                                 <button
+                                                    onMouseDown={e => { e.preventDefault(); e.stopPropagation(); handleLinkClick(); }}
+                                                    style={{
+                                                        padding: '3px 5px', borderRadius: 6, border: 'none', cursor: 'pointer',
+                                                        background: 'transparent',
+                                                        color: '#94a3b8',
+                                                        display: 'flex', alignItems: 'center',
+                                                    }}
+                                                    title="Chèn đường dẫn"
+                                                >
+                                                    <LinkIcon style={{ width: 11, height: 11 }} />
+                                                </button>
+
+                                                <div style={{ width: 1, height: 16, background: '#334155', margin: '0 2px' }} />
+
+                                                <button
                                                     onMouseDown={e => { e.preventDefault(); e.stopPropagation(); insertListInCell(rIdx, cIdx, 'bullet'); }}
                                                     style={{
                                                         padding: '3px 5px', borderRadius: 6, border: 'none', cursor: 'pointer',
@@ -598,47 +631,56 @@ const TableBlockCanvas: React.FC<Props> = ({ block, onUpdate, isSelected }) => {
                                             </div>
                                         )}
 
-                                        {/* Content: textarea (multi-line) khi edit, span khi không */}
+                                        {/* Content: contentEditable div khi edit, span khi không */}
                                         {isSelected && isEditing ? (
-                                            <textarea
+                                            <div
+                                                id={`cell-editor-${rIdx}-${cIdx}`}
+                                                contentEditable
                                                 autoFocus
-                                                className="w-full bg-transparent outline-none resize-none"
+                                                className="w-full bg-transparent outline-none min-h-[1.2em] outline-0"
                                                 style={{
                                                     border: 'none', padding: 0,
                                                     fontSize: fontSize || undefined,
                                                     textAlign: effectiveAlign,
                                                     fontWeight: (headerRow && rIdx === 0) ? 'bold' : 'normal',
                                                     color: cell.color || getCellStyle(rIdx, cIdx, cell).color as string || 'inherit',
-                                                    // Giữ đúng chiều cao tự nhiên — không scroll
-                                                    overflow: 'hidden',
-                                                    minHeight: '1.2em',
                                                     display: 'block',
                                                     width: '100%',
-                                                    // Tự điều chỉnh chiều cao theo nội dung
-                                                    height: 'auto',
                                                     lineHeight: 'inherit',
                                                     fontFamily: 'inherit',
                                                     background: 'transparent',
+                                                    whiteSpace: 'pre-wrap',
+                                                    wordBreak: 'break-word',
                                                 }}
-                                                rows={1}
                                                 ref={el => {
-                                                    if (el) {
-                                                        el.style.height = 'auto';
-                                                        el.style.height = el.scrollHeight + 'px';
+                                                    if (el && document.activeElement !== el) {
+                                                        el.focus();
+                                                        // Move cursor to end of text
+                                                        const range = document.createRange();
+                                                        range.selectNodeContents(el);
+                                                        range.collapse(false);
+                                                        const sel = window.getSelection();
+                                                        if (sel) {
+                                                            sel.removeAllRanges();
+                                                            sel.addRange(range);
+                                                        }
                                                     }
                                                 }}
-                                                value={cell.content}
-                                                onChange={e => {
-                                                    // Auto-resize
-                                                    e.target.style.height = 'auto';
-                                                    e.target.style.height = e.target.scrollHeight + 'px';
-                                                    patchCell(rIdx, cIdx, { content: e.target.value });
+                                                dangerouslySetInnerHTML={{ __html: cell.content }}
+                                                onInput={e => {
+                                                    patchCell(rIdx, cIdx, { content: e.currentTarget.innerHTML });
                                                 }}
                                                 onBlur={() => {
                                                     blurTimer.current = setTimeout(() => {
+                                                        if (keepEditingRef.current) return;
+                                                        if (document.activeElement && (
+                                                            document.activeElement.closest('.table-tooltip')
+                                                        )) {
+                                                            return;
+                                                        }
                                                         setEditCell(null);
                                                         setColorCell(false);
-                                                    }, 150);
+                                                    }, 200);
                                                 }}
                                                 onKeyDown={e => {
                                                     if (e.key === 'Escape') { setEditCell(null); }
@@ -656,7 +698,9 @@ const TableBlockCanvas: React.FC<Props> = ({ block, onUpdate, isSelected }) => {
                                         ) : (
                                             // Non-editing: span hiển thị text + placeholder mờ
                                             <span style={{ display: 'block', width: '100%', position: 'relative', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                                                {cell.content || (
+                                                {cell.content ? (
+                                                    <span dangerouslySetInnerHTML={{ __html: cell.content }} />
+                                                ) : (
                                                     // Placeholder: chỉ hiển thị khi selected, không ảnh hưởng layout
                                                     isSelected ? (
                                                         <span
@@ -762,6 +806,24 @@ const TableBlockCanvas: React.FC<Props> = ({ block, onUpdate, isSelected }) => {
                 )}
             </table>
         </div>
+        <InputModal
+            isOpen={showLinkModal}
+            onClose={() => {
+                keepEditingRef.current = false;
+                setShowLinkModal(false);
+                if (editCell) {
+                    const el = document.getElementById(`cell-editor-${editCell.r}-${editCell.c}`);
+                    if (el) el.focus();
+                }
+            }}
+            onConfirm={handleLinkConfirm}
+            title="Chèn đường dẫn"
+            placeholder="https://example.com"
+            confirmLabel="Chèn"
+            zIndex={100200}
+            isDarkTheme={true}
+        />
+        </>
     );
 };
 
