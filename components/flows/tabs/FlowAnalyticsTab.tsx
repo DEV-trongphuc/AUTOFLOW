@@ -1894,21 +1894,68 @@ const LogItem: React.FC<{
         colorClass = 'text-amber-600 bg-amber-50 border-amber-100';
     }
 
+    const initials = (() => {
+        const fName = log.first_name || '';
+        const lName = log.last_name || '';
+        const name = `${fName} ${lName}`.trim();
+        if (name) {
+            const parts = name.split(/\s+/);
+            if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+            if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+        }
+        return (log.email || 'UN').substring(0, 2).toUpperCase();
+    })();
+
+    const avatarBg = (() => {
+        const fName = log.first_name || '';
+        const lName = log.last_name || '';
+        const email = log.email || '';
+        const colors = [
+            'bg-rose-500', 'bg-pink-500', 'bg-purple-500', 'bg-violet-500',
+            'bg-indigo-500', 'bg-blue-500', 'bg-sky-500', 'bg-cyan-500',
+            'bg-teal-500', 'bg-emerald-500', 'bg-amber-500', 'bg-orange-500'
+        ];
+        const str = `${fName} ${lName} ${email}`;
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+            hash = str.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        const index = Math.abs(hash) % colors.length;
+        return colors[index];
+    })();
+
+    const fullName = `${log.first_name || ''} ${log.last_name || ''}`.trim() || 'Chưa đặt tên';
+
     return (
         <div className={`group px-3 py-3 hover:bg-slate-50 dark:bg-slate-950 transition-all cursor-default border-b border-slate-50/50 ${isGroupItem ? 'bg-slate-50 dark:bg-slate-950/40 ml-4 border-l border-slate-200 dark:border-slate-700/60' : ''}`}>
             <div className="flex items-center gap-2.5">
-                {/* Minimal Icon Box */}
-                <div className={`shrink-0 w-5 h-5 rounded-md flex items-center justify-center border shadow-none transition-transform group-hover:scale-105 ${colorClass.replace('bg-', 'bg-opacity-10 ')}`}>
-                    {React.cloneElement(icon as React.ReactElement<any>, { className: "w-2.5 h-2.5 opacity-80" })}
-                </div>
+                {/* Avatar / Icon Container */}
+                {!isGroupItem ? (
+                    <div className="relative shrink-0 select-none">
+                        {log.avatar ? (
+                            <img src={log.avatar} alt="" className="w-7 h-7 rounded-full object-cover shadow-sm" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                        ) : (
+                            <div className={`w-7 h-7 rounded-full ${avatarBg} flex items-center justify-center text-white font-bold text-[10px] uppercase shadow-sm`}>
+                                {initials}
+                            </div>
+                        )}
+                        {/* Status Icon badge */}
+                        <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full border border-white dark:border-slate-900 bg-white dark:bg-slate-900 flex items-center justify-center shadow-sm">
+                            {React.cloneElement(icon as React.ReactElement<any>, { className: `w-2 h-2 ${colorClass.split(' ')[0]}` })}
+                        </div>
+                    </div>
+                ) : (
+                    <div className={`shrink-0 w-5 h-5 rounded-md flex items-center justify-center border shadow-none transition-transform group-hover:scale-105 ${colorClass.replace('bg-', 'bg-opacity-10 ')}`}>
+                        {React.cloneElement(icon as React.ReactElement<any>, { className: "w-2.5 h-2.5 opacity-80" })}
+                    </div>
+                )}
 
-                {/* Main Content Area: Email and Action Type */}
+                {/* Main Content Area */}
                 <div className="flex-1 flex items-center justify-between min-w-0">
-                    <div className="flex items-center gap-2 min-w-0">
-                        {!isGroupItem && (
-                            <span 
-                                className="text-[10px] font-bold text-slate-600 dark:text-slate-300 truncate max-w-[140px] cursor-pointer hover:text-blue-600 hover:underline" 
-                                title={log.email}
+                    <div className="flex flex-col min-w-0 gap-0.5">
+                        {!isGroupItem ? (
+                            <div 
+                                className="flex flex-col cursor-pointer group/email"
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     if (onSelectSubscriber) {
@@ -1919,10 +1966,19 @@ const LogItem: React.FC<{
                                     }
                                 }}
                             >
+                                <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200 group-hover/email:text-blue-600 group-hover/email:underline truncate max-w-[160px]">
+                                    {fullName}
+                                </span>
+                                <span className="text-[9px] text-slate-400 dark:text-slate-500 truncate max-w-[160px]">
+                                    {log.email}
+                                </span>
+                            </div>
+                        ) : (
+                            <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300 truncate max-w-[140px]">
                                 {log.email}
                             </span>
                         )}
-                        <span className={`text-[8px] font-black uppercase tracking-tight ${colorClass.split(' ')[0]} opacity-60 whitespace-nowrap`}>
+                        <span className={`text-[8px] font-black uppercase tracking-tight ${colorClass.split(' ')[0]} opacity-60 whitespace-nowrap self-start mt-0.5`}>
                             {type.replace(/_/g, ' ')}
                         </span>
                         {log.details && (
