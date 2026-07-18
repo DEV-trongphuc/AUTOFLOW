@@ -25,7 +25,10 @@ import ConfirmModal from '../../common/ConfirmModal';
 import FlowSimulateModal from '../modals/FlowSimulateModal';
 import { generateFlowStepLabels } from '../../../utils/flowLabeling';
 
-const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
+const FlowAnalyticsTab: React.FC<{ 
+    flow: Flow; 
+    onSelectSubscriber?: (subscriber: any) => void;
+}> = memo(({ flow, onSelectSubscriber }) => {
     const navigate = useNavigate();
     const containerRef = useRef<HTMLDivElement>(null);
 
@@ -1659,17 +1662,18 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                                             return (
                                                 <div key={group.id} className="relative">
                                                     <LogItem
-                                                        log={group.main}
-                                                        isGroupItem={false}
-                                                        hasSubs={group.subs.length > 0}
-                                                        isExpanded={group.isExpanded}
-                                                        onToggle={() => toggleGroup(group.id)}
-                                                        subCount={group.subs.length}
-                                                    />
+                                                         log={group.main}
+                                                         isGroupItem={false}
+                                                         hasSubs={group.subs.length > 0}
+                                                         isExpanded={group.isExpanded}
+                                                         onToggle={() => toggleGroup(group.id)}
+                                                         subCount={group.subs.length}
+                                                         onSelectSubscriber={onSelectSubscriber}
+                                                     />
                                                     {group.isExpanded && group.subs.length > 0 && (
                                                         <div className="animate-in slide-in-from-top-1 duration-200">
                                                             {group.subs.map((sub: any, subIndex: number) => (
-                                                                <LogItem key={subIndex} log={sub} isGroupItem={true} />
+                                                                <LogItem key={subIndex} log={sub} isGroupItem={true} onSelectSubscriber={onSelectSubscriber} />
                                                             ))}
                                                         </div>
                                                     )}
@@ -1813,6 +1817,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                 stepId={selectedStepId || undefined}
                 stepData={currentFlow.steps.find((s: any) => s.id === selectedStepId)}
                 onActionComplete={refreshFlow}
+                onSelectSubscriber={onSelectSubscriber}
             />
 
             {/* Inactive Users Modal */}
@@ -1833,6 +1838,7 @@ const FlowAnalyticsTab: React.FC<{ flow: Flow }> = memo(({ flow }) => {
                 stepType="inactive" // Custom type
                 flowId={currentFlow.id}
                 onActionComplete={refreshFlow}
+                onSelectSubscriber={onSelectSubscriber}
             />
 
             <FlowSimulateModal
@@ -1853,7 +1859,8 @@ const LogItem: React.FC<{
     isExpanded?: boolean;
     onToggle?: () => void;
     subCount?: number;
-}> = ({ log, isGroupItem = false, hasSubs = false, isExpanded = false, onToggle, subCount = 0 }) => {
+    onSelectSubscriber?: (subscriber: any) => void;
+}> = ({ log, isGroupItem = false, hasSubs = false, isExpanded = false, onToggle, subCount = 0, onSelectSubscriber }) => {
     const type = log.type || '';
     let icon = <Activity className="w-3.5 h-3.5" />;
     let colorClass = 'text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-950 border-slate-100 dark:border-slate-800/60';
@@ -1899,7 +1906,19 @@ const LogItem: React.FC<{
                 <div className="flex-1 flex items-center justify-between min-w-0">
                     <div className="flex items-center gap-2 min-w-0">
                         {!isGroupItem && (
-                            <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300 truncate max-w-[140px]" title={log.email}>
+                            <span 
+                                className="text-[10px] font-bold text-slate-600 dark:text-slate-300 truncate max-w-[140px] cursor-pointer hover:text-blue-600 hover:underline" 
+                                title={log.email}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (onSelectSubscriber) {
+                                        onSelectSubscriber({
+                                            id: log.subscriber_id || log.id,
+                                            email: log.email
+                                        });
+                                    }
+                                }}
+                            >
                                 {log.email}
                             </span>
                         )}

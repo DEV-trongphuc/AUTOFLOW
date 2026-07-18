@@ -2380,7 +2380,7 @@ const Flows: React.FC = () => {
                                             onReportClick={onReportClickMemo}
                                         />
                                     )}
-                                    {flowViewTab === 'analytics' && <div className="h-full overflow-y-auto w-full"><FlowAnalyticsTab flow={selectedFlow} /></div>}
+                                    {flowViewTab === 'analytics' && <div className="h-full overflow-y-auto w-full"><FlowAnalyticsTab flow={selectedFlow} onSelectSubscriber={setSelectedSubscriberForDetail} /></div>}
                                     {flowViewTab === 'settings' && <div className="h-full overflow-y-auto w-full"><FlowSettingsTab flow={selectedFlow} onUpdate={(d, silent, skipApi) => handleUpdateFlow({ ...selectedFlow, ...d }, silent ?? true, silent ? undefined : "Cập nhật cài đặt", skipApi)} /></div>}
                                     </React.Suspense>
                                 </div>

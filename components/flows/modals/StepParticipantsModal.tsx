@@ -78,6 +78,7 @@ interface StepParticipantsModalProps {
     activeBranchFilter?: string | null;
     onBranchClick?: (branch: string | null) => void;
     isDarkTheme?: boolean;
+    onSelectSubscriber?: (subscriber: any) => void;
 }
 
 const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
@@ -102,7 +103,8 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
     onActionComplete,
     activeBranchFilter,
     onBranchClick,
-    isDarkTheme = false
+    isDarkTheme = false,
+    onSelectSubscriber
 }) => {
     const [animateIn, setAnimateIn] = useState(false);
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -1212,7 +1214,19 @@ const StepParticipantsModal: React.FC<StepParticipantsModalProps> = ({
                                                     </td>
                                                 )}
                                                 <td className={['failed', 'zns_failed'].includes(activeTab as string) ? 'px-4 py-3' : 'px-6 py-4'}>
-                                                    <div className="flex items-center gap-2">
+                                                    <div 
+                                                        className="flex items-center gap-2 cursor-pointer hover:opacity-85 transition-opacity"
+                                                        onClick={() => {
+                                                            if (onSelectSubscriber) {
+                                                                onSelectSubscriber({
+                                                                    id: participantId,
+                                                                    email: p.email,
+                                                                    firstName: p.name || '',
+                                                                    ...p
+                                                                });
+                                                            }
+                                                        }}
+                                                    >
                                                         <div className={`w-7 h-7 rounded-full ${getAvatarBg(p.name, p.email)} flex items-center justify-center text-white font-bold text-[10px] uppercase shrink-0 shadow-sm`}>
                                                             {getInitials(p.name, p.email)}
                                                         </div>
