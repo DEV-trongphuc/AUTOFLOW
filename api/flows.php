@@ -1797,7 +1797,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'history') {
         $search = $_GET['search'] ?? null;
         $filter_type = $_GET['type'] ?? null;
 
-        $sql = "SELECT sa.type, sa.details, sa.created_at, s.email, s.first_name, s.last_name, sa.reference_name as label 
+        $sql = "SELECT sa.subscriber_id, sa.type, sa.details, sa.created_at, s.email, s.first_name, s.last_name, sa.reference_name as label 
                 FROM subscriber_activity sa
                 LEFT JOIN subscribers s ON sa.subscriber_id = s.id
                 WHERE ";
