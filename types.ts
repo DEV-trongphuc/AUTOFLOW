@@ -326,6 +326,8 @@ export interface Template {
   category: 'newsletter' | 'promotional' | 'transactional' | 'welcome' | 'event' | string;
   groupId?: string;
   lastModified: string;
+  created_at?: string;
+  createdAt?: string;
   blocks: EmailBlock[];
   bodyStyle: EmailBodyStyle;
   htmlContent?: string;

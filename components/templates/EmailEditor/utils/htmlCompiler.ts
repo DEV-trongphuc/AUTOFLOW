@@ -90,11 +90,46 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
     const responsiveRules: string[] = [];
     const camelToKebab = (str: string) => str.replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`);
 
+    const googleFonts = ['Roboto', 'Inter', 'Montserrat', 'Poppins', 'Playfair Display', 'Outfit', 'Nunito', 'Merriweather'];
+    const fontsToImport = new Set<string>();
+    
+    // Scan body font
+    const bodyFontMatch = bodyStyle.fontFamily?.match(/'?([^',]+)'?/);
+    if (bodyFontMatch && googleFonts.includes(bodyFontMatch[1])) {
+        fontsToImport.add(bodyFontMatch[1]);
+    }
+    
+    // Scan block fonts
+    const scanBlocksForFonts = (items: EmailBlock[]) => {
+        items.forEach(b => {
+            if (b.style?.fontFamily) {
+                const match = b.style.fontFamily.match(/'?([^',]+)'?/);
+                if (match && googleFonts.includes(match[1])) {
+                    fontsToImport.add(match[1]);
+                }
+            }
+            if (b.children) scanBlocksForFonts(b.children);
+        });
+    };
+    scanBlocksForFonts(blocks);
+
+    let fontImportsHtml = '';
+    let fontImportsCss = '';
+    if (fontsToImport.size > 0) {
+        fontImportsHtml += `        <link rel="preconnect" href="https://fonts.googleapis.com">\n`;
+        fontImportsHtml += `        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n`;
+        const fontParams = Array.from(fontsToImport).map(f => `family=${f.replace(/\s+/g, '+')}:ital,wght@0,300;0,400;0,500;0,700;0,900;1,300;1,400;1,500;1,700;1,900`).join('&');
+        fontImportsHtml += `        <link href="https://fonts.googleapis.com/css2?${fontParams}&display=swap" rel="stylesheet">`;
+        fontImportsCss += `@import url('https://fonts.googleapis.com/css2?${fontParams}&display=swap');`;
+    } else {
+        fontImportsHtml = `        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n        <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap" rel="stylesheet">`;
+        fontImportsCss = `@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap');`;
+    }
+
     const getHeadCss = (customRules: string[]) => `
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap" rel="stylesheet">
+        ${fontImportsHtml}
         <style type="text/css">
-            @import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap');
+            ${fontImportsCss}
         
         ${SHARED_EMAIL_CSS}
         a { color: ${bodyStyle.linkColor || '#2563eb'} !important; text-decoration: underline !important; }
@@ -368,7 +403,8 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
         if (b.type === 'button') {
             const btnBg = s.contentBackgroundColor || (s as any).buttonBackgroundColor || s.backgroundColor || '#d97706';
             const btnWidth = s.width || 'auto';
-            const tableWidth = btnWidth === 'auto' ? '' : btnWidth.replace('px', '');
+            const tableWidthAttr = (btnWidth && btnWidth !== 'auto') ? `width="${btnWidth.replace('px', '')}"` : '';
+            const inlineWidth = btnWidth === 'auto' ? '' : `width: ${btnWidth};`;
             const btnColor = s.color || '#ffffff';
             const btnPadding = `padding: ${s.paddingTop || '12px'} ${s.paddingRight || '24px'} ${s.paddingBottom || '12px'} ${s.paddingLeft || '24px'};`;
             // Use inherited alignment if not explicitly set (default to center to match canvas editor)
@@ -385,7 +421,7 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
 
             const tableMarginCss = `margin-top: ${btnMarginTop}; margin-bottom: ${btnMarginBottom}; margin-left: ${btnMarginLeft}; margin-right: ${btnMarginRight};`;
 
-            return `<tr><td align="${btnAlign}" class="${customClassName}" style="width: 100%; text-align: ${btnAlign} !important; ${hideOnDesktopCss}"><!--[if mso]><table role="presentation" border="0" cellspacing="0" cellpadding="0" align="${btnAlign}" width="${tableWidth}" style="${tableMarginCss} width: ${btnWidth};"><tr><td align="center" style="background: ${btnBg}; border-radius: ${btnRadius};"><![endif]--><!--[if !mso]><!--><table border="0" cellspacing="0" cellpadding="0" align="${btnAlign}" width="${tableWidth}" style="${tableMarginCss} display: table; border-collapse: separate; width: ${btnWidth};"><!--<![endif]--><tr><td align="center" class="${parentNoStack ? 'btn-nostack' : ''}" style="${getBorderStyle(s)} border-radius: ${btnRadius};"><a class="btn-link ${customClassName} ${parentNoStack ? 'btn-nostack' : ''}" href="${b.url || '#'}" target="_blank" style="font-family: ${bodyStyle.fontFamily || "'Roboto', Arial, sans-serif"}; font-size: ${s.fontSize || '16px'}; font-weight: ${s.fontWeight || 'bold'}; font-style: ${s.fontStyle || 'normal'}; text-decoration: ${s.textDecoration || 'none'}; text-transform: ${s.textTransform || 'none'}; color: ${btnColor} !important; border-radius: ${btnRadius}; -webkit-border-radius: ${btnRadius}; -moz-border-radius: ${btnRadius}; ${btnPadding} ${btnHeight}${btnLineHeight}display: block; background: ${btnBg}; width: ${btnWidth}; box-sizing: border-box; text-align: center; overflow: hidden;">${b.content || 'BUTTON'}</a></td></tr></table><!--[if mso]></td></tr></table><![endif]--></td></tr>`;
+            return `<tr><td align="${btnAlign}" class="${customClassName}" style="width: 100%; text-align: ${btnAlign} !important; ${hideOnDesktopCss}"><!--[if mso]><table role="presentation" border="0" cellspacing="0" cellpadding="0" align="${btnAlign}" ${tableWidthAttr} style="${tableMarginCss} ${inlineWidth}"><tr><td align="center" style="background: ${btnBg}; border-radius: ${btnRadius};"><![endif]--><!--[if !mso]><!--><table border="0" cellspacing="0" cellpadding="0" align="${btnAlign}" ${tableWidthAttr} style="${tableMarginCss} display: table; border-collapse: separate; ${inlineWidth}"><!--<![endif]--><tr><td align="center" class="${parentNoStack ? 'btn-nostack' : ''}" style="${getBorderStyle(s)} border-radius: ${btnRadius};"><a class="btn-link ${customClassName} ${parentNoStack ? 'btn-nostack' : ''}" href="${b.url || '#'}" target="_blank" style="font-family: ${bodyStyle.fontFamily || "'Roboto', Arial, sans-serif"}; font-size: ${s.fontSize || '16px'}; font-weight: ${s.fontWeight || 'bold'}; font-style: ${s.fontStyle || 'normal'}; text-decoration: ${s.textDecoration || 'none'}; text-transform: ${s.textTransform || 'none'}; color: ${btnColor} !important; border-radius: ${btnRadius}; -webkit-border-radius: ${btnRadius}; -moz-border-radius: ${btnRadius}; ${btnPadding} ${btnHeight}${btnLineHeight}display: block; background: ${btnBg}; ${inlineWidth} box-sizing: border-box; text-align: center; overflow: hidden;">${b.content || 'BUTTON'}</a></td></tr></table><!--[if mso]></td></tr></table><![endif]--></td></tr>`;
         }
 
         if (b.type === 'header') {

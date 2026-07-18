@@ -550,7 +550,7 @@ try {
                 // Even though $lockName contains only hex chars (from md5), direct query() with
                 // interpolation is unsafe by pattern and may mislead future maintainers.
                 if ($lockName) {
-                    $pdo->prepare("SELECT GET_LOCK(?, 5)")->execute([$lockName]);
+                    db_get_lock($pdo, $lockName, 5);
                 }
 
                 // 1. Check subscribers table (Email/Zalo marketing)
@@ -757,8 +757,7 @@ try {
                 }
                 
                 if (isset($lockName) && $lockName) {
-                    // [FIX P0-7] Use prepared statement for RELEASE_LOCK
-                    $pdo->prepare("SELECT RELEASE_LOCK(?)")->execute([$lockName]);
+                    db_release_lock($pdo, $lockName);
                 }
             }
         } else {

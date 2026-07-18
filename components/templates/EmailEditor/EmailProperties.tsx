@@ -28,6 +28,12 @@ import { getIconUrl } from './utils/htmlCompiler';
 
 const BODY_FONT_OPTIONS = [
     { value: "'Roboto', Arial, sans-serif", label: "Roboto" },
+    { value: "'Inter', sans-serif", label: "Inter" },
+    { value: "'Montserrat', sans-serif", label: "Montserrat" },
+    { value: "'Poppins', sans-serif", label: "Poppins" },
+    { value: "'Playfair Display', serif", label: "Playfair Display" },
+    { value: "'Outfit', sans-serif", label: "Outfit" },
+    { value: "'Nunito', sans-serif", label: "Nunito" },
     { value: "Arial, sans-serif", label: "Arial" },
     { value: "Helvetica, sans-serif", label: "Helvetica" },
     { value: "'Times New Roman', Times, serif", label: "Times New Roman" },

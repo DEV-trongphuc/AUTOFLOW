@@ -4,16 +4,21 @@ export interface HistoryLog {
   action: string;
   timestamp: string;
   user: string;
+  userPicture?: string;
   details: string;
   flowId?: string;
 }
 
 export const logAction = (action: string, details: string, flowId?: string): HistoryLog[] => {
   let userName = 'Admin';
+  let userPicture = '';
   try {
     const savedUser = JSON.parse(localStorage.getItem('user') || localStorage.getItem('currentUser') || '{}');
     if (savedUser && savedUser.name) {
       userName = savedUser.name;
+    }
+    if (savedUser && savedUser.picture) {
+      userPicture = savedUser.picture;
     }
   } catch {}
 
@@ -23,6 +28,7 @@ export const logAction = (action: string, details: string, flowId?: string): His
     details,
     timestamp: new Date().toISOString(),
     user: userName,
+    userPicture,
     flowId
   };
 

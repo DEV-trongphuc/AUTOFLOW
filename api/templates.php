@@ -14,6 +14,8 @@ function formatTemplate($row)
     $row['bodyStyle'] = json_decode($row['body_style'] ?? '{}');
     $row['htmlContent'] = $row['html_content'];
     $row['lastModified'] = $row['updated_at'];
+    $row['created_at'] = $row['created_at'] ?? null;
+    $row['createdAt'] = $row['created_at'] ?? null;
     $row['groupId'] = $row['group_id'] ?? null;
     unset($row['body_style'], $row['html_content'], $row['updated_at'], $row['group_id']);
     return $row;

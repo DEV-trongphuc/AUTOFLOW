@@ -18,6 +18,7 @@ interface ModalProps {
   isDarkTheme?: boolean;
   noScroll?: boolean;
   zIndex?: number;
+  className?: string;
 }
 
 const Modal: React.FC<ModalProps> = ({
@@ -33,7 +34,8 @@ const Modal: React.FC<ModalProps> = ({
   hideCloseButton = false,
   isDarkTheme = false,
   noScroll = false,
-  zIndex
+  zIndex,
+  className
 }) => {
   useEffect(() => {
     if (isOpen) {
@@ -87,6 +89,7 @@ const Modal: React.FC<ModalProps> = ({
             ${isDarkTheme 
               ? 'bg-[#11151d] border-slate-800/80 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5),0_0_40px_rgba(124,58,237,0.05)]' 
               : 'bg-white border-slate-100 shadow-[0_20px_50px_rgba(15,23,42,0.08),0_0_40px_rgba(124,58,237,0.03)]'}
+            ${className || ''}
           `}
           >
         {isLoading && (

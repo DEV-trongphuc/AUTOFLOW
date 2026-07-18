@@ -914,10 +914,16 @@ const Settings: React.FC = () => {
 
                                         return (
                                             <div key={log.id} className="relative group/log flex items-start gap-4">
-                                                {/* Timeline dot */}
-                                                <div className={`absolute -left-[31px] top-1.5 w-4.5 h-4.5 rounded-full border-2 bg-white flex items-center justify-center transition-all group-hover/log:scale-110 z-10 ${iconColor.split(' ')[0]}`}>
-                                                    <div className="w-1.5 h-1.5 rounded-full bg-current"></div>
-                                                </div>
+                                                {/* Timeline avatar with Status dot */}
+                                                 <div className="absolute -left-[16px] top-1 z-10 w-8 h-8 rounded-full border-2 border-white bg-slate-100 shadow-md shrink-0">
+                                                     <img 
+                                                         src={log.userPicture || "/imgs/ICON.png"} 
+                                                         className="w-full h-full object-cover rounded-full" 
+                                                         alt="" 
+                                                         onError={(e) => { (e.target as HTMLImageElement).src = "/imgs/ICON.png"; }}
+                                                     />
+                                                     <div className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white ${badgeColor.split(' ')[0]}`}></div>
+                                                 </div>
 
                                                 <div className="flex-1 bg-slate-50/60 dark:bg-slate-900/20 border border-slate-100 dark:border-slate-800 rounded-2xl p-4 hover:border-slate-200 hover:bg-white transition-all shadow-sm">
                                                     <div className="flex flex-wrap items-center justify-between gap-3 mb-2">

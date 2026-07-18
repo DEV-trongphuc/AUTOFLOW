@@ -29,9 +29,7 @@ function claimVoucherAtomic($pdo, $campaignId, $subscriberId, $rewardItemId = nu
 
     // Lock subscriber globally to prevent concurrent claims for the same user
     $lockTarget = "sub_claim_" . md5($subscriberId . $campaignId);
-    $lockStmt = $pdo->prepare("SELECT GET_LOCK(?, 5)");
-    $lockStmt->execute([$lockTarget]);
-    if ($lockStmt->fetchColumn() != 1) {
+    if (!db_get_lock($pdo, $lockTarget, 5)) {
         return ['success' => false, 'message' => 'Hệ thống đang bận, vui lòng thử lại sau giây lát.'];
     }
 
@@ -106,12 +104,12 @@ function claimVoucherAtomic($pdo, $campaignId, $subscriberId, $rewardItemId = nu
         if (!$alreadyInTx) $pdo->commit();
     } catch (Exception $e) {
         if (!$alreadyInTx && $pdo->inTransaction()) $pdo->rollBack();
-        $pdo->prepare("SELECT RELEASE_LOCK(?)")->execute([$lockTarget]);
+        db_release_lock($pdo, $lockTarget);
         error_log("Voucher Atomic Claim Error: " . $e->getMessage());
         return ['success' => false, 'message' => 'Hệ thống quá tải, vui lòng thử lại.'];
     }
 
-    $pdo->prepare("SELECT RELEASE_LOCK(?)")->execute([$lockTarget]);
+    db_release_lock($pdo, $lockTarget);
 
     if (!$codeAssigned) {
         return ['success' => false, 'message' => 'Hết mã! Số lượng Voucher của chương trình đã cạn.'];

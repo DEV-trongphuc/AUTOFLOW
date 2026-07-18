@@ -34,9 +34,10 @@ if ($method === 'GET') {
         if ($isAdmin) {
             // Admin sees all logs globally
             $stmt = $pdo->prepare("
-                SELECT id, user_name, module, action, target_name, details, created_at
-                FROM system_audit_logs
-                ORDER BY created_at DESC
+                SELECT l.id, l.user_name, l.module, l.action, l.target_name, l.details, l.created_at, u.picture as user_picture
+                FROM system_audit_logs l
+                LEFT JOIN users u ON l.user_id = u.id
+                ORDER BY l.created_at DESC
                 LIMIT ? OFFSET ?
             ");
             $stmt->bindValue(1, $limit, PDO::PARAM_INT);
@@ -44,10 +45,11 @@ if ($method === 'GET') {
         } else {
             // Normal user sees only their own logs
             $stmt = $pdo->prepare("
-                SELECT id, user_name, module, action, target_name, details, created_at
-                FROM system_audit_logs
-                WHERE user_id = ?
-                ORDER BY created_at DESC
+                SELECT l.id, l.user_name, l.module, l.action, l.target_name, l.details, l.created_at, u.picture as user_picture
+                FROM system_audit_logs l
+                LEFT JOIN users u ON l.user_id = u.id
+                WHERE l.user_id = ?
+                ORDER BY l.created_at DESC
                 LIMIT ? OFFSET ?
             ");
             $stmt->bindValue(1, $userId);

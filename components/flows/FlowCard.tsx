@@ -449,7 +449,16 @@ const FlowCard = React.memo<FlowCardProps>((
                                     {(flow.config as any)?.creator?.name || 'Hệ thống'}
                                 </span>
                                 <span className="text-[9px] text-slate-400 font-medium">
-                                    {flow.createdAt ? new Date(flow.createdAt).toLocaleDateString('vi-VN') : 'Chưa rõ'}
+                                    {flow.createdAt ? (() => {
+                                        const d = new Date(flow.createdAt);
+                                        if (isNaN(d.getTime())) return 'Chưa rõ';
+                                        const day = String(d.getDate()).padStart(2, '0');
+                                        const month = String(d.getMonth() + 1).padStart(2, '0');
+                                        const year = d.getFullYear();
+                                        const hours = String(d.getHours()).padStart(2, '0');
+                                        const minutes = String(d.getMinutes()).padStart(2, '0');
+                                        return `${day}/${month}/${year} ${hours}:${minutes}`;
+                                    })() : 'Chưa rõ'}
                                 </span>
                             </div>
                         </div>

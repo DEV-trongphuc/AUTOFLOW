@@ -24,12 +24,10 @@ export const toPx = (val: string | number | undefined, defaultVal = '0px'): stri
     return `${sVal}px`;
 };
 
-/**
- * Extracts a numeric value from a pixel string.
- */
-export const fromPx = (val: string | undefined): number => {
-    if (!val) return 0;
-    return parseInt(val.replace('px', '')) || 0;
+export const fromPx = (val: string | number | undefined): number => {
+    if (val === undefined || val === null || val === '') return 0;
+    if (typeof val === 'number') return val;
+    return parseInt(String(val).replace('px', '')) || 0;
 };
 
 /**

@@ -665,7 +665,7 @@ const Flows: React.FC = () => {
             trigger_type: triggerType,
             config: {
                 ...updated.config,
-                creator: creatorInfo || (updated.config as any)?.creator || { name: 'Hệ thống', picture: '/imgs/ICON.png' }
+                creator: (updated.config as any)?.creator || creatorInfo || { name: 'Hệ thống', picture: '/imgs/ICON.png' }
             }
         };
 

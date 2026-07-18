@@ -349,7 +349,7 @@ const Campaigns: React.FC = () => {
             stats: data.id ? undefined : { sent: 0, opened: 0, clicked: 0, bounced: 0, spam: 0, unsubscribed: 0, failed: 0 },
             config: {
                 ...data.config,
-                creator: creatorInfo || (data.config as any)?.creator || { name: 'Hệ thống', picture: '/imgs/ICON.png' }
+                creator: (data.config as any)?.creator || creatorInfo || { name: 'Hệ thống', picture: '/imgs/ICON.png' }
             }
         };
         try {
@@ -404,7 +404,7 @@ const Campaigns: React.FC = () => {
             scheduledAt: scheduleTime,
             config: {
                 ...data.config,
-                creator: creatorInfo || (data.config as any)?.creator || { name: 'Hệ thống', picture: '/imgs/ICON.png' }
+                creator: (data.config as any)?.creator || creatorInfo || { name: 'Hệ thống', picture: '/imgs/ICON.png' }
             }
         };
 

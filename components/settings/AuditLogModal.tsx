@@ -5,6 +5,7 @@ import { api } from '../../services/storageAdapter';
 interface AuditLog {
     id: number;
     user_name: string;
+    user_picture?: string;
     module: string;
     action: string;
     target_name: string;
@@ -116,8 +117,16 @@ const AuditLogModal: React.FC<AuditLogModalProps> = ({ isOpen, onClose }) => {
 
                                 return (
                                     <div key={log.id} className="relative pl-14 transition-all">
-                                        {/* Dot */}
-                                        <div className={`absolute left-[19px] top-1.5 w-2.5 h-2.5 rounded-full ring-4 ring-slate-50 ${actionColor.split(' ')[1]}`}></div>
+                                        {/* Avatar with Status indicator dot */}
+                                        <div className="absolute left-[5px] top-1 z-10 w-9 h-9 rounded-full border-2 border-white bg-slate-100 shadow-md shrink-0">
+                                            <img 
+                                                src={log.user_picture || "/imgs/ICON.png"} 
+                                                className="w-full h-full object-cover rounded-full" 
+                                                alt="" 
+                                                onError={(e) => { (e.target as HTMLImageElement).src = "/imgs/ICON.png"; }}
+                                            />
+                                            <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white ${actionColor.split(' ')[1]}`}></div>
+                                        </div>
                                         
                                         <div className="flex items-start justify-between bg-white p-4 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all group">
                                             <div>

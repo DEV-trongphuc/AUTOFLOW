@@ -47,7 +47,7 @@ const Tabs: React.FC<TabsProps> = ({ items, activeId, onChange, variant = 'under
               key={item.id}
               onClick={() => onChange(item.id)}
               className={`
-                relative px-4 py-2 rounded-xl text-xs font-bold transition-colors duration-200 flex items-center gap-2 whitespace-nowrap shrink-0 outline-none
+                relative px-2.5 py-1.5 md:px-3.5 md:py-2 rounded-xl text-[10.5px] md:text-xs font-bold transition-colors duration-200 flex items-center gap-1 md:gap-1.5 whitespace-nowrap shrink-0 outline-none
                 ${isActive
                   ? 'text-slate-900 dark:text-white font-extrabold'
                   : 'text-slate-500 dark:text-slate-400 hover:text-slate-850 dark:hover:text-slate-200'
@@ -66,7 +66,7 @@ const Tabs: React.FC<TabsProps> = ({ items, activeId, onChange, variant = 'under
               <span className="relative z-10">{item.label}</span>
               {item.count !== undefined && (
                 <span className={`
-                  relative z-10 ml-1 px-1.5 py-0.5 rounded-md text-[9px] font-black transition-colors duration-200
+                  relative z-10 ml-0.5 px-1 py-0.5 rounded-md text-[8.5px] font-black transition-colors duration-200
                   ${isActive 
                     ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900' 
                     : 'bg-slate-200/60 dark:bg-slate-700/60 text-slate-500 dark:text-slate-400'

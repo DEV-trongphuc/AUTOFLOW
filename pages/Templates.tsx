@@ -183,7 +183,7 @@ const Templates: React.FC = () => {
             if (editingTemplate && editingTemplate.id && !editingTemplate.id.startsWith('sys_')) {
                 const updatedBodyStyle = {
                     ...data.bodyStyle,
-                    creator: creatorInfo || (editingTemplate.bodyStyle as any)?.creator || { name: 'Hệ thống', picture: '/imgs/ICON.png' }
+                    creator: (editingTemplate.bodyStyle as any)?.creator || creatorInfo || { name: 'Hệ thống', picture: '/imgs/ICON.png' }
                 };
                 res = await api.put(`templates/${editingTemplate.id}`, { 
                     ...editingTemplate, 
@@ -194,8 +194,12 @@ const Templates: React.FC = () => {
                 if (res.success) {
                     showToast('Đã cập nhật mẫu email');
                     logAction("Cập nhật mẫu email", `Mẫu: ${data.name || editingTemplate.name}`);
-                    // [OPTIMISTIC UI] Update in-place, no network round-trip
-                    setUserTemplates(prev => prev.map(t => t.id === editingTemplate.id ? { ...t, ...res.data } : t));
+                    // [OPTIMISTIC UI] Update in-place, preserve existing created_at
+                    setUserTemplates(prev => prev.map(t => t.id === editingTemplate.id ? { 
+                        ...t, 
+                        ...res.data,
+                        created_at: t.created_at || (t as any).createdAt || new Date().toISOString()
+                    } : t));
                 }
             } else {
                 const updatedBodyStyle = {
@@ -213,8 +217,13 @@ const Templates: React.FC = () => {
                     showToast('Đã tạo mẫu email mới');
                     logAction("Tạo mẫu email mới", `Mẫu: ${data.name}`);
                     setEditingTemplate(res.data);
-                    // [OPTIMISTIC UI] Prepend new template to list
-                    setUserTemplates(prev => [res.data, ...prev]);
+                    // [OPTIMISTIC UI] Prepend new template to list with creation dates
+                    const newTemplateWithDate = {
+                        ...res.data,
+                        created_at: new Date().toISOString(),
+                        createdAt: new Date().toISOString()
+                    };
+                    setUserTemplates(prev => [newTemplateWithDate, ...prev]);
                 }
             }
 
@@ -365,8 +374,13 @@ const Templates: React.FC = () => {
 
             const res = await api.post('templates', newTpl);
             if (res.success) {
-                // [OPTIMISTIC UI] Prepend duplicated template immediately
-                setUserTemplates(prev => [res.data as Template, ...prev]);
+                // [OPTIMISTIC UI] Prepend duplicated template immediately with creation dates
+                const duplicatedWithDate = {
+                    ...(res.data as any),
+                    created_at: new Date().toISOString(),
+                    createdAt: new Date().toISOString()
+                } as Template;
+                setUserTemplates(prev => [duplicatedWithDate, ...prev]);
                 setCurrentPage(1);
                 showToast('Đã nhân bản mẫu thành công', 'success');
                 logAction("Nhân bản mẫu email", `Nhân bản mẫu "${tpl.name}" thành "${newName}"`);
@@ -649,9 +663,16 @@ const Templates: React.FC = () => {
                                                                 {template.id.startsWith('sys_') 
                                                                     ? 'Mẫu hệ thống' 
                                                                     : (() => {
-                                                                        if (!template.lastModified) return new Date().toLocaleDateString('vi-VN');
-                                                                        const d = new Date(template.lastModified);
-                                                                        return isNaN(d.getTime()) ? new Date().toLocaleDateString('vi-VN') : d.toLocaleDateString('vi-VN');
+                                                                        const dateToShow = template.created_at || template.createdAt || template.lastModified;
+                                                                        if (!dateToShow) return '';
+                                                                        const d = new Date(dateToShow);
+                                                                        if (isNaN(d.getTime())) return '';
+                                                                        const day = String(d.getDate()).padStart(2, '0');
+                                                                        const month = String(d.getMonth() + 1).padStart(2, '0');
+                                                                        const year = d.getFullYear();
+                                                                        const hours = String(d.getHours()).padStart(2, '0');
+                                                                        const minutes = String(d.getMinutes()).padStart(2, '0');
+                                                                        return `${day}/${month}/${year} ${hours}:${minutes}`;
                                                                       })()
                                                                 }
                                                             </span>

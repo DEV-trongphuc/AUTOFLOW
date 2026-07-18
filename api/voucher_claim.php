@@ -104,9 +104,7 @@ if (!empty($camp['end_date']) && strtotime($camp['end_date']) < time()) {
 
 // 1. Identity / Upsert Subscriber
 $lockTarget = $email ? "sub_email_" . md5($email) : "sub_phone_" . md5($phone);
-$lockStmt = $pdo->prepare("SELECT GET_LOCK(?, 5)");
-$lockStmt->execute([$lockTarget]);
-if ($lockStmt->fetchColumn() != 1) {
+if (!db_get_lock($pdo, $lockTarget, 5)) {
     doResponse($isAjax, false, "Hệ thống đang bận, vui lòng thử lại.", $redirectEmpty);
 }
 
@@ -159,7 +157,7 @@ try {
         }
     }
 
-    $pdo->prepare("SELECT RELEASE_LOCK(?)")->execute([$lockTarget]);
+    db_release_lock($pdo, $lockTarget);
 
     // 3. Atomic Claim via Helper
     $claimRes = claimVoucherAtomic($pdo, $campaignId, $sid, null, 'api', $campaignId, $eventName);
@@ -183,7 +181,7 @@ try {
     ]);
 
 } catch (Exception $e) {
-    $pdo->prepare("SELECT RELEASE_LOCK(?)")->execute([$lockTarget]);
+    db_release_lock($pdo, $lockTarget);
     error_log("Voucher Claim API Error: " . $e->getMessage());
     doResponse($isAjax, false, "Lỗi hệ thống khi xử lý hồ sơ.", $redirectEmpty);
 }
