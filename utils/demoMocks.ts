@@ -119,12 +119,18 @@ export const getDynamicReport = (resource: string, endpoint: string, pathId?: st
                 growth_leads: 22.1,
             },
             chart_data: chartData,
-            top_campaigns: storedCampaigns.filter((c: any) => c.status === 'sent').slice(0, 5).map((c: any) => ({
-                name: c.name,
-                stat_total_sent: c.stats?.sent || 0,
-                stat_total_opened: c.stats?.opened || 0,
-                stat_total_clicked: c.stats?.clicked || 0,
-            })),
+            top_campaigns: storedCampaigns
+                .filter((c: any) => c.status === 'sent' || c.status === 'sending')
+                .sort((a: any, b: any) => new Date(b.sentAt || b.createdAt).getTime() - new Date(a.sentAt || a.createdAt).getTime())
+                .slice(0, 5)
+                .map((c: any) => ({
+                    name: c.name,
+                    stat_total_sent: c.stats?.sent || 0,
+                    stat_total_opened: c.stats?.opened || 0,
+                    stat_total_clicked: c.stats?.clicked || 0,
+                    config: c.config,
+                    type: c.type,
+                })),
             top_flows: storedFlows.slice(0, 5).map((f: any) => ({
                 name: f.name,
                 stat_enrolled: f.stats?.enrolled || 0,

@@ -8,13 +8,13 @@
     --color-primary: #7c3aed;
     --color-primary-hover: #6d28d9;
     --color-primary-light: rgba(124, 58, 237, 0.08);
-    --color-bg: #f8fafc;
+    --color-bg: #F6F6FA;
     --color-surface: #ffffff;
-    --color-border: #e2e8f0;
-    --color-border-light: #f1f5f9;
-    --color-text: #0f172a;
-    --color-text-light: #475569;
-    --color-text-muted: #94a3b8;
+    --color-border: #E5E5EA;
+    --color-border-light: #EFEFF4;
+    --color-text: #1C1C1E;
+    --color-text-light: #3A3A3C;
+    --color-text-muted: #8E8E93;
 
     --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.03);
     --shadow-sm: 0 2px 4px rgba(15, 23, 42, 0.04), 0 1px 2px rgba(15, 23, 42, 0.02);
@@ -1680,7 +1680,7 @@ html {
 [class*="rounded-[40px]/50"],
 [class*="rounded-[48px]"],
 [class*="rounded-[48px]/50"] {
-    border-radius: 18px !important;
+    border-radius: 24px !important;
 }
 
 .rounded-2xl, 
@@ -1689,19 +1689,78 @@ html {
 [class*="rounded-[20px]"],
 [class*="rounded-[20px]/50"],
 [class*="rounded-[22px]"] {
-    border-radius: 14px !important;
+    border-radius: 16px !important;
 }
 
 .rounded-xl, 
 [class*="rounded-[18px]"],
 [class*="rounded-[16px]"],
 [class*="rounded-[14px]"] {
-    border-radius: 10px !important;
+    border-radius: 12px !important;
 }
 
 .rounded-lg,
 [class*="rounded-[12px]"] {
     border-radius: 8px !important;
+}
+
+/* Custom Card Border & Shadow synchronization with Richmond Land */
+.rounded-2xl.border,
+.rounded-\[24px\].border,
+.border-slate-100,
+.border-slate-100\/70,
+.border-slate-200,
+.border-slate-200\/80 {
+    border-color: #EFEFF4 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02), 0 0 1px rgba(0, 0, 0, 0.02) !important;
+}
+
+.dark .rounded-2xl.border,
+.dark .rounded-\[24px\].border,
+.dark .border-slate-800,
+.dark .border-slate-800\/80,
+.dark .border-slate-700\/60 {
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Stat card specific overrides */
+.stat-card {
+    border-radius: 16px !important;
+    border: 1px solid #EFEFF4 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02), 0 0 1px rgba(0, 0, 0, 0.02) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04) !important;
+}
+
+.dark .stat-card {
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+.dark .stat-card:hover {
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6), 0 0 20px rgba(255, 255, 255, 0.03) !important;
+}
+
+/* Background decorative SVGs inside premium stat-cards */
+.decor-svg {
+    position: absolute;
+    bottom: -15px;
+    right: -15px;
+    width: 100px;
+    height: 100px;
+    opacity: 0.08;
+    pointer-events: none;
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.stat-card:hover .decor-svg {
+    transform: scale(1.2) rotate(6deg);
+    opacity: 0.16;
 }
 
 /* Global Heading Low-Contrast Override for Transparent Headers */

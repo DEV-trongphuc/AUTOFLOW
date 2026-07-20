@@ -337,7 +337,7 @@ const FlowHeader: React.FC<FlowHeaderProps> = ({
               isLoading={isSaving}
               className={`h-9 lg:h-10 rounded-full px-2 sm:px-4 lg:px-6 text-[9px] lg:text-[10px] uppercase font-black tracking-widest transition-all min-w-0 flex items-center justify-center gap-2 ${isViewMode || isSaving
                 ? 'bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed shadow-none border-none'
-                : 'bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-750 hover:to-indigo-750 text-white shadow-lg shadow-violet-500/20 hover:shadow-violet-500/30 border-none'
+                : 'bg-violet-600 hover:bg-violet-700 dark:bg-violet-500 dark:hover:bg-violet-600 text-white shadow-md active:scale-95 border-none'
                 }`}
             >
               <span className="hidden sm:inline">Lưu</span>
@@ -432,7 +432,7 @@ const FlowHeader: React.FC<FlowHeaderProps> = ({
                       </div>
                       <div className="flex justify-end gap-3 pt-2">
                           <Button variant="secondary" onClick={() => setAiModalOpen(false)}>Hủy bỏ</Button>
-                          <Button variant="primary" onClick={handleConfirmAiReview} className="bg-gradient-to-r from-purple-500 to-indigo-500 text-white border-0 hover:brightness-110 shadow-md shadow-purple-500/20">
+                          <Button variant="primary" onClick={handleConfirmAiReview} className="bg-violet-600 hover:bg-violet-700 dark:bg-violet-500 dark:hover:bg-violet-600 text-white border-0 shadow-md active:scale-95 transition-all duration-200">
                               <Sparkles className="w-4 h-4 mr-2" /> Bắt đầu Phân tích
                           </Button>
                       </div>

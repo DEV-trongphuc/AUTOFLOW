@@ -1800,99 +1800,153 @@ const Flows: React.FC = () => {
                         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                             {/* Card 1: Tổng kịch bản */}
                             <div 
-                                className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/80 rounded-xl p-5 shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] duration-200 cursor-pointer min-h-[140px] flex flex-col justify-between"
+                                className="stat-card bg-white dark:bg-slate-900 border border-slate-100/70 dark:border-slate-800/80 rounded-[24px] p-5 md:p-6 shadow-[0_2px_8px_rgba(0,0,0,0.02)] transition-all hover:shadow-[0_12px_36px_rgba(0,0,0,0.035)] hover:-translate-y-1 duration-300 relative overflow-hidden flex flex-col justify-between min-h-[145px] group cursor-pointer"
                                 style={{ animation: 'slideUp 0.4s ease-out both', animationDelay: '50ms' }}
                             >
-                                <div className="flex items-center justify-between mb-3">
-                                    <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none">Tổng kịch bản</span>
-                                    <div className="text-violet-500 dark:text-violet-400 opacity-80 shrink-0">
-                                        <LayoutGrid className="w-5 h-5" />
-                                    </div>
+                                <div className="decor-svg" style={{ color: '#8b5cf6' }}>
+                                    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
+                                        <circle cx="50" cy="50" r="40" stroke="currentColor" strokeWidth="2" stroke-dasharray="4 4" />
+                                        <circle cx="35" cy="45" r="15" fill="currentColor" fillOpacity="0.2" />
+                                        <circle cx="65" cy="45" r="15" fill="currentColor" fillOpacity="0.4" />
+                                        <circle cx="50" cy="70" r="18" fill="currentColor" fillOpacity="0.6" />
+                                    </svg>
                                 </div>
-                                <div className="flex-1 flex flex-col justify-start">
-                                    <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-800 dark:text-slate-100 tracking-tight leading-none">{flowStats.total}</h3>
-                                    <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mt-2.5 flex flex-wrap gap-x-2.5 gap-y-1">
-                                        <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#8b5cf6' }}></span>Hoạt động: {flows.filter(f => f.status === 'active').length}</span>
-                                        <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#64748b' }}></span>Bản nháp: {flows.filter(f => f.status === 'draft').length}</span>
+                                <div className="relative z-10 flex flex-col justify-between h-full w-full">
+                                    <div>
+                                        <div className="flex justify-between items-center mb-3">
+                                            <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none">Tổng kịch bản</span>
+                                            <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-transform group-hover:scale-110" style={{ backgroundColor: '#8b5cf615', color: '#8b5cf6' }}>
+                                                <LayoutGrid className="w-4 h-4" />
+                                            </div>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <h3 className="text-xl md:text-2xl font-black text-slate-850 dark:text-slate-100 tracking-tight leading-none mb-2.5">{flowStats.total}</h3>
+                                            <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mt-2.5 flex flex-wrap gap-x-2.5 gap-y-1">
+                                                <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#8b5cf6' }}></span>Hoạt động: {flows.filter(f => f.status === 'active').length}</span>
+                                                <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#64748b' }}></span>Bản nháp: {flows.filter(f => f.status === 'draft').length}</span>
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                                <div className="text-[11px] font-black text-emerald-500 mt-2 flex items-center gap-1">
-                                    <span>▲ +2.4%</span>
-                                    <span className="text-slate-400 font-bold">so với 30 ngày trước</span>
+                                    <div className="text-[11px] font-bold mt-2 flex items-center gap-1.5">
+                                        <span className="flex items-center gap-0.5 px-2 py-0.5 rounded-full" style={{ backgroundColor: 'rgba(16, 185, 129, 0.08)', color: '#10b981' }}>
+                                            ▲ +2.4%
+                                        </span>
+                                        <span className="text-slate-400 font-bold dark:text-slate-500">so với 30 ngày trước</span>
+                                    </div>
                                 </div>
                             </div>
 
                             {/* Card 2: Đang hoạt động */}
                             <div 
-                                className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/80 rounded-xl p-5 shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] duration-200 cursor-pointer min-h-[140px] flex flex-col justify-between"
+                                className="stat-card bg-white dark:bg-slate-900 border border-slate-100/70 dark:border-slate-800/80 rounded-[24px] p-5 md:p-6 shadow-[0_2px_8px_rgba(0,0,0,0.02)] transition-all hover:shadow-[0_12px_36px_rgba(0,0,0,0.035)] hover:-translate-y-1 duration-300 relative overflow-hidden flex flex-col justify-between min-h-[145px] group cursor-pointer"
                                 style={{ animation: 'slideUp 0.4s ease-out both', animationDelay: '100ms' }}
                             >
-                                <div className="flex items-center justify-between mb-3">
-                                    <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none">Đang hoạt động</span>
-                                    <div className="text-blue-500 dark:text-blue-400 opacity-80 shrink-0">
-                                        <Zap className="w-5 h-5" />
-                                    </div>
+                                <div className="decor-svg" style={{ color: '#3b82f6' }}>
+                                    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
+                                        <path d="M10 50 Q 50 10 90 50 T 90 90" stroke="currentColor" strokeWidth="2" stroke-dasharray="3 3" />
+                                        <circle cx="10" cy="50" r="6" fill="currentColor" />
+                                        <circle cx="50" cy="10" r="6" fill="currentColor" />
+                                        <circle cx="90" cy="50" r="6" fill="currentColor" />
+                                        <path d="M50 10 L 90 50" stroke="currentColor" strokeWidth="1.5" />
+                                    </svg>
                                 </div>
-                                <div className="flex-1 flex flex-col justify-start">
-                                    <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-800 dark:text-slate-100 tracking-tight leading-none">{flowStats.active}</h3>
-                                    <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mt-2.5 flex flex-wrap gap-x-2.5 gap-y-1">
-                                        <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: '#10b981' }}></span>Đang chạy: {flows.filter(f => f.status === 'active').length}</span>
-                                        <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#f59e0b' }}></span>Tạm dừng: {flows.filter(f => f.status === 'paused').length}</span>
+                                <div className="relative z-10 flex flex-col justify-between h-full w-full">
+                                    <div>
+                                        <div className="flex justify-between items-center mb-3">
+                                            <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none">Đang hoạt động</span>
+                                            <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-transform group-hover:scale-110" style={{ backgroundColor: '#3b82f615', color: '#3b82f6' }}>
+                                                <Zap className="w-4 h-4" />
+                                            </div>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <h3 className="text-xl md:text-2xl font-black text-slate-850 dark:text-slate-100 tracking-tight leading-none mb-2.5">{flowStats.active}</h3>
+                                            <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mt-2.5 flex flex-wrap gap-x-2.5 gap-y-1">
+                                                <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: '#10b981' }}></span>Đang chạy: {flows.filter(f => f.status === 'active').length}</span>
+                                                <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#f59e0b' }}></span>Tạm dừng: {flows.filter(f => f.status === 'paused').length}</span>
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                                <div className="text-[11px] font-black text-emerald-500 mt-2 flex items-center gap-1">
-                                    <span>▲ +8.2%</span>
-                                    <span className="text-slate-400 font-bold">so với 30 ngày trước</span>
+                                    <div className="text-[11px] font-bold mt-2 flex items-center gap-1.5">
+                                        <span className="flex items-center gap-0.5 px-2 py-0.5 rounded-full" style={{ backgroundColor: 'rgba(16, 185, 129, 0.08)', color: '#10b981' }}>
+                                            ▲ +8.2%
+                                        </span>
+                                        <span className="text-slate-400 font-bold dark:text-slate-500">so với 30 ngày trước</span>
+                                    </div>
                                 </div>
                             </div>
 
                             {/* Card 3: Đang tham gia */}
                             <div 
-                                className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/80 rounded-xl p-5 shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] duration-200 cursor-pointer min-h-[140px] flex flex-col justify-between"
+                                className="stat-card bg-white dark:bg-slate-900 border border-slate-100/70 dark:border-slate-800/80 rounded-[24px] p-5 md:p-6 shadow-[0_2px_8px_rgba(0,0,0,0.02)] transition-all hover:shadow-[0_12px_36px_rgba(0,0,0,0.035)] hover:-translate-y-1 duration-300 relative overflow-hidden flex flex-col justify-between min-h-[145px] group cursor-pointer"
                                 style={{ animation: 'slideUp 0.4s ease-out both', animationDelay: '150ms' }}
                             >
-                                <div className="flex items-center justify-between mb-3">
-                                    <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none">Đang tham gia</span>
-                                    <div className="text-rose-500 dark:text-rose-400 opacity-80 shrink-0">
-                                        <Users className="w-5 h-5" />
-                                    </div>
+                                <div className="decor-svg" style={{ color: '#ec4899' }}>
+                                    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
+                                        <circle cx="50" cy="50" r="30" stroke="currentColor" strokeWidth="2" />
+                                        <path d="M50 35 V 65 M35 50 H 65" stroke="currentColor" strokeWidth="3" stroke-linecap="round" />
+                                    </svg>
                                 </div>
-                                <div className="flex-1 flex flex-col justify-start">
-                                    <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-800 dark:text-slate-100 tracking-tight leading-none">{flowStats.totalUsers.toLocaleString()}</h3>
-                                    <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mt-2.5 flex flex-wrap gap-x-2.5 gap-y-1">
-                                        <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#3b82f6' }}></span>Mới: {Math.round(flowStats.totalUsers * 0.15).toLocaleString()}</span>
-                                        <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#ec4899' }}></span>Hoàn thành: {flows.reduce((sum, f) => sum + (f.stats?.completed || 0), 0).toLocaleString()}</span>
+                                <div className="relative z-10 flex flex-col justify-between h-full w-full">
+                                    <div>
+                                        <div className="flex justify-between items-center mb-3">
+                                            <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none">Đang tham gia</span>
+                                            <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-transform group-hover:scale-110" style={{ backgroundColor: '#ec489915', color: '#ec4899' }}>
+                                                <Users className="w-4 h-4" />
+                                            </div>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <h3 className="text-xl md:text-2xl font-black text-slate-850 dark:text-slate-100 tracking-tight leading-none mb-2.5">{flowStats.totalUsers.toLocaleString()}</h3>
+                                            <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mt-2.5 flex flex-wrap gap-x-2.5 gap-y-1">
+                                                <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#3b82f6' }}></span>Mới: {Math.round(flowStats.totalUsers * 0.15).toLocaleString()}</span>
+                                                <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#ec4899' }}></span>Hoàn thành: {flows.reduce((sum, f) => sum + (f.stats?.completed || 0), 0).toLocaleString()}</span>
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                                <div className="text-[11px] font-black text-emerald-500 mt-2 flex items-center gap-1">
-                                    <span>▲ +15.5%</span>
-                                    <span className="text-slate-400 font-bold">so với 30 ngày trước</span>
+                                    <div className="text-[11px] font-bold mt-2 flex items-center gap-1.5">
+                                        <span className="flex items-center gap-0.5 px-2 py-0.5 rounded-full" style={{ backgroundColor: 'rgba(16, 185, 129, 0.08)', color: '#10b981' }}>
+                                            ▲ +15.5%
+                                        </span>
+                                        <span className="text-slate-400 font-bold dark:text-slate-500">so với 30 ngày trước</span>
+                                    </div>
                                 </div>
                             </div>
 
                             {/* Card 4: Hoàn thành */}
                             <div 
-                                className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/80 rounded-xl p-5 shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] duration-200 cursor-pointer min-h-[140px] flex flex-col justify-between"
+                                className="stat-card bg-white dark:bg-slate-900 border border-slate-100/70 dark:border-slate-800/80 rounded-[24px] p-5 md:p-6 shadow-[0_2px_8px_rgba(0,0,0,0.02)] transition-all hover:shadow-[0_12px_36px_rgba(0,0,0,0.035)] hover:-translate-y-1 duration-300 relative overflow-hidden flex flex-col justify-between min-h-[145px] group cursor-pointer"
                                 style={{ animation: 'slideUp 0.4s ease-out both', animationDelay: '200ms' }}
                             >
-                                <div className="flex items-center justify-between mb-3">
-                                    <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none">Hoàn thành</span>
-                                    <div className="text-emerald-500 dark:text-emerald-400 opacity-80 shrink-0">
-                                        <CheckCircle2 className="w-5 h-5" />
-                                    </div>
+                                <div className="decor-svg" style={{ color: '#10b981' }}>
+                                    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
+                                        <rect x="20" y="20" width="60" height="15" rx="7.5" fill="currentColor" fillOpacity="0.6" />
+                                        <rect x="20" y="42" width="60" height="15" rx="7.5" fill="currentColor" fillOpacity="0.4" />
+                                        <rect x="20" y="64" width="60" height="15" rx="7.5" fill="currentColor" fillOpacity="0.2" />
+                                    </svg>
                                 </div>
-                                <div className="flex-1 flex flex-col justify-start">
-                                    <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-800 dark:text-slate-100 tracking-tight leading-none">
-                                        {flows.reduce((sum, f) => sum + (f.stats?.completed || 0), 0).toLocaleString()}
-                                    </h3>
-                                    <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mt-2.5 flex flex-wrap gap-x-2.5 gap-y-1">
-                                        <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#10b981' }}></span>Thành công: {flows.reduce((sum, f) => sum + (f.stats?.completed || 0), 0).toLocaleString()}</span>
-                                        <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#ef4444' }}></span>Lỗi/Bỏ qua: {flows.reduce((sum, f) => sum + (f.stats?.totalFailed || 0), 0).toLocaleString()}</span>
+                                <div className="relative z-10 flex flex-col justify-between h-full w-full">
+                                    <div>
+                                        <div className="flex justify-between items-center mb-3">
+                                            <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none">Hoàn thành</span>
+                                            <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-transform group-hover:scale-110" style={{ backgroundColor: '#10b98115', color: '#10b981' }}>
+                                                <CheckCircle2 className="w-4 h-4" />
+                                            </div>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <h3 className="text-xl md:text-2xl font-black text-slate-850 dark:text-slate-100 tracking-tight leading-none mb-2.5">
+                                                {flows.reduce((sum, f) => sum + (f.stats?.completed || 0), 0).toLocaleString()}
+                                            </h3>
+                                            <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mt-2.5 flex flex-wrap gap-x-2.5 gap-y-1">
+                                                <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#10b981' }}></span>Thành công: {flows.reduce((sum, f) => sum + (f.stats?.completed || 0), 0).toLocaleString()}</span>
+                                                <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#ef4444' }}></span>Lỗi/Bỏ qua: {flows.reduce((sum, f) => sum + (f.stats?.totalFailed || 0), 0).toLocaleString()}</span>
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                                <div className="text-[11px] font-black text-emerald-500 mt-2 flex items-center gap-1">
-                                    <span>▲ +11.1%</span>
-                                    <span className="text-slate-400 font-bold">so với 30 ngày trước</span>
+                                    <div className="text-[11px] font-bold mt-2 flex items-center gap-1.5">
+                                        <span className="flex items-center gap-0.5 px-2 py-0.5 rounded-full" style={{ backgroundColor: 'rgba(16, 185, 129, 0.08)', color: '#10b981' }}>
+                                            ▲ +11.1%
+                                        </span>
+                                        <span className="text-slate-400 font-bold dark:text-slate-500">so với 30 ngày trước</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>

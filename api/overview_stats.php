@@ -196,14 +196,22 @@ try {
 
     // 4. Top Campaigns — scoped by workspace_id
     $stmtCamp = $pdo->prepare("
-        SELECT name, type, status, count_opened as stat_total_opened, count_sent as stat_total_sent, count_clicked as stat_total_clicked 
+        SELECT name, type, status, count_opened as stat_total_opened, count_sent as stat_total_sent, count_clicked as stat_total_clicked, config 
         FROM campaigns 
         WHERE workspace_id = ? AND status IN ('sent', 'sending', 'scheduled') 
-        ORDER BY count_opened DESC, count_sent DESC 
+        ORDER BY sent_at DESC, created_at DESC 
         LIMIT 5
     ");
     $stmtCamp->execute([$workspace_id]);
-    $topCampaigns = $stmtCamp->fetchAll(PDO::FETCH_ASSOC);
+    $topCampaigns = [];
+    while ($row = $stmtCamp->fetch(PDO::FETCH_ASSOC)) {
+        if (!empty($row['config'])) {
+            $row['config'] = json_decode($row['config'], true);
+        } else {
+            $row['config'] = null;
+        }
+        $topCampaigns[] = $row;
+    }
 
     // 5. Top Flows — scoped by workspace_id
     $stmtFlow = $pdo->prepare("

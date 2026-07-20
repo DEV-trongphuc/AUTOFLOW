@@ -218,10 +218,60 @@ const ZaloBroadcastTab: React.FC<ZaloBroadcastTabProps> = ({ initialSelectedIds,
         <TabTransition className="space-y-8">
             {/* Beautiful Hero Section with Stats (Matching Email Campaigns) */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <HeroStatCard label="Tin nhắn đã gửi" value={globalStats.sent} icon={Send} color="blue" />
-                <HeroStatCard label="Tỷ lệ xem (Read)" value={`${globalStats.openRate}%`} icon={MailOpen} color="orange" />
-                <HeroStatCard label="Phản hồi / Chat" value={globalStats.reacted} icon={MessageCircle} color="green" />
-                <HeroStatCard label="Thiết bị nhận" value={globalStats.delivered} icon={CheckCircle} color="indigo" />
+                <HeroStatCard 
+                    label="Tin nhắn đã gửi" 
+                    value={globalStats.sent} 
+                    icon={Send} 
+                    color="#3b82f6" 
+                    decor={
+                        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
+                            <path d="M10 50 Q 50 10 90 50 T 90 90" stroke="currentColor" strokeWidth="2" stroke-dasharray="3 3" />
+                            <circle cx="10" cy="50" r="6" fill="currentColor" />
+                            <circle cx="50" cy="10" r="6" fill="currentColor" />
+                            <circle cx="90" cy="50" r="6" fill="currentColor" />
+                            <path d="M50 10 L 90 50" stroke="currentColor" strokeWidth="1.5" />
+                        </svg>
+                    }
+                />
+                <HeroStatCard 
+                    label="Tỷ lệ xem (Read)" 
+                    value={`${globalStats.openRate}%`} 
+                    icon={MailOpen} 
+                    color="#f59e0b" 
+                    decor={
+                        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
+                            <circle cx="50" cy="50" r="40" stroke="currentColor" strokeWidth="2" stroke-dasharray="4 4" />
+                            <circle cx="35" cy="45" r="15" fill="currentColor" fillOpacity="0.2" />
+                            <circle cx="65" cy="45" r="15" fill="currentColor" fillOpacity="0.4" />
+                            <circle cx="50" cy="70" r="18" fill="currentColor" fillOpacity="0.6" />
+                        </svg>
+                    }
+                />
+                <HeroStatCard 
+                    label="Phản hồi / Chat" 
+                    value={globalStats.reacted} 
+                    icon={MessageCircle} 
+                    color="#10b981" 
+                    decor={
+                        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
+                            <rect x="20" y="20" width="60" height="15" rx="7.5" fill="currentColor" fillOpacity="0.6" />
+                            <rect x="20" y="42" width="60" height="15" rx="7.5" fill="currentColor" fillOpacity="0.4" />
+                            <rect x="20" y="64" width="60" height="15" rx="7.5" fill="currentColor" fillOpacity="0.2" />
+                        </svg>
+                    }
+                />
+                <HeroStatCard 
+                    label="Thiết bị nhận" 
+                    value={globalStats.delivered} 
+                    icon={CheckCircle} 
+                    color="#6366f1" 
+                    decor={
+                        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
+                            <circle cx="50" cy="50" r="30" stroke="currentColor" strokeWidth="2" />
+                            <path d="M50 35 V 65 M35 50 H 65" stroke="currentColor" strokeWidth="3" stroke-linecap="round" />
+                        </svg>
+                    }
+                />
             </div>
 
             {/* Campaign Management Header (Compact) */}
@@ -723,21 +773,20 @@ const ZaloBroadcastTab: React.FC<ZaloBroadcastTabProps> = ({ initialSelectedIds,
 };
 
 // Sub-components
-const HeroStatCard = ({ label, value, icon: Icon, color }: any) => {
-    const themes: any = {
-        blue: 'from-blue-500 to-blue-600 shadow-blue-500/20',
-        indigo: 'from-indigo-500 to-indigo-600 shadow-indigo-500/20',
-        green: 'from-emerald-500 to-emerald-600 shadow-emerald-500/20',
-        orange: 'from-[#ffa900] to-[#ca7900] shadow-orange-500/20',
-    };
+const HeroStatCard = ({ label, value, icon: Icon, color, decor }: any) => {
     return (
-        <div className="bg-white dark:bg-slate-900 p-6 rounded-[28px] border border-slate-100/70 dark:border-slate-800/80 shadow-sm flex items-center justify-between group hover:shadow-md hover:-translate-y-1 transition-all duration-300">
-            <div>
-                <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5">{label}</p>
-                <h4 className="text-xl md:text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tight">{value.toLocaleString()}</h4>
+        <div className="stat-card bg-white dark:bg-slate-900 p-5 md:p-6 rounded-[24px] border border-slate-100/70 dark:border-slate-800/80 shadow-[0_2px_8px_rgba(0,0,0,0.02)] flex items-center justify-between group hover:shadow-[0_12px_36px_rgba(0,0,0,0.035)] hover:-translate-y-1 transition-all duration-300 relative overflow-hidden min-h-[100px]">
+            {decor && (
+                <div className="decor-svg" style={{ color: color }}>
+                    {decor}
+                </div>
+            )}
+            <div className="relative z-10 flex flex-col justify-between h-full">
+                <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5 leading-none">{label}</p>
+                <h4 className="text-xl md:text-2xl font-black text-slate-850 dark:text-slate-100 tracking-tight leading-none">{typeof value === 'number' ? value.toLocaleString() : value}</h4>
             </div>
-            <div className={`w-14 h-14 bg-gradient-to-br ${themes[color]} text-white rounded-2xl shadow-lg flex items-center justify-center transition-all group-hover:scale-110 group-hover:rotate-3`}>
-                <Icon className="w-7 h-7" />
+            <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-transform group-hover:scale-110 relative z-10" style={{ backgroundColor: `${color}15`, color: color }}>
+                <Icon className="w-4 h-4" />
             </div>
         </div>
     );

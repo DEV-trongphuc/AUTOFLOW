@@ -33,22 +33,82 @@ const FlowSummaryModal: React.FC<FlowSummaryModalProps> = ({ isOpen, onClose, fl
       ? Math.round(stats.openRate * 100)
       : (totalSent > 0 ? Math.round((totalOpened / totalSent) * 100) : 0);
 
-    const StatCard = ({ label, value, icon: Icon, color, subValue }: any) => (
-        <div className="bg-white p-5 rounded-[24px] border border-slate-100 shadow-sm hover:shadow-md transition-all">
-            <div className="flex items-center justify-between mb-3">
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white bg-gradient-to-br ${color}`}>
-                    <Icon className="w-5 h-5" />
-                </div>
-                {subValue && (
-                    <span className="text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded-lg border border-slate-100">
-                        {subValue}
-                    </span>
+    const StatCard = ({ label, value, icon: Icon, color, subValue }: any) => {
+        const hexColor = (() => {
+            const cStr = String(color).toLowerCase();
+            if (cStr.includes('blue') || cStr.includes('indigo')) return '#3b82f6';
+            if (cStr.includes('emerald') || cStr.includes('teal')) return '#10b981';
+            if (cStr.includes('orange') || cStr.includes('amber') || cStr.includes('red')) return '#f59e0b';
+            if (cStr.includes('rose') || cStr.includes('pink')) return '#ec4899';
+            if (cStr.includes('violet') || cStr.includes('purple') || cStr.includes('cyan')) return '#8b5cf6';
+            return '#64748b';
+        })();
+
+        const decorSvg = (() => {
+            if (hexColor === '#10b981') {
+                return (
+                    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
+                        <rect x="20" y="20" width="60" height="15" rx="7.5" fill="currentColor" fillOpacity="0.6" />
+                        <rect x="20" y="42" width="60" height="15" rx="7.5" fill="currentColor" fillOpacity="0.4" />
+                        <rect x="20" y="64" width="60" height="15" rx="7.5" fill="currentColor" fillOpacity="0.2" />
+                    </svg>
+                );
+            }
+            if (hexColor === '#ec4899') {
+                return (
+                    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
+                        <circle cx="50" cy="50" r="30" stroke="currentColor" strokeWidth="2" />
+                        <path d="M50 35 V 65 M35 50 H 65" stroke="currentColor" strokeWidth="3" stroke-linecap="round" />
+                    </svg>
+                );
+            }
+            if (hexColor === '#3b82f6') {
+                return (
+                    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
+                        <path d="M10 50 Q 50 10 90 50 T 90 90" stroke="currentColor" strokeWidth="2" stroke-dasharray="3 3" />
+                        <circle cx="10" cy="50" r="6" fill="currentColor" />
+                        <circle cx="50" cy="10" r="6" fill="currentColor" />
+                        <circle cx="90" cy="50" r="6" fill="currentColor" />
+                        <path d="M50 10 L 90 50" stroke="currentColor" strokeWidth="1.5" />
+                    </svg>
+                );
+            }
+            return (
+                <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
+                    <circle cx="50" cy="50" r="40" stroke="currentColor" strokeWidth="2" stroke-dasharray="4 4" />
+                    <circle cx="35" cy="45" r="15" fill="currentColor" fillOpacity="0.2" />
+                    <circle cx="65" cy="45" r="15" fill="currentColor" fillOpacity="0.4" />
+                    <circle cx="50" cy="70" r="18" fill="currentColor" fillOpacity="0.6" />
+                </svg>
+            );
+        })();
+
+        return (
+            <div className="stat-card bg-white dark:bg-slate-900 p-5 md:p-6 rounded-[24px] border border-slate-100/70 dark:border-slate-800/80 shadow-[0_2px_8px_rgba(0,0,0,0.02)] flex flex-col justify-between group hover:shadow-[0_12px_36px_rgba(0,0,0,0.035)] hover:-translate-y-1 transition-all duration-300 relative overflow-hidden min-h-[145px] cursor-pointer">
+                {decorSvg && (
+                    <div className="decor-svg" style={{ color: hexColor }}>
+                        {decorSvg}
+                    </div>
                 )}
+                <div className="relative z-10 flex flex-col justify-between h-full w-full">
+                    <div>
+                        <div className="flex justify-between items-center mb-3.5">
+                            <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest leading-none">{label}</p>
+                            <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-transform group-hover:scale-110 relative z-10" style={{ backgroundColor: `${hexColor}15`, color: hexColor }}>
+                                <Icon className="w-4 h-4" />
+                            </div>
+                        </div>
+                        <h4 className="text-xl md:text-2xl font-black text-slate-850 dark:text-slate-100 tracking-tight leading-none mb-2.5">{value.toLocaleString()}</h4>
+                    </div>
+                    {subValue && (
+                        <div className="mt-2 text-[10px] font-bold text-slate-450 dark:text-slate-500">
+                            {subValue}
+                        </div>
+                    )}
+                </div>
             </div>
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">{label}</p>
-            <p className="text-xl font-black text-slate-800">{value.toLocaleString()}</p>
-        </div>
-    );
+        );
+    };
 
     return (
         <Modal

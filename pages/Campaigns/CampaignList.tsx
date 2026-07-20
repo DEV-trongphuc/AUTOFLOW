@@ -50,7 +50,7 @@ const CampaignTableRow = React.memo(React.forwardRef<HTMLTableRowElement, Campai
         <tr
             ref={ref}
             data-index={dataIndex}
-            className="hidden md:table-row group hover:bg-slate-50/80 transition-all duration-500 cursor-pointer hover-lift"
+            className="hidden md:table-row group cursor-pointer"
             onClick={() => {
                 if (c.status === CampaignStatus.DRAFT || c.status === CampaignStatus.SCHEDULED) {
                     onEdit(c);
@@ -61,15 +61,32 @@ const CampaignTableRow = React.memo(React.forwardRef<HTMLTableRowElement, Campai
         >
             <td className="px-8 py-5">
                 <div className="flex items-center gap-4">
-                    <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 transition-all shadow-sm border ${c.type === 'zalo_zns' ? 'bg-white text-[#0068ff] border-[#0068ff]/20 shadow-[0_0_15px_rgba(0,104,255,0.1)] p-2 group-hover:border-[#0068ff]/40 group-hover:shadow-[0_0_20px_rgba(0,104,255,0.15)]' :
-                        (isFlow ? 'bg-violet-50 text-violet-600 border-violet-100 shadow-[0_0_15px_rgba(139,92,246,0.1)]' :
-                            (showReminderBadge ? 'bg-orange-50 text-orange-500 border-orange-100' :
-                                (isSent ? 'bg-blue-50 text-blue-600 border-blue-100' :
-                                    (isWaiting ? 'bg-amber-50 text-amber-600 border-amber-100' :
-                                        (isSending ? 'bg-blue-50 text-blue-600 border-blue-100' :
-                                            (isPaused ? 'bg-orange-50 text-orange-600 border-orange-200' :
-                                                (c.status === CampaignStatus.SCHEDULED ? 'bg-indigo-50 text-indigo-600 border-indigo-100' : 'bg-slate-50 text-slate-400 border-slate-100')))))))
-                        }`}>
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-all shadow-sm border ${
+                        c.type === 'zalo_zns' 
+                            ? 'bg-white text-[#0068ff] border-[#0068ff]/20 shadow-[0_2px_8px_rgba(0,104,255,0.05)] p-2 group-hover:border-[#0068ff]/40' 
+                            : (isFlow 
+                                ? 'bg-violet-50 text-violet-600 border-violet-100 dark:bg-violet-500/10 dark:text-violet-400 dark:border-violet-500/20 shadow-[0_2px_8px_rgba(139,92,246,0.05)]' 
+                                : (showReminderBadge 
+                                    ? 'bg-orange-50 text-orange-500 border-orange-100 dark:bg-orange-500/10 dark:text-orange-400 dark:border-orange-500/20' 
+                                    : (isSent 
+                                        ? 'bg-blue-50 text-blue-600 border-blue-100 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20' 
+                                        : (isWaiting 
+                                            ? 'bg-amber-50 text-amber-600 border-amber-100 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20' 
+                                            : (isSending 
+                                                ? 'bg-blue-50 text-blue-600 border-blue-100 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20' 
+                                                : (isPaused 
+                                                    ? 'bg-orange-50 text-orange-600 border-orange-200 dark:bg-orange-500/10 dark:text-orange-400 dark:border-orange-500/20' 
+                                                    : (c.status === CampaignStatus.SCHEDULED 
+                                                        ? 'bg-indigo-50 text-indigo-600 border-indigo-100 dark:bg-indigo-500/10 dark:text-indigo-400 dark:border-indigo-500/20' 
+                                                        : 'bg-slate-50 text-slate-400 border-slate-100 dark:bg-slate-800 dark:text-slate-500 dark:border-slate-700/50'
+                                                      )
+                                                  )
+                                              )
+                                          )
+                                      )
+                                  )
+                              )
+                    }`}>
                         {c.type === 'zalo_zns' ? <img src={`${EXTERNAL_ASSET_BASE}/imgs/zalolog.png`} alt="Zalo" className="w-full h-full object-contain" /> :
                             (isFlow ? (isSending ? <Loader2 className="w-5 h-5 animate-spin text-violet-600" /> : <GitMerge className="w-5 h-5 text-violet-600" />) :
                                 (showReminderBadge ? <Clock className="w-5 h-5 text-orange-500" /> :
@@ -80,23 +97,23 @@ const CampaignTableRow = React.memo(React.forwardRef<HTMLTableRowElement, Campai
                                                     (c.status === CampaignStatus.SCHEDULED ? <CalendarClock className="w-5 h-5 text-indigo-600" /> : <FileText className="w-5 h-5" />)))))))}
 
                     </div>
-                    <div className="min-w-0">
-                        <p className="font-bold text-slate-800 text-sm leading-tight mb-1 group-hover:text-amber-600 transition-colors truncate pr-4">{c.name}</p>
+                    <div className="min-w-0 flex-1">
+                        <p className="font-bold text-slate-800 dark:text-slate-200 text-sm leading-tight mb-1 group-hover:text-amber-600 transition-colors truncate pr-4">{c.name}</p>
                         <div className="flex items-center gap-1.5 mt-0.5 min-w-0">
                             {/* Creator Avatar & Name */}
-                            <div className="flex items-center gap-1 shrink-0 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-850 px-1.5 py-0.5 rounded-full">
+                            <div className="flex items-center gap-1 shrink-0 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700/50 px-1.5 py-0.5 rounded-full">
                                 <img 
                                     src={(c.config as any)?.creator?.picture || "/imgs/ICON.png"} 
                                     className="w-3.5 h-3.5 rounded-full object-cover shrink-0" 
                                     alt="" 
                                     onError={(e) => { (e.target as HTMLImageElement).src = "/imgs/ICON.png"; }}
                                 />
-                                <span className="text-[9px] text-slate-500 font-bold max-w-[80px] truncate">
+                                <span className="text-[9px] text-slate-500 dark:text-slate-400 font-bold max-w-[80px] truncate">
                                     {(c.config as any)?.creator?.name || 'Hệ thống'}
                                 </span>
                             </div>
                             <span className="text-slate-300 dark:text-slate-700 font-normal text-[10px]">|</span>
-                            <span className="text-[11px] text-slate-500 font-medium truncate max-w-[150px]">{c.subject || (c.type === 'zalo_zns' ? `Template: ${c.templateId}` : 'Bản nháp')}</span>
+                            <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium truncate max-w-[400px]">{c.subject || (c.type === 'zalo_zns' ? `Template: ${c.templateId}` : 'Bản nháp')}</span>
                         </div>
                     </div>
                 </div>
@@ -463,7 +480,6 @@ const CampaignList: React.FC<CampaignListProps> = ({ campaigns, loading, onSelec
 
     return (
         <div className="min-h-[300px]">
-            {/* Custom styles for progress bar animations */}
             <style>{`
                 @keyframes progressBarStripes {
                     0% { background-position: 1rem 0; }
@@ -483,12 +499,61 @@ const CampaignList: React.FC<CampaignListProps> = ({ campaigns, loading, onSelec
                     background-size: 1rem 1rem;
                     animation: progressBarStripes 1s linear infinite;
                 }
+                
+                /* Floating Card Row Table styling */
+                .campaign-table {
+                    border-collapse: separate !important;
+                    border-spacing: 0 10px !important;
+                    width: 100%;
+                }
+                .campaign-table tbody tr {
+                    background: transparent !important;
+                    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+                }
+                .campaign-table tbody td {
+                    background-color: #ffffff !important;
+                    border-top: 1px solid rgba(229, 229, 234, 0.5) !important;
+                    border-bottom: 1px solid rgba(229, 229, 234, 0.5) !important;
+                    transition: all 0.25s ease !important;
+                }
+                .dark .campaign-table tbody td {
+                    background-color: #111827 !important;
+                    border-top: 1px solid rgba(255, 255, 255, 0.05) !important;
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+                }
+                .campaign-table tbody td:first-child {
+                    border-left: 1px solid rgba(229, 229, 234, 0.5) !important;
+                    border-top-left-radius: 16px !important;
+                    border-bottom-left-radius: 16px !important;
+                }
+                .dark .campaign-table tbody td:first-child {
+                    border-left: 1px solid rgba(255, 255, 255, 0.05) !important;
+                }
+                .campaign-table tbody td:last-child {
+                    border-right: 1px solid rgba(229, 229, 234, 0.5) !important;
+                    border-top-right-radius: 16px !important;
+                    border-bottom-right-radius: 16px !important;
+                }
+                .dark .campaign-table tbody td:last-child {
+                    border-right: 1px solid rgba(255, 255, 255, 0.05) !important;
+                }
+                
+                /* Hover state styling */
+                .campaign-table tbody tr:hover {
+                    transform: translateY(-2px);
+                }
+                .campaign-table tbody tr:hover td {
+                    border-color: rgba(104, 61, 242, 0.15) !important;
+                }
+                .dark .campaign-table tbody tr:hover td {
+                    border-color: rgba(139, 92, 246, 0.2) !important;
+                }
             `}</style>
             {/* Desktop Table View */}
-            <div ref={parentRef} className="hidden md:block overflow-x-auto overflow-y-auto max-h-[580px]">
-                <table className="w-full relative">
-                    <thead className="bg-slate-50/50 border-b border-slate-100 text-left sticky top-0 z-20 backdrop-blur-sm">
-                        <tr>
+            <div ref={parentRef} className="hidden md:block overflow-x-auto overflow-y-auto max-h-[580px] px-2">
+                <table className="campaign-table relative">
+                    <thead className="text-left sticky top-0 z-20 bg-[#F6F6FA] dark:bg-[#0b0f19]">
+                        <tr className="border-none">
                             <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest pl-8 w-[35%]">Chiến dịch</th>
                             <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center w-[15%]">Trạng thái</th>
                             <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest w-[20%]">Lịch trình</th>

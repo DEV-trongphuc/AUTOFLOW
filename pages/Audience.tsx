@@ -1255,6 +1255,14 @@ const Audience: React.FC = () => {
                                 </span>
                             </>
                         }
+                        decor={
+                            <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
+                                <circle cx="50" cy="50" r="40" stroke="currentColor" strokeWidth="2" stroke-dasharray="4 4" />
+                                <circle cx="35" cy="45" r="15" fill="currentColor" fillOpacity="0.2" />
+                                <circle cx="65" cy="45" r="15" fill="currentColor" fillOpacity="0.4" />
+                                <circle cx="50" cy="70" r="18" fill="currentColor" fillOpacity="0.6" />
+                            </svg>
+                        }
                     />
 
                     {/* Card 2: Multi-Channel Reach */}
@@ -1279,6 +1287,15 @@ const Audience: React.FC = () => {
                                 </span>
                             </>
                         }
+                        decor={
+                            <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
+                                <path d="M10 50 Q 50 10 90 50 T 90 90" stroke="currentColor" strokeWidth="2" stroke-dasharray="3 3" />
+                                <circle cx="10" cy="50" r="6" fill="currentColor" />
+                                <circle cx="50" cy="10" r="6" fill="currentColor" />
+                                <circle cx="90" cy="50" r="6" fill="currentColor" />
+                                <path d="M50 10 L 90 50" stroke="currentColor" strokeWidth="1.5" />
+                            </svg>
+                        }
                     />
 
                     {/* Card 3: Hủy đăng ký */}
@@ -1302,6 +1319,12 @@ const Audience: React.FC = () => {
                                     Khác: {Math.round(stats.unsubscribed * 0.95).toLocaleString()}
                                 </span>
                             </>
+                        }
+                        decor={
+                            <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
+                                <circle cx="50" cy="50" r="30" stroke="currentColor" strokeWidth="2" />
+                                <path d="M50 35 V 65 M35 50 H 65" stroke="currentColor" strokeWidth="3" stroke-linecap="round" />
+                            </svg>
                         }
                     />
                 </div>

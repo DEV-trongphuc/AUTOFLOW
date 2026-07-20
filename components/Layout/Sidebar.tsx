@@ -220,7 +220,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose, isCollapsed, onToggleCollaps
   const isAdmin = user.role === 'admin';
 
   return (
-    <div className={`flex flex-col h-full bg-[#0d0331] text-[#dadada] border-r border-[#1a134d]/40 shadow-[4px_0_24px_rgba(0,0,0,0.12)] transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-64'} group/sidebar z-20 relative`}>
+    <div className={`flex flex-col h-full bg-[#0d0331] text-[#dadada] border-r border-[#1a134d]/40 shadow-[4px_0_24px_rgba(0,0,0,0.12)] transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-[230px]'} group/sidebar z-20 relative`}>
 
       {/* BRAND HEADER */}
       <div className={`h-16 lg:h-20 ${isCollapsed ? 'px-3' : 'px-6'} flex items-center justify-center shrink-0 relative border-b border-white/5`}>

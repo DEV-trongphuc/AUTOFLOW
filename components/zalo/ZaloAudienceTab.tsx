@@ -471,20 +471,46 @@ const ZaloAudienceTab: React.FC = () => {
     );
 };
 
-const StatCard = ({ label, value, icon: Icon, color }: any) => (
-    <div className="bg-white dark:bg-slate-900 px-5 py-4 rounded-3xl border border-slate-100/70 dark:border-slate-800/80 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-4 group">
-        <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${color === 'blue' ? 'bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-450' :
-            color === 'emerald' ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-450' :
-                'bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-450'
-            } group-hover:scale-110`}>
-            {Icon && <Icon className="w-5 h-5" />}
+const StatCard = ({ label, value, icon: Icon, color }: any) => {
+    const hexColor = color === 'blue' ? '#3b82f6' : color === 'emerald' ? '#10b981' : '#ec4899';
+    const decorSvg = color === 'blue' ? (
+        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
+            <path d="M10 50 Q 50 10 90 50 T 90 90" stroke="currentColor" strokeWidth="2" stroke-dasharray="3 3" />
+            <circle cx="10" cy="50" r="6" fill="currentColor" />
+            <circle cx="50" cy="10" r="6" fill="currentColor" />
+            <circle cx="90" cy="50" r="6" fill="currentColor" />
+            <path d="M50 10 L 90 50" stroke="currentColor" strokeWidth="1.5" />
+        </svg>
+    ) : color === 'emerald' ? (
+        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
+            <rect x="20" y="20" width="60" height="15" rx="7.5" fill="currentColor" fillOpacity="0.6" />
+            <rect x="20" y="42" width="60" height="15" rx="7.5" fill="currentColor" fillOpacity="0.4" />
+            <rect x="20" y="64" width="60" height="15" rx="7.5" fill="currentColor" fillOpacity="0.2" />
+        </svg>
+    ) : (
+        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
+            <circle cx="50" cy="50" r="30" stroke="currentColor" strokeWidth="2" />
+            <path d="M50 35 V 65 M35 50 H 65" stroke="currentColor" strokeWidth="3" stroke-linecap="round" />
+        </svg>
+    );
+
+    return (
+        <div className="stat-card bg-white dark:bg-slate-900 p-5 md:p-6 rounded-[24px] border border-slate-100/70 dark:border-slate-800/80 shadow-[0_2px_8px_rgba(0,0,0,0.02)] flex items-center justify-between group hover:shadow-[0_12px_36px_rgba(0,0,0,0.035)] hover:-translate-y-1 transition-all duration-300 relative overflow-hidden min-h-[90px]">
+            {decorSvg && (
+                <div className="decor-svg" style={{ color: hexColor }}>
+                    {decorSvg}
+                </div>
+            )}
+            <div className="relative z-10 flex flex-col justify-between h-full">
+                <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5 leading-none">{label}</p>
+                <h4 className="text-xl md:text-2xl font-black text-slate-850 dark:text-slate-100 tracking-tight leading-none">{(value || 0).toLocaleString()}</h4>
+            </div>
+            <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-transform group-hover:scale-110 relative z-10" style={{ backgroundColor: `${hexColor}15`, color: hexColor }}>
+                {Icon && <Icon className="w-4 h-4" />}
+            </div>
         </div>
-        <div>
-            <p className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-0.5">{label}</p>
-            <p className="text-xl font-black text-slate-800 dark:text-slate-100 tracking-tighter">{(value || 0).toLocaleString()}</p>
-        </div>
-    </div>
-);
+    );
+};
 
 const formatTimeAgoShort = (date: string) => {
     if (!date) return 'Vừa xong';

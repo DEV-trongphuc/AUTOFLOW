@@ -7,6 +7,7 @@ import Card from '../common/Card';
 import Input from '../common/Input';
 import Select from '../common/Select';
 import TabTransition from '../common/TabTransition';
+import StatCard from '../common/StatCard';
 
 interface ReportData {
     date: string;
@@ -67,10 +68,59 @@ const ZaloReportTab: React.FC<ZaloReportProps> = ({ dateRange }) => {
     } : { new_followers: 0, non_follower_interactions: 0, total_followers: 0, automation: 0, sent_zns: 0 };
 
     const stats = [
-        { label: 'THÀNH VIÊN MỚI', value: totals.new_followers + totals.non_follower_interactions, icon: TrendingUp, color: 'text-indigo-600', bg: 'bg-indigo-600/10', iconBg: 'bg-indigo-500' },
-        { label: 'QUAN TÂM', value: totals.total_followers, icon: Heart, color: 'text-rose-600', bg: 'bg-rose-600/10', iconBg: 'bg-rose-500' },
-        { label: 'TIN NHẮN ZNS/ZBS', value: totals.sent_zns, icon: Send, color: 'text-blue-600', bg: 'bg-blue-600/10', iconBg: 'bg-blue-500' },
-        { label: 'KÍCH HOẠT AUTOMATION', value: totals.automation, icon: Zap, color: 'text-orange-600', bg: 'bg-orange-600/10', iconBg: 'bg-orange-500' },
+        { 
+            label: 'THÀNH VIÊN MỚI', 
+            value: totals.new_followers + totals.non_follower_interactions, 
+            icon: <TrendingUp />, 
+            color: '#6366f1',
+            decor: (
+                <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+                    <circle cx="50" cy="50" r="40" stroke="currentColor" strokeWidth="2" strokeDasharray="4 4" />
+                    <circle cx="35" cy="45" r="15" fill="currentColor" fillOpacity="0.2" />
+                    <circle cx="65" cy="45" r="15" fill="currentColor" fillOpacity="0.4" />
+                    <circle cx="50" cy="70" r="18" fill="currentColor" fillOpacity="0.6" />
+                </svg>
+            )
+        },
+        { 
+            label: 'QUAN TÂM', 
+            value: totals.total_followers, 
+            icon: <Heart />, 
+            color: '#f43f5e',
+            decor: (
+                <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+                    <circle cx="50" cy="50" r="38" stroke="currentColor" strokeWidth="2" />
+                    <path d="M15 50 Q 35 15 50 50 T 85 50" stroke="currentColor" strokeWidth="2" strokeDasharray="6 6" />
+                    <circle cx="50" cy="50" r="10" fill="currentColor" fillOpacity="0.3" />
+                </svg>
+            )
+        },
+        { 
+            label: 'TIN NHẮN ZNS/ZBS', 
+            value: totals.sent_zns, 
+            icon: <Send />, 
+            color: '#3b82f6',
+            decor: (
+                <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+                    <rect x="15" y="15" width="70" height="70" rx="20" stroke="currentColor" strokeWidth="2" strokeDasharray="5 5" />
+                    <circle cx="30" cy="30" r="12" fill="currentColor" fillOpacity="0.2" />
+                    <circle cx="70" cy="70" r="16" fill="currentColor" fillOpacity="0.4" />
+                </svg>
+            )
+        },
+        { 
+            label: 'KÍCH HOẠT AUTOMATION', 
+            value: totals.automation, 
+            icon: <Zap />, 
+            color: '#8b5cf6',
+            decor: (
+                <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+                    <path d="M50 10 L85 50 L50 90 L15 50 Z" stroke="currentColor" strokeWidth="2" strokeDasharray="4 4" />
+                    <circle cx="50" cy="30" r="10" fill="currentColor" fillOpacity="0.3" />
+                    <circle cx="50" cy="70" r="10" fill="currentColor" fillOpacity="0.5" />
+                </svg>
+            )
+        },
     ];
 
     return (
@@ -106,19 +156,15 @@ const ZaloReportTab: React.FC<ZaloReportProps> = ({ dateRange }) => {
             {/* Redesigned Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {stats.map((stat, idx) => (
-                    <div key={idx} className="bg-white rounded-[32px] p-6 border border-slate-100 shadow-sm flex items-center justify-between group hover:shadow-md transition-all">
-                        <div className="space-y-1 w-full">
-                            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{stat.label}</h4>
-                            {loading ? (
-                                <div className="h-8 w-24 bg-slate-200 rounded animate-pulse mt-1"></div>
-                            ) : (
-                                <div className="text-3xl font-black text-slate-800 tracking-tight">{stat.value.toLocaleString()}</div>
-                            )}
-                        </div>
-                        <div className={`w-14 h-14 ${stat.iconBg} rounded-2xl flex items-center justify-center shadow-lg shadow-black/5 shrink-0`}>
-                            <stat.icon className="w-6 h-6 text-white" />
-                        </div>
-                    </div>
+                    <StatCard
+                        key={idx}
+                        title={stat.label}
+                        value={stat.value}
+                        icon={stat.icon}
+                        color={stat.color}
+                        decor={stat.decor}
+                        loading={loading}
+                    />
                 ))}
             </div>
 

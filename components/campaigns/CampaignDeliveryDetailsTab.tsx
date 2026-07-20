@@ -327,40 +327,77 @@ const CampaignDeliveryDetailsTab: React.FC<Props> = ({ campaign, allLists, allTa
         <TabTransition className="space-y-6 pb-20">
             {/* ... stats ... */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="bg-white p-5 rounded-2xl border border-slate-200/60 shadow-sm flex items-center justify-between group hover:border-blue-200 transition-all">
-                    <div>
-                        <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1">Tổng gửi</p>
-                        <h4 className="text-2xl font-black text-slate-800">{stats.total.toLocaleString()}</h4>
+                {/* Card 1: Tổng gửi */}
+                <div className="stat-card bg-white dark:bg-slate-900 p-5 md:p-6 rounded-[24px] border border-slate-100/70 dark:border-slate-800/80 shadow-[0_2px_8px_rgba(0,0,0,0.02)] flex items-center justify-between group hover:shadow-[0_12px_36px_rgba(0,0,0,0.035)] hover:-translate-y-1 transition-all duration-300 relative overflow-hidden min-h-[100px]">
+                    <div className="decor-svg" style={{ color: '#3b82f6' }}>
+                        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
+                            <path d="M10 50 Q 50 10 90 50 T 90 90" stroke="currentColor" strokeWidth="2" stroke-dasharray="3 3" />
+                            <circle cx="10" cy="50" r="6" fill="currentColor" />
+                            <circle cx="50" cy="10" r="6" fill="currentColor" />
+                            <circle cx="90" cy="50" r="6" fill="currentColor" />
+                            <path d="M50 10 L 90 50" stroke="currentColor" strokeWidth="1.5" />
+                        </svg>
                     </div>
-                    <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-2xl shadow-lg shadow-blue-500/10 flex items-center justify-center transition-all group-hover:scale-110">
-                        {isZns ? <Smartphone className="w-7 h-7" /> : <Mail className="w-7 h-7" />}
+                    <div className="relative z-10">
+                        <p className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 tracking-wider mb-1.5 leading-none">Tổng gửi</p>
+                        <h4 className="text-xl md:text-2xl font-black text-slate-850 dark:text-slate-100 tracking-tight leading-none">{stats.total.toLocaleString()}</h4>
                     </div>
-                </div>
-                <div className="bg-white p-5 rounded-2xl border border-slate-200/60 shadow-sm flex items-center justify-between group hover:border-emerald-200 transition-all">
-                    <div>
-                        <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1">Thành công</p>
-                        <h4 className="text-2xl font-black text-emerald-600">{stats.sent.toLocaleString()}</h4>
-                    </div>
-                    <div className="w-14 h-14 bg-gradient-to-br from-emerald-500 to-teal-600 text-white rounded-2xl shadow-lg shadow-emerald-500/10 flex items-center justify-center transition-all group-hover:scale-110">
-                        <CheckCircle2 className="w-7 h-7" />
-                    </div>
-                </div>
-                <div className="bg-white p-5 rounded-2xl border border-slate-200/60 shadow-sm flex items-center justify-between group hover:border-purple-200 transition-all">
-                    <div>
-                        <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1">{isZns ? 'Người xem' : 'Lượt mở'}</p>
-                        <h4 className="text-2xl font-black text-purple-600">{stats.opened.toLocaleString()}</h4>
-                    </div>
-                    <div className="w-14 h-14 bg-gradient-to-br from-violet-500 to-purple-600 text-white rounded-2xl shadow-lg shadow-violet-500/10 flex items-center justify-center transition-all group-hover:scale-110">
-                        {isZns ? <BadgeCheck className="w-7 h-7" /> : <MailOpen className="w-7 h-7" />}
+                    <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-transform group-hover:scale-110 relative z-10" style={{ backgroundColor: '#3b82f615', color: '#3b82f6' }}>
+                        {isZns ? <Smartphone className="w-4 h-4" /> : <Mail className="w-4 h-4" />}
                     </div>
                 </div>
-                <div className="bg-white p-5 rounded-2xl border border-slate-200/60 shadow-sm flex items-center justify-between group hover:border-rose-200 transition-all">
-                    <div>
-                        <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1">Thất bại</p>
-                        <h4 className="text-2xl font-black text-rose-600">{stats.failed.toLocaleString()}</h4>
+
+                {/* Card 2: Thành công */}
+                <div className="stat-card bg-white dark:bg-slate-900 p-5 md:p-6 rounded-[24px] border border-slate-100/70 dark:border-slate-800/80 shadow-[0_2px_8px_rgba(0,0,0,0.02)] flex items-center justify-between group hover:shadow-[0_12px_36px_rgba(0,0,0,0.035)] hover:-translate-y-1 transition-all duration-300 relative overflow-hidden min-h-[100px]">
+                    <div className="decor-svg" style={{ color: '#10b981' }}>
+                        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
+                            <rect x="20" y="20" width="60" height="15" rx="7.5" fill="currentColor" fillOpacity="0.6" />
+                            <rect x="20" y="42" width="60" height="15" rx="7.5" fill="currentColor" fillOpacity="0.4" />
+                            <rect x="20" y="64" width="60" height="15" rx="7.5" fill="currentColor" fillOpacity="0.2" />
+                        </svg>
                     </div>
-                    <div className="w-14 h-14 bg-gradient-to-br from-pink-500 to-rose-600 text-white rounded-2xl shadow-lg shadow-rose-500/10 flex items-center justify-center transition-all group-hover:scale-110">
-                        <XCircle className="w-7 h-7" />
+                    <div className="relative z-10">
+                        <p className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 tracking-wider mb-1.5 leading-none">Thành công</p>
+                        <h4 className="text-xl md:text-2xl font-black text-emerald-600 dark:text-emerald-500 tracking-tight leading-none">{stats.sent.toLocaleString()}</h4>
+                    </div>
+                    <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-transform group-hover:scale-110 relative z-10" style={{ backgroundColor: '#10b98115', color: '#10b981' }}>
+                        <CheckCircle2 className="w-4 h-4" />
+                    </div>
+                </div>
+
+                {/* Card 3: Lượt mở */}
+                <div className="stat-card bg-white dark:bg-slate-900 p-5 md:p-6 rounded-[24px] border border-slate-100/70 dark:border-slate-800/80 shadow-[0_2px_8px_rgba(0,0,0,0.02)] flex items-center justify-between group hover:shadow-[0_12px_36px_rgba(0,0,0,0.035)] hover:-translate-y-1 transition-all duration-300 relative overflow-hidden min-h-[100px]">
+                    <div className="decor-svg" style={{ color: '#8b5cf6' }}>
+                        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
+                            <circle cx="50" cy="50" r="40" stroke="currentColor" strokeWidth="2" stroke-dasharray="4 4" />
+                            <circle cx="35" cy="45" r="15" fill="currentColor" fillOpacity="0.2" />
+                            <circle cx="65" cy="45" r="15" fill="currentColor" fillOpacity="0.4" />
+                            <circle cx="50" cy="70" r="18" fill="currentColor" fillOpacity="0.6" />
+                        </svg>
+                    </div>
+                    <div className="relative z-10">
+                        <p className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 tracking-wider mb-1.5 leading-none">{isZns ? 'Người xem' : 'Lượt mở'}</p>
+                        <h4 className="text-xl md:text-2xl font-black text-purple-600 dark:text-purple-550 tracking-tight leading-none">{stats.opened.toLocaleString()}</h4>
+                    </div>
+                    <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-transform group-hover:scale-110 relative z-10" style={{ backgroundColor: '#8b5cf615', color: '#8b5cf6' }}>
+                        {isZns ? <BadgeCheck className="w-4 h-4" /> : <MailOpen className="w-4 h-4" />}
+                    </div>
+                </div>
+
+                {/* Card 4: Thất bại */}
+                <div className="stat-card bg-white dark:bg-slate-900 p-5 md:p-6 rounded-[24px] border border-slate-100/70 dark:border-slate-800/80 shadow-[0_2px_8px_rgba(0,0,0,0.02)] flex items-center justify-between group hover:shadow-[0_12px_36px_rgba(0,0,0,0.035)] hover:-translate-y-1 transition-all duration-300 relative overflow-hidden min-h-[100px]">
+                    <div className="decor-svg" style={{ color: '#ec4899' }}>
+                        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
+                            <circle cx="50" cy="50" r="30" stroke="currentColor" strokeWidth="2" />
+                            <path d="M50 35 V 65 M35 50 H 65" stroke="currentColor" strokeWidth="3" stroke-linecap="round" />
+                        </svg>
+                    </div>
+                    <div className="relative z-10">
+                        <p className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 tracking-wider mb-1.5 leading-none">Thất bại</p>
+                        <h4 className="text-xl md:text-2xl font-black text-rose-600 dark:text-rose-500 tracking-tight leading-none">{stats.failed.toLocaleString()}</h4>
+                    </div>
+                    <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-transform group-hover:scale-110 relative z-10" style={{ backgroundColor: '#ec489915', color: '#ec4899' }}>
+                        <XCircle className="w-4 h-4" />
                     </div>
                 </div>
             </div>

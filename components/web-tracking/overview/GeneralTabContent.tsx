@@ -133,116 +133,150 @@ const GeneralTabContent: React.FC<GeneralTabContentProps> = ({ stats, formatDura
                     {/* Stats Grid - Compact Style */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {/* Unique Visitors */}
-                        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-[0_4px_15px_-4px_rgba(0,0,0,0.05)] hover:shadow-lg hover:shadow-indigo-500/10 transition-all duration-300 group flex items-center justify-between">
-                            <div className="flex flex-col h-full justify-between">
-                                <div className="space-y-2">
-                                    <h5 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Unique Visitors</h5>
-                                    <div className="flex items-baseline gap-2">
-                                        <span className="text-2xl font-black text-slate-800 tracking-tight">{stats?.overview.visitors.toLocaleString() || 0}</span>
-                                    </div>
+                        <div className="stat-card bg-white dark:bg-slate-900 p-5 md:p-6 rounded-[24px] border border-slate-100/70 dark:border-slate-800/80 shadow-[0_2px_8px_rgba(0,0,0,0.02)] flex items-center justify-between group hover:shadow-[0_12px_36px_rgba(0,0,0,0.035)] hover:-translate-y-1 transition-all duration-300 relative overflow-hidden min-h-[100px] cursor-pointer">
+                            <div className="decor-svg" style={{ color: '#8b5cf6' }}>
+                                <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
+                                    <circle cx="50" cy="50" r="40" stroke="currentColor" strokeWidth="2" stroke-dasharray="4 4" />
+                                    <circle cx="35" cy="45" r="15" fill="currentColor" fillOpacity="0.2" />
+                                    <circle cx="65" cy="45" r="15" fill="currentColor" fillOpacity="0.4" />
+                                    <circle cx="50" cy="70" r="18" fill="currentColor" fillOpacity="0.6" />
+                                </svg>
+                            </div>
+                            <div className="relative z-10">
+                                <h5 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none mb-1.5">Unique Visitors</h5>
+                                <div className="flex items-baseline gap-2">
+                                    <span className="text-xl md:text-2xl font-black text-slate-850 dark:text-slate-100 tracking-tight leading-none">{stats?.overview.visitors.toLocaleString() || 0}</span>
                                 </div>
                             </div>
-                            <div className="w-9 h-9 rounded-lg bg-indigo-500 border border-indigo-500 flex items-center justify-center text-white shadow-lg shadow-indigo-500/20 transform group-hover:scale-105 transition-all duration-500">
+                            <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-transform group-hover:scale-110 relative z-10" style={{ backgroundColor: '#8b5cf615', color: '#8b5cf6' }}>
                                 <Users className="w-4 h-4" />
                             </div>
                         </div>
 
                         {/* New Users */}
-                        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-[0_4px_15px_-4px_rgba(0,0,0,0.05)] hover:shadow-lg hover:shadow-blue-500/10 transition-all duration-300 group flex items-center justify-between">
-                            <div className="flex flex-col h-full justify-between">
-                                <div className="space-y-2">
-                                    <h5 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">New Users</h5>
-                                    <div className="flex items-baseline gap-2">
-                                        <span className="text-2xl font-black text-slate-800 tracking-tight">{(stats?.overview.newUsers ?? 0).toLocaleString()}</span>
-                                    </div>
+                        <div className="stat-card bg-white dark:bg-slate-900 p-5 md:p-6 rounded-[24px] border border-slate-100/70 dark:border-slate-800/80 shadow-[0_2px_8px_rgba(0,0,0,0.02)] flex items-center justify-between group hover:shadow-[0_12px_36px_rgba(0,0,0,0.035)] hover:-translate-y-1 transition-all duration-300 relative overflow-hidden min-h-[100px] cursor-pointer">
+                            <div className="decor-svg" style={{ color: '#3b82f6' }}>
+                                <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
+                                    <path d="M10 50 Q 50 10 90 50 T 90 90" stroke="currentColor" strokeWidth="2" stroke-dasharray="3 3" />
+                                    <circle cx="10" cy="50" r="6" fill="currentColor" />
+                                    <circle cx="50" cy="10" r="6" fill="currentColor" />
+                                    <circle cx="90" cy="50" r="6" fill="currentColor" />
+                                    <path d="M50 10 L 90 50" stroke="currentColor" strokeWidth="1.5" />
+                                </svg>
+                            </div>
+                            <div className="relative z-10">
+                                <h5 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none mb-1.5">New Users</h5>
+                                <div className="flex items-baseline gap-2">
+                                    <span className="text-xl md:text-2xl font-black text-slate-850 dark:text-slate-100 tracking-tight leading-none">{(stats?.overview.newUsers ?? 0).toLocaleString()}</span>
                                 </div>
                             </div>
-                            <div className="w-9 h-9 rounded-lg bg-blue-500 border border-blue-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/20 transform group-hover:scale-105 transition-all duration-500">
+                            <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-transform group-hover:scale-110 relative z-10" style={{ backgroundColor: '#3b82f615', color: '#3b82f6' }}>
                                 <UserPlus className="w-4 h-4" />
                             </div>
                         </div>
 
                         {/* Total Sessions */}
-                        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-[0_4px_15px_-4px_rgba(0,0,0,0.05)] hover:shadow-lg hover:shadow-amber-600/10 transition-all duration-300 group flex items-center justify-between">
-                            <div className="flex flex-col h-full justify-between">
-                                <div className="space-y-2">
-                                    <div className="flex items-center gap-2">
-                                        <h5 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Sessions</h5>
-                                        <span className="relative flex h-1.5 w-1.5">
-                                            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-blue-500"></span>
-                                        </span>
-                                    </div>
-                                    <div className="flex items-baseline gap-2">
-                                        <span className="text-2xl font-black text-slate-800 tracking-tight">{stats?.overview.sessions.toLocaleString() || 0}</span>
-                                    </div>
+                        <div className="stat-card bg-white dark:bg-slate-900 p-5 md:p-6 rounded-[24px] border border-slate-100/70 dark:border-slate-800/80 shadow-[0_2px_8px_rgba(0,0,0,0.02)] flex items-center justify-between group hover:shadow-[0_12px_36px_rgba(0,0,0,0.035)] hover:-translate-y-1 transition-all duration-300 relative overflow-hidden min-h-[100px] cursor-pointer">
+                            <div className="decor-svg" style={{ color: '#f59e0b' }}>
+                                <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
+                                    <rect x="20" y="20" width="60" height="15" rx="7.5" fill="currentColor" fillOpacity="0.6" />
+                                    <rect x="20" y="42" width="60" height="15" rx="7.5" fill="currentColor" fillOpacity="0.4" />
+                                    <rect x="20" y="64" width="60" height="15" rx="7.5" fill="currentColor" fillOpacity="0.2" />
+                                </svg>
+                            </div>
+                            <div className="relative z-10">
+                                <div className="flex items-center gap-2 mb-1.5">
+                                    <h5 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none">Total Sessions</h5>
+                                    <span className="relative flex h-1.5 w-1.5">
+                                        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-blue-500"></span>
+                                    </span>
+                                </div>
+                                <div className="flex items-baseline gap-2">
+                                    <span className="text-xl md:text-2xl font-black text-slate-850 dark:text-slate-100 tracking-tight leading-none">{stats?.overview.sessions.toLocaleString() || 0}</span>
                                 </div>
                             </div>
-                            <div className="w-9 h-9 rounded-lg bg-amber-600 border border-amber-600 flex items-center justify-center text-white shadow-lg shadow-amber-600/20 transform group-hover:scale-105 transition-all duration-500">
+                            <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-transform group-hover:scale-110 relative z-10" style={{ backgroundColor: '#f59e0b15', color: '#f59e0b' }}>
                                 <Zap className="w-4 h-4" />
                             </div>
                         </div>
 
                         {/* Page Views */}
-                        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-[0_4px_15px_-4px_rgba(0,0,0,0.05)] hover:shadow-lg hover:shadow-violet-500/10 transition-all duration-300 group flex items-center justify-between">
-                            <div className="flex flex-col h-full justify-between">
-                                <div className="space-y-2">
-                                    <h5 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Page Views</h5>
-                                    <div className="flex items-baseline gap-2">
-                                        <span className="text-2xl font-black text-slate-800 tracking-tight">{stats?.overview.pageViews.toLocaleString() || 0}</span>
-                                    </div>
+                        <div className="stat-card bg-white dark:bg-slate-900 p-5 md:p-6 rounded-[24px] border border-slate-100/70 dark:border-slate-800/80 shadow-[0_2px_8px_rgba(0,0,0,0.02)] flex items-center justify-between group hover:shadow-[0_12px_36px_rgba(0,0,0,0.035)] hover:-translate-y-1 transition-all duration-300 relative overflow-hidden min-h-[100px] cursor-pointer">
+                            <div className="decor-svg" style={{ color: '#ec4899' }}>
+                                <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
+                                    <circle cx="50" cy="50" r="30" stroke="currentColor" strokeWidth="2" />
+                                    <path d="M50 35 V 65 M35 50 H 65" stroke="currentColor" strokeWidth="3" stroke-linecap="round" />
+                                </svg>
+                            </div>
+                            <div className="relative z-10">
+                                <h5 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none mb-1.5">Page Views</h5>
+                                <div className="flex items-baseline gap-2">
+                                    <span className="text-xl md:text-2xl font-black text-slate-850 dark:text-slate-100 tracking-tight leading-none">{stats?.overview.pageViews.toLocaleString() || 0}</span>
                                 </div>
                             </div>
-                            <div className="w-9 h-9 rounded-lg bg-violet-500 border border-violet-500 flex items-center justify-center text-white shadow-lg shadow-violet-500/20 transform group-hover:scale-105 transition-all duration-500">
+                            <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-transform group-hover:scale-110 relative z-10" style={{ backgroundColor: '#ec489915', color: '#ec4899' }}>
                                 <Eye className="w-4 h-4" />
                             </div>
                         </div>
 
                         {/* Avg Duration */}
-                        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-[0_4px_15px_-4px_rgba(0,0,0,0.05)] hover:shadow-lg hover:shadow-teal-500/10 transition-all duration-300 group flex items-center justify-between">
-                            <div className="flex flex-col h-full justify-between">
-                                <div className="space-y-2">
-                                    <h5 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Avg Duration</h5>
-                                    <div className="flex items-baseline gap-2">
-                                        <span className="text-2xl font-black text-slate-800 tracking-tight">{formatDuration(Math.floor(stats?.overview.avgDuration || 0))}</span>
-                                    </div>
+                        <div className="stat-card bg-white dark:bg-slate-900 p-5 md:p-6 rounded-[24px] border border-slate-100/70 dark:border-slate-800/80 shadow-[0_2px_8px_rgba(0,0,0,0.02)] flex items-center justify-between group hover:shadow-[0_12px_36px_rgba(0,0,0,0.035)] hover:-translate-y-1 transition-all duration-300 relative overflow-hidden min-h-[100px] cursor-pointer">
+                            <div className="decor-svg" style={{ color: '#10b981' }}>
+                                <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
+                                    <rect x="20" y="20" width="60" height="15" rx="7.5" fill="currentColor" fillOpacity="0.6" />
+                                    <rect x="20" y="42" width="60" height="15" rx="7.5" fill="currentColor" fillOpacity="0.4" />
+                                    <rect x="20" y="64" width="60" height="15" rx="7.5" fill="currentColor" fillOpacity="0.2" />
+                                </svg>
+                            </div>
+                            <div className="relative z-10">
+                                <h5 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none mb-1.5">Avg Duration</h5>
+                                <div className="flex items-baseline gap-2">
+                                    <span className="text-xl md:text-2xl font-black text-slate-855 dark:text-slate-100 tracking-tight leading-none">{formatDuration(Math.floor(stats?.overview.avgDuration || 0))}</span>
                                 </div>
                             </div>
-                            <div className="w-9 h-9 rounded-lg bg-teal-500 border border-teal-500 flex items-center justify-center text-white shadow-lg shadow-teal-500/20 transform group-hover:scale-105 transition-all duration-500">
+                            <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-transform group-hover:scale-110 relative z-10" style={{ backgroundColor: '#10b98115', color: '#10b981' }}>
                                 <Clock className="w-4 h-4" />
                             </div>
                         </div>
 
                         {/* Bounce Rate */}
-                        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-[0_4px_15px_-4px_rgba(0,0,0,0.05)] hover:shadow-lg hover:shadow-rose-500/10 transition-all duration-300 group flex items-center justify-between">
-                            <div className="flex flex-col h-full justify-between">
-                                <div className="space-y-2">
-                                    <div className="flex items-center gap-2">
-                                        <h5 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Bounce Rate</h5>
-                                        <button
-                                            onClick={() => setIsBounceInfoOpen(true)}
-                                            className="text-slate-300 hover:text-rose-500 transition-colors"
-                                        >
-                                            <Info className="w-3 h-3" />
-                                        </button>
-                                    </div>
-                                    <div className="flex items-baseline gap-2">
-                                        {(() => {
-                                            const val = stats?.overview.bounceRate || 0;
-                                            return (
-                                                <div className="flex flex-col">
-                                                    <span className="text-2xl font-black tracking-tight text-slate-800">
-                                                        {val.toFixed(1)}%
-                                                    </span>
-                                                    <span className="text-[9px] font-bold text-slate-400 mt-1">
-                                                        {stats?.overview.bounces.toLocaleString()} / {stats?.overview.sessions.toLocaleString()}
-                                                    </span>
-                                                </div>
-                                            );
-                                        })()}
-                                    </div>
+                        <div className="stat-card bg-white dark:bg-slate-900 p-5 md:p-6 rounded-[24px] border border-slate-100/70 dark:border-slate-800/80 shadow-[0_2px_8px_rgba(0,0,0,0.02)] flex items-center justify-between group hover:shadow-[0_12px_36px_rgba(0,0,0,0.035)] hover:-translate-y-1 transition-all duration-300 relative overflow-hidden min-h-[100px] cursor-pointer">
+                            <div className="decor-svg" style={{ color: '#ef4444' }}>
+                                <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
+                                    <circle cx="50" cy="50" r="30" stroke="currentColor" strokeWidth="2" />
+                                    <path d="M50 35 V 65 M35 50 H 65" stroke="currentColor" strokeWidth="3" stroke-linecap="round" />
+                                </svg>
+                            </div>
+                            <div className="relative z-10">
+                                <div className="flex items-center gap-2 mb-1.5">
+                                    <h5 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none">Bounce Rate</h5>
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setIsBounceInfoOpen(true);
+                                        }}
+                                        className="text-slate-300 hover:text-rose-500 transition-colors z-20 relative"
+                                    >
+                                        <Info className="w-3 h-3" />
+                                    </button>
+                                </div>
+                                <div className="flex items-baseline gap-2">
+                                    {(() => {
+                                        const val = stats?.overview.bounceRate || 0;
+                                        return (
+                                            <div className="flex flex-col">
+                                                <span className="text-xl md:text-2xl font-black tracking-tight text-slate-850 dark:text-slate-100 leading-none">
+                                                    {val.toFixed(1)}%
+                                                </span>
+                                                <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 mt-1 uppercase tracking-tight">
+                                                    {stats?.overview.bounces.toLocaleString()} / {stats?.overview.sessions.toLocaleString()}
+                                                </span>
+                                            </div>
+                                        );
+                                    })()}
                                 </div>
                             </div>
-                            <div className="w-9 h-9 rounded-lg bg-rose-500 border border-rose-500 flex items-center justify-center text-white shadow-lg shadow-rose-500/20 transform group-hover:scale-105 transition-all duration-500">
+                            <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-transform group-hover:scale-110 relative z-10" style={{ backgroundColor: '#ef444415', color: '#ef4444' }}>
                                 <Activity className="w-4 h-4" />
                             </div>
                         </div>

@@ -407,14 +407,6 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
         : (localCampaign.totalTargetAudience || 0);
 
     const StatBox = ({ label, value, subValue, icon: Icon, colorClass }: any) => {
-        const getGradient = (clr: string) => {
-            if (clr.includes('orange') || clr.includes('#ffa900')) return 'from-amber-400 to-orange-500 shadow-orange-500/10';
-            if (clr.includes('emerald') || clr.includes('green') || clr.includes('10b981')) return 'from-emerald-400 to-teal-500 shadow-emerald-500/10';
-            if (clr.includes('blue') || clr.includes('indigo')) return 'from-blue-500 to-indigo-600 shadow-indigo-500/10';
-            if (clr.includes('rose') || clr.includes('pink') || clr.includes('red') || clr.includes('ec4899')) return 'from-pink-400 to-rose-500 shadow-rose-500/10';
-            return 'from-slate-500 to-slate-600 shadow-slate-500/10';
-        };
-
         const accentColor = (() => {
             if (colorClass.includes('emerald') || colorClass.includes('green') || colorClass.includes('10b981')) return '#10b981';
             if (colorClass.includes('rose') || colorClass.includes('pink') || colorClass.includes('ec4899')) return '#ec4899';
@@ -422,15 +414,59 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
             return '#8b5cf6';
         })();
 
+        const decorSvg = (() => {
+            if (accentColor === '#10b981') {
+                return (
+                    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
+                        <rect x="20" y="20" width="60" height="15" rx="7.5" fill="currentColor" fillOpacity="0.6" />
+                        <rect x="20" y="42" width="60" height="15" rx="7.5" fill="currentColor" fillOpacity="0.4" />
+                        <rect x="20" y="64" width="60" height="15" rx="7.5" fill="currentColor" fillOpacity="0.2" />
+                    </svg>
+                );
+            }
+            if (accentColor === '#ec4899') {
+                return (
+                    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
+                        <circle cx="50" cy="50" r="30" stroke="currentColor" strokeWidth="2" />
+                        <path d="M50 35 V 65 M35 50 H 65" stroke="currentColor" strokeWidth="3" stroke-linecap="round" />
+                    </svg>
+                );
+            }
+            if (accentColor === '#3b82f6') {
+                return (
+                    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
+                        <path d="M10 50 Q 50 10 90 50 T 90 90" stroke="currentColor" strokeWidth="2" stroke-dasharray="3 3" />
+                        <circle cx="10" cy="50" r="6" fill="currentColor" />
+                        <circle cx="50" cy="10" r="6" fill="currentColor" />
+                        <circle cx="90" cy="50" r="6" fill="currentColor" />
+                        <path d="M50 10 L 90 50" stroke="currentColor" strokeWidth="1.5" />
+                    </svg>
+                );
+            }
+            return (
+                <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
+                    <circle cx="50" cy="50" r="40" stroke="currentColor" strokeWidth="2" stroke-dasharray="4 4" />
+                    <circle cx="35" cy="45" r="15" fill="currentColor" fillOpacity="0.2" />
+                    <circle cx="65" cy="45" r="15" fill="currentColor" fillOpacity="0.4" />
+                    <circle cx="50" cy="70" r="18" fill="currentColor" fillOpacity="0.6" />
+                </svg>
+            );
+        })();
+
         return (
-            <div className="bg-white dark:bg-slate-900 p-5 md:p-6 rounded-2xl md:rounded-[24px] border border-slate-100 dark:border-slate-800/80 shadow-sm hover:shadow-md flex items-center justify-between group hover:-translate-y-1 transition-all duration-300 relative overflow-hidden">
-                <div className="min-w-0">
-                    <p className="text-[10px] md:text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">{label}</p>
-                    <h4 className="text-2xl md:text-3xl font-black text-slate-800 dark:text-slate-100 tracking-tight">{value}</h4>
-                    {subValue && <p className="text-[9px] md:text-[10px] font-bold text-slate-400 mt-1 md:mt-2 uppercase tracking-tight truncate max-w-[150px] md:max-w-none">{subValue}</p>}
+            <div className="stat-card bg-white dark:bg-slate-900 p-5 md:p-6 rounded-2xl md:rounded-[24px] border border-slate-100/70 dark:border-slate-800/80 shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:shadow-[0_12px_36px_rgba(0,0,0,0.035)] hover:-translate-y-1 transition-all duration-300 relative overflow-hidden flex items-center justify-between group cursor-pointer">
+                {decorSvg && (
+                    <div className="decor-svg" style={{ color: accentColor }}>
+                        {decorSvg}
+                    </div>
+                )}
+                <div className="min-w-0 relative z-10">
+                    <p className="text-[10px] md:text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5 leading-none">{label}</p>
+                    <h4 className="text-xl md:text-2xl font-black text-slate-850 dark:text-slate-100 tracking-tight leading-none">{value}</h4>
+                    {subValue && <p className="text-[9px] md:text-[10px] font-bold text-slate-400 dark:text-slate-500 mt-1 md:mt-2 uppercase tracking-tight truncate max-w-[150px] md:max-w-none">{subValue}</p>}
                 </div>
-                <div className={`w-11 h-11 md:w-14 md:h-14 bg-gradient-to-br ${getGradient(colorClass)} text-white rounded-2xl shadow-lg flex items-center justify-center transition-all group-hover:scale-110 shrink-0 ml-4`}>
-                    <Icon className="w-5 h-5 md:w-7 md:h-7" />
+                <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-transform group-hover:scale-110 relative z-10 ml-4" style={{ backgroundColor: `${accentColor}15`, color: accentColor }}>
+                    <Icon className="w-4 h-4" />
                 </div>
             </div>
         );
@@ -442,7 +478,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
             
             {/* Floating Back Button on Backdrop */}
             <div 
-                className={`hidden lg:flex absolute left-0 top-0 bottom-0 w-[260px] items-center justify-center z-40 transition-opacity duration-500 ${animateIn ? 'opacity-100' : 'opacity-0'}`}
+                className={`hidden lg:flex absolute left-0 top-0 bottom-0 w-[230px] items-center justify-center z-40 transition-opacity duration-500 ${animateIn ? 'opacity-100' : 'opacity-0'}`}
                 style={{ pointerEvents: 'none' }}
             >
                 <button
@@ -456,7 +492,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
             </div>
 
             <div
-                className={`relative w-full lg:max-w-[calc(100vw-260px)] bg-[#f8fafc] shadow-2xl h-full lg:h-screen flex flex-col transition-all duration-500 cubic-bezier(0.16, 1, 0.3, 1) ${animateIn ? 'translate-x-0 opacity-100' : 'translate-x-full lg:translate-x-[100px] opacity-0'}`}
+                className={`relative w-full lg:max-w-[calc(100vw-230px)] bg-[#f8fafc] shadow-2xl h-full lg:h-screen flex flex-col transition-all duration-500 cubic-bezier(0.16, 1, 0.3, 1) ${animateIn ? 'translate-x-0 opacity-100' : 'translate-x-full lg:translate-x-[100px] opacity-0'}`}
             >
                 {/* Header */}
                 <div className="bg-white border-b border-slate-100 px-4 md:px-8 py-4 md:py-5 flex flex-col sm:flex-row justify-between items-start gap-4 shrink-0 shadow-sm z-30">

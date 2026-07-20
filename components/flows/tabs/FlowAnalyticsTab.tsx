@@ -1010,37 +1010,95 @@ const FlowAnalyticsTab: React.FC<{
     };
 
     const StatItem = ({ label, value, icon: Icon, color, subText, trendText, trendType, onClick }: any) => {
-        let iconColorClass = 'text-slate-500 dark:text-slate-400';
-        if (color === 'bg-blue-600') iconColorClass = 'text-blue-500 dark:text-blue-400';
-        else if (color === 'bg-indigo-600') iconColorClass = 'text-indigo-500 dark:text-indigo-400';
-        else if (color === 'bg-[#ffa900]') iconColorClass = 'text-amber-500 dark:text-amber-400';
-        else if (color === 'bg-rose-500') iconColorClass = 'text-rose-500 dark:text-rose-400';
+        const hexColor = (() => {
+            if (color === 'bg-blue-600') return '#3b82f6';
+            if (color === 'bg-indigo-600') return '#8b5cf6';
+            if (color === 'bg-[#ffa900]') return '#f59e0b';
+            if (color === 'bg-rose-500') return '#ec4899';
+            return '#64748b';
+        })();
+
+        const decorSvg = (() => {
+            if (hexColor === '#3b82f6') {
+                return (
+                    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
+                        <circle cx="50" cy="50" r="40" stroke="currentColor" strokeWidth="2" stroke-dasharray="4 4" />
+                        <circle cx="35" cy="45" r="15" fill="currentColor" fillOpacity="0.2" />
+                        <circle cx="65" cy="45" r="15" fill="currentColor" fillOpacity="0.4" />
+                        <circle cx="50" cy="70" r="18" fill="currentColor" fillOpacity="0.6" />
+                    </svg>
+                );
+            }
+            if (hexColor === '#8b5cf6') {
+                return (
+                    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
+                        <path d="M10 50 Q 50 10 90 50 T 90 90" stroke="currentColor" strokeWidth="2" stroke-dasharray="3 3" />
+                        <circle cx="10" cy="50" r="6" fill="currentColor" />
+                        <circle cx="50" cy="10" r="6" fill="currentColor" />
+                        <circle cx="90" cy="50" r="6" fill="currentColor" />
+                        <path d="M50 10 L 90 50" stroke="currentColor" strokeWidth="1.5" />
+                    </svg>
+                );
+            }
+            if (hexColor === '#f59e0b') {
+                return (
+                    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
+                        <rect x="20" y="20" width="60" height="15" rx="7.5" fill="currentColor" fillOpacity="0.6" />
+                        <rect x="20" y="42" width="60" height="15" rx="7.5" fill="currentColor" fillOpacity="0.4" />
+                        <rect x="20" y="64" width="60" height="15" rx="7.5" fill="currentColor" fillOpacity="0.2" />
+                    </svg>
+                );
+            }
+            return (
+                <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
+                    <circle cx="50" cy="50" r="30" stroke="currentColor" strokeWidth="2" />
+                    <path d="M50 35 V 65 M35 50 H 65" stroke="currentColor" strokeWidth="3" stroke-linecap="round" />
+                </svg>
+            );
+        })();
 
         const isTrendSuccess = trendType === 'success';
 
         return (
             <div
                 onClick={onClick}
-                className={`bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-100 dark:border-slate-800/60 flex flex-col justify-between hover:shadow-md hover:border-slate-200 dark:hover:border-slate-700/60 transition-all duration-300 group ${onClick ? 'cursor-pointer' : 'cursor-default'}`}
+                className={`stat-card bg-white dark:bg-slate-900 p-5 md:p-6 rounded-[24px] border border-slate-100/70 dark:border-slate-800/80 shadow-[0_2px_8px_rgba(0,0,0,0.02)] flex flex-col justify-between hover:shadow-[0_12px_36px_rgba(0,0,0,0.035)] hover:-translate-y-1 transition-all duration-300 relative overflow-hidden min-h-[145px] group ${onClick ? 'cursor-pointer' : 'cursor-default'}`}
             >
-                <div>
-                    <div className="flex items-center justify-between gap-2">
-                        <p className="text-[10px] md:text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">{label}</p>
-                        <Icon className={`w-5 h-5 shrink-0 ${iconColorClass}`} />
+                {decorSvg && (
+                    <div className="decor-svg" style={{ color: hexColor }}>
+                        {decorSvg}
                     </div>
-                    <p className="text-2xl md:text-3xl font-bold text-slate-800 dark:text-slate-100 tracking-tight mt-3 mb-1">{value}</p>
-                </div>
-                <div className="mt-2 space-y-1">
-                    {subText && (
-                        <div className="text-[11px] text-slate-400 dark:text-slate-500 font-medium flex items-center flex-wrap gap-x-2 gap-y-1">
-                            {subText}
+                )}
+                <div className="relative z-10 flex flex-col justify-between h-full w-full">
+                    <div>
+                        <div className="flex items-center justify-between gap-2">
+                            <p className="text-[10px] md:text-xs text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest leading-none">{label}</p>
+                            <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-transform group-hover:scale-110" style={{ backgroundColor: `${hexColor}15`, color: hexColor }}>
+                                <Icon className="w-4 h-4" />
+                            </div>
                         </div>
-                    )}
-                    {trendText && (
-                        <p className={`text-[10px] font-bold flex items-center gap-1 ${isTrendSuccess ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
-                            {trendText}
-                        </p>
-                    )}
+                        <p className="text-xl md:text-2xl font-black text-slate-850 dark:text-slate-100 tracking-tight mt-3 mb-1.5 leading-none">{value}</p>
+                    </div>
+                    <div className="mt-2 space-y-1">
+                        {subText && (
+                            <div className="text-[10px] text-slate-450 dark:text-slate-500 font-bold flex items-center flex-wrap gap-x-2 gap-y-0.5">
+                                {subText}
+                            </div>
+                        )}
+                        {trendText && (
+                            <div className="text-[11px] font-bold mt-1 flex items-center gap-1.5">
+                                <span className="flex items-center gap-0.5 px-2 py-0.5 rounded-full" style={{ 
+                                    backgroundColor: isTrendSuccess ? 'rgba(16, 185, 129, 0.08)' : 'rgba(244, 63, 94, 0.08)',
+                                    color: isTrendSuccess ? '#10b981' : '#f43f5e'
+                                }}>
+                                    {trendText.includes(':') ? trendText.split(':')[0] : trendText}
+                                </span>
+                                {trendText.includes(':') && (
+                                    <span className="text-slate-400 font-bold dark:text-slate-500">{trendText.split(':')[1]}</span>
+                                )}
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
         );

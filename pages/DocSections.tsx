@@ -36,13 +36,74 @@ const FeatureRow = ({ icon: Icon, title, desc }: { icon: any; title: string; des
         <div><p className="font-black text-slate-900 text-sm">{title}</p><p className="text-xs text-slate-500 mt-0.5 leading-relaxed">{desc}</p></div>
     </div>
 );
-const StatCard = ({ val, label, icon: Icon, color }: any) => (
-    <div className="p-6 bg-white/5 border border-white/10 rounded-2xl text-center hover:bg-white/[0.08] transition-all">
-        <Icon className={`w-6 h-6 mx-auto mb-3 ${color}`} />
-        <div className="text-2xl font-black text-white">{val}</div>
-        <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">{label}</div>
-    </div>
-);
+const StatCard = ({ val, label, icon: Icon, color }: any) => {
+    const hexColor = (() => {
+        const cStr = String(color).toLowerCase();
+        if (cStr.includes('blue')) return '#3b82f6';
+        if (cStr.includes('emerald')) return '#10b981';
+        if (cStr.includes('amber')) return '#f59e0b';
+        if (cStr.includes('rose')) return '#ec4899';
+        return '#8b5cf6';
+    })();
+
+    const decorSvg = (() => {
+        if (hexColor === '#10b981') {
+            return (
+                <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
+                    <rect x="20" y="20" width="60" height="15" rx="7.5" fill="currentColor" fillOpacity="0.6" />
+                    <rect x="20" y="42" width="60" height="15" rx="7.5" fill="currentColor" fillOpacity="0.4" />
+                    <rect x="20" y="64" width="60" height="15" rx="7.5" fill="currentColor" fillOpacity="0.2" />
+                </svg>
+            );
+        }
+        if (hexColor === '#ec4899') {
+            return (
+                <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
+                    <circle cx="50" cy="50" r="30" stroke="currentColor" strokeWidth="2" />
+                    <path d="M50 35 V 65 M35 50 H 65" stroke="currentColor" strokeWidth="3" stroke-linecap="round" />
+                </svg>
+            );
+        }
+        if (hexColor === '#3b82f6') {
+            return (
+                <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
+                    <path d="M10 50 Q 50 10 90 50 T 90 90" stroke="currentColor" strokeWidth="2" stroke-dasharray="3 3" />
+                    <circle cx="10" cy="50" r="6" fill="currentColor" />
+                    <circle cx="50" cy="10" r="6" fill="currentColor" />
+                    <circle cx="90" cy="50" r="6" fill="currentColor" />
+                    <path d="M50 10 L 90 50" stroke="currentColor" strokeWidth="1.5" />
+                </svg>
+            );
+        }
+        return (
+            <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
+                <circle cx="50" cy="50" r="40" stroke="currentColor" strokeWidth="2" stroke-dasharray="4 4" />
+                <circle cx="35" cy="45" r="15" fill="currentColor" fillOpacity="0.2" />
+                <circle cx="65" cy="45" r="15" fill="currentColor" fillOpacity="0.4" />
+                <circle cx="50" cy="70" r="18" fill="currentColor" fillOpacity="0.6" />
+            </svg>
+        );
+    })();
+
+    return (
+        <div className="stat-card bg-white/5 border border-white/10 rounded-2xl p-5 hover:bg-white/[0.08] transition-all duration-300 relative overflow-hidden flex flex-col justify-between min-h-[120px] group cursor-pointer">
+            {decorSvg && (
+                <div className="decor-svg" style={{ color: hexColor, opacity: 0.12 }}>
+                    {decorSvg}
+                </div>
+            )}
+            <div className="relative z-10 flex flex-col justify-between h-full w-full">
+                <div className="flex justify-between items-start mb-3">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">{label}</span>
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-transform group-hover:scale-110" style={{ backgroundColor: `${hexColor}25`, color: hexColor }}>
+                        <Icon className="w-4 h-4" />
+                    </div>
+                </div>
+                <div className="text-2xl font-black text-white leading-none">{val}</div>
+            </div>
+        </div>
+    );
+};
 
 /* ─── SECTION 1: OVERVIEW ───────────────────────────── */
 export const SectionOverview = () => (

@@ -670,6 +670,14 @@ const Campaigns: React.FC = () => {
                                 </span>
                             </>
                         }
+                        decor={
+                            <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
+                                <circle cx="50" cy="50" r="40" stroke="currentColor" strokeWidth="2" stroke-dasharray="4 4" />
+                                <circle cx="35" cy="45" r="15" fill="currentColor" fillOpacity="0.2" />
+                                <circle cx="65" cy="45" r="15" fill="currentColor" fillOpacity="0.4" />
+                                <circle cx="50" cy="70" r="18" fill="currentColor" fillOpacity="0.6" />
+                            </svg>
+                        }
                     />
 
                     {/* Card 2: Tổng gửi */}
@@ -692,6 +700,15 @@ const Campaigns: React.FC = () => {
                                     Zalo: {(stats.totalSent * 0.4).toFixed(0).toLocaleString()}
                                 </span>
                             </>
+                        }
+                        decor={
+                            <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
+                                <path d="M10 50 Q 50 10 90 50 T 90 90" stroke="currentColor" strokeWidth="2" stroke-dasharray="3 3" />
+                                <circle cx="10" cy="50" r="6" fill="currentColor" />
+                                <circle cx="50" cy="10" r="6" fill="currentColor" />
+                                <circle cx="90" cy="50" r="6" fill="currentColor" />
+                                <path d="M50 10 L 90 50" stroke="currentColor" strokeWidth="1.5" />
+                            </svg>
                         }
                     />
 
@@ -716,6 +733,13 @@ const Campaigns: React.FC = () => {
                                 </span>
                             </>
                         }
+                        decor={
+                            <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
+                                <rect x="20" y="20" width="60" height="15" rx="7.5" fill="currentColor" fillOpacity="0.6" />
+                                <rect x="20" y="42" width="60" height="15" rx="7.5" fill="currentColor" fillOpacity="0.4" />
+                                <rect x="20" y="64" width="60" height="15" rx="7.5" fill="currentColor" fillOpacity="0.2" />
+                            </svg>
+                        }
                     />
 
                     {/* Card 4: Lượt Click */}
@@ -738,6 +762,12 @@ const Campaigns: React.FC = () => {
                                     CTR: {stats.totalSent > 0 ? (stats.totalClicked / stats.totalSent * 100).toFixed(1) : '0'}%
                                 </span>
                             </>
+                        }
+                        decor={
+                            <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
+                                <circle cx="50" cy="50" r="30" stroke="currentColor" strokeWidth="2" />
+                                <path d="M50 35 V 65 M35 50 H 65" stroke="currentColor" strokeWidth="3" stroke-linecap="round" />
+                            </svg>
                         }
                     />
                 </div>
