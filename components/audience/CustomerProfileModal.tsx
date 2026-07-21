@@ -7,7 +7,7 @@ import {
     Phone, Globe, CheckCircle2, Edit3, Briefcase, Building, MapPin, Activity, Cake, UserMinus,
     Zap, UserCircle, Search, Clock, MessageSquare, AlertOctagon, Send, AlertTriangle,
     ShoppingCart, ArrowRight, ArrowUpRight, BadgeCheck, Eye, Monitor, Smartphone, BarChart2, ChevronDown,
-    Star, MessageCircle, RefreshCw, Heart, ExternalLink, MousePointerClick, Facebook, Sparkles
+    Star, MessageCircle, RefreshCw, Heart, ExternalLink, MousePointerClick, Facebook, Sparkles, ArrowLeft
 } from 'lucide-react';
 import Modal from '../common/Modal';
 import Badge from '../common/Badge';
@@ -614,113 +614,223 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
 
     return (
         <>
-            <Modal
-                isOpen={!!subscriber} onClose={onClose} title="Hồ sơ chi tiết" size="lg" isLoading={isLoading}
-                className="h-[80vh] md:h-[750px] max-h-[90vh]"
-                footer={
-                    <div className="flex justify-between w-full items-center">
-                        <Button variant="danger" icon={Trash2} onClick={() => setConfirmConfig({ isOpen: true, title: "Xóa hồ sơ?", message: "Hành động này không thể hoàn tác.", variant: 'danger', onConfirm: () => { onDelete(subscriber.id); onClose(); } })} className="bg-red-50 text-red-600 hover:bg-red-100 border-none shadow-none px-4">Xóa</Button>
-                        <div className="flex gap-3">
-                            {isEditing ? (
-                                <><Button variant="ghost" onClick={resetState} disabled={isLoading}>Hủy</Button><Button icon={Save} onClick={handleSave} disabled={isLoading}>Lưu cập nhật</Button></>
-                            ) : (<Button variant="secondary" onClick={onClose} disabled={isLoading}>Đóng</Button>)}
-                        </div>
+            <div className="fixed inset-0 z-[300] overflow-hidden animate-fade-in">
+                {/* Backdrop Blur Overlay with Floating Circular Arrow Close Button */}
+                <div
+                    className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm transition-opacity duration-300 z-[300] cursor-pointer group"
+                    onClick={onClose}
+                >
+                    {/* Floating Circular Arrow Button (Centered over 230px sidebar) */}
+                    <div className="hidden lg:flex absolute left-[115px] top-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-slate-900/90 border border-slate-700/80 text-white items-center justify-center shadow-2xl transition-all duration-300 group-hover:scale-110 group-hover:bg-violet-600 group-hover:border-violet-500">
+                        <ArrowLeft className="w-6 h-6 stroke-[2.5]" />
                     </div>
-                }
-            >
-                <div className="flex flex-col">
-                    {/* Header Summary */}
-                    <div className="flex items-center gap-5 mb-8 px-1 shrink-0">
-                        <div className="relative">
-                            {formData.avatar ? (
-                                <img src={formData.avatar} alt="Avatar" className="w-14 h-14 md:w-16 md:h-16 rounded-[22px] md:rounded-[24px] object-cover border-2 border-slate-100 dark:border-slate-800/60 shadow-xl shadow-violet-600/10 shrink-0" />
-                            ) : (
-                                <div className="w-14 h-14 md:w-16 md:h-16 rounded-[22px] md:rounded-[24px] bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-lg md:text-xl font-bold text-white shadow-xl shadow-amber-600/20 shrink-0">
-                                    {(formData.firstName || '?')[0]}{(formData.lastName || '')[0]}
-                                </div>
-                            )}
-                            {(Number(formData.verified) === 1) && (
-                                <div className="absolute -bottom-1 -right-1 bg-white dark:bg-slate-900 rounded-full p-0.5 border border-slate-50">
-                                    <BadgeCheck className="w-4 h-4 md:w-5 md:h-5 text-blue-500 fill-white" />
-                                </div>
-                            )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-3">
-                                <div className="flex items-center gap-1.5 min-w-0">
-                                    <h2 className="text-xl md:text-2xl font-black text-slate-800 dark:text-slate-200 truncate tracking-tight">{(formData.firstName || formData.lastName) ? `${formData.firstName || ''} ${formData.lastName || ''}`.trim() : 'Chưa đặt tên'}</h2>
-                                    {(Number(formData.verified) === 1) && <BadgeCheck className="w-5 h-5 md:w-6 md:h-6 text-blue-500 fill-blue-50 flex-shrink-0" />}
-                                    {formData.status === 'customer' && <BadgeCheck className="w-5 h-5 md:w-6 md:h-6 text-blue-500 fill-blue-50 flex-shrink-0" />}
-                                </div>
-                                <Badge
-                                    variant={
-                                        formData.status === "active" ? "success" :
-                                            (formData.status === "unsubscribed" || formData.status === "bounced" || formData.status === "complained") ? "danger" :
-                                                formData.status === "lead" ? "pink" :
-                                                    formData.status === "customer" ? "amber" : "neutral"
-                                    }
-                                    className="text-[9px] px-2 py-0.5 shrink-0"
-                                >
-                                    {formData.status}
-                                </Badge>
-                            </div>
-                            <div className="flex items-center gap-3 mt-1.5 text-slate-500 dark:text-slate-400 font-bold text-xs tracking-tight">
-                                <span className="flex items-center gap-1.5 lowercase">
-                                    {isVirtualEmail ? (
-                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-50 border border-slate-100 text-[9px] font-black uppercase tracking-tight text-slate-400">
-                                            <div className="w-1.5 h-1.5 rounded-full bg-purple-500 shadow-[0_0_6px_rgba(168,85,247,0.4)]" />
-                                            {isZalo ? 'Zalo Identity' : (isMeta ? 'Meta Identity' : 'Virtual Identity')}
-                                        </span>
+                </div>
+
+                {/* Slide-over Right Drawer Panel - Anchored to 230px sidebar */}
+                <div className="fixed inset-y-0 right-0 z-[310] max-w-full flex pl-0 lg:pl-[230px] pointer-events-none">
+                    <div className="w-screen max-w-none lg:w-[calc(100vw-230px)] bg-white dark:bg-slate-950 shadow-2xl flex flex-col transition-all duration-300 overflow-hidden pointer-events-auto">
+
+                        {/* EXECUTIVE HEADER BAR */}
+                        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800/80 bg-white dark:bg-slate-900 flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0">
+                            {/* Customer Identity */}
+                            <div className="flex items-center gap-4 min-w-0">
+                                <div className="relative shrink-0">
+                                    {formData.avatar ? (
+                                        <img src={formData.avatar} alt="Avatar" className="w-12 h-12 md:w-14 md:h-14 rounded-full object-cover ring-2 ring-violet-500/30 shadow-md" />
                                     ) : (
-                                        <span className="flex items-center gap-1.5 text-blue-600"><Mail className="w-3.5 h-3.5" />{formData.email}</span>
+                                        <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-gradient-to-tr from-violet-600 via-indigo-600 to-amber-500 flex items-center justify-center text-white font-extrabold text-lg shadow-md ring-2 ring-white dark:ring-slate-800 select-none">
+                                            {(formData.firstName || '?')[0]}{(formData.lastName || '')[0]}
+                                        </div>
                                     )}
-                                </span>
-                                <span className="w-1 h-1 rounded-full bg-slate-300"></span>
-                                <span className="text-slate-400">Tham gia: {formatRelativeTime(formData.joinedAt)}</span>
-                            </div>
-                            {/* LEAD SCORE & CHANNELS & SEGMENTS */}
-                            <div className="mt-2 flex flex-wrap gap-2 items-center">
-                                {formData.leadScore && (
-                                    <div className="px-2.5 py-1 bg-gradient-to-r from-amber-500/10 via-yellow-500/5 to-orange-500/10 dark:from-amber-500/20 dark:to-orange-500/15 border border-amber-300 dark:border-amber-700/60 text-amber-700 dark:text-amber-300 rounded-xl text-xs font-black flex items-center gap-1.5 shadow-[0_2px_12px_rgba(245,158,11,0.12)] hover:scale-[1.03] transition-all duration-300">
-                                        <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500 animate-pulse" />
-                                        <span>{formData.leadScore || 0} Points</span>
+                                    {(Number(formData.verified) === 1) && (
+                                        <div className="absolute -bottom-0.5 -right-0.5 bg-white dark:bg-slate-900 rounded-full p-0.5 border border-slate-100 dark:border-slate-800">
+                                            <BadgeCheck className="w-4 h-4 text-blue-500 fill-blue-50" />
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="min-w-0 space-y-1">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        <h2 className="text-xl font-black text-slate-900 dark:text-white truncate tracking-tight">
+                                            {(formData.firstName || formData.lastName) ? `${formData.firstName || ''} ${formData.lastName || ''}`.trim() : (formData.email || 'Chưa đặt tên')}
+                                        </h2>
+                                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                                            {formData.status || 'Active'}
+                                        </span>
+                                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                                            Đã thẩm định
+                                        </span>
                                     </div>
+
+                                    <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-slate-400 font-medium">
+                                        <span>Tạo lúc: {formatRelativeTime(formData.createdAt || formData.joinedAt)}</span>
+                                        <span>•</span>
+                                        <span>Tương tác gần nhất: {formatRelativeTime(formData.lastActiveAt || formData.updatedAt || formData.lastActivityAt || formData.joinedAt || formData.createdAt)}</span>
+                                        {!isVirtualEmail && (
+                                            <>
+                                                <span>•</span>
+                                                <span className="text-violet-600 dark:text-violet-400 font-bold">{formData.email}</span>
+                                            </>
+                                        )}
+                                        {formData.phone && (
+                                            <>
+                                                <span>•</span>
+                                                <span className="text-slate-700 dark:text-slate-300 font-bold">{formData.phone}</span>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Header Actions */}
+                            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-500/20 text-xs font-black">
+                                    <Star className="w-3.5 h-3.5 fill-violet-500 text-violet-500" />
+                                    {formData.leadScore || formData.score || 100} Points
+                                </span>
+
+                                <button
+                                    onClick={handleAISummarize}
+                                    disabled={isSummarizing}
+                                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 text-purple-600 dark:text-purple-400 border border-purple-500/20 text-xs font-bold transition-all disabled:opacity-50"
+                                >
+                                    <Sparkles className={`w-3.5 h-3.5 ${isSummarizing ? 'animate-spin' : ''}`} />
+                                    {isSummarizing ? 'Đang xử lý...' : 'Tóm tắt AI'}
+                                </button>
+
+                                {isEditing ? (
+                                    <div className="flex items-center gap-2">
+                                        <button onClick={resetState} className="px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-bold">Hủy</button>
+                                        <button onClick={handleSave} className="px-4 py-2 rounded-2xl bg-violet-600 hover:bg-violet-700 text-white text-xs font-extrabold uppercase tracking-wider shadow-md shadow-violet-500/25">Lưu cập nhật</button>
+                                    </div>
+                                ) : (
+                                    <button onClick={() => setIsEditing(true)} className="px-4 py-2 rounded-2xl bg-violet-600 hover:bg-violet-700 text-white text-xs font-extrabold uppercase tracking-wider shadow-md shadow-violet-500/25 transition-all">Sửa hồ sơ</button>
                                 )}
 
-                                {memberInsights.segments.map(seg => (
-                                    <div key={seg.id} className="px-2 py-0.5 bg-indigo-50 border border-indigo-100 text-indigo-600 rounded-lg text-[10px] font-black uppercase tracking-tight flex items-center gap-1">
-                                        <Layers className="w-2.5 h-2.5" />
-                                        {seg.name}
-                                    </div>
-                                ))}
                             </div>
                         </div>
-                        {!isEditing && (
-                            <div className="flex flex-col gap-2 shrink-0 self-start w-[120px] md:w-[140px]">
-                                <button onClick={() => setIsEditing(true)} className="px-3 py-1.5 md:px-4 md:py-2 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-300 rounded-xl text-[10px] md:text-xs font-black border border-slate-200 dark:border-slate-700/60 transition-all duration-500 flex items-center justify-center gap-2 hover:shadow-sm w-full"><Edit3 className="w-3 md:w-3.5 h-3 md:h-3.5" /> Sửa hồ sơ</button>
-                                <button onClick={handleAISummarize} disabled={isSummarizing} className="px-3 py-1.5 md:px-4 md:py-2 bg-gradient-to-r from-violet-400 to-purple-500 hover:from-violet-500 hover:to-purple-600 text-white rounded-xl text-[10px] md:text-xs font-black border-none transition-all duration-500 flex items-center justify-center gap-2 shadow-lg shadow-violet-600/20 w-full disabled:opacity-50 active:scale-95"><Sparkles className="w-3 md:w-3.5 h-3 md:h-3.5 fill-white" /> {isSummarizing ? "Đang xử lý..." : "Tóm tắt AI"}</button>
+
+                        {/* SPLIT-PANE BODY */}
+                        <div className="flex-1 flex min-h-0 overflow-hidden">
+
+                            {/* LEFT SUB-SIDEBAR PANEL */}
+                            <div className="w-64 shrink-0 border-r border-slate-200 dark:border-slate-800/80 bg-white dark:bg-slate-900 p-4 space-y-6 overflow-y-auto">
+                                
+                                {/* Group 1 */}
+                                <div className="space-y-1">
+                                    <h4 className="px-3 text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Thông tin & Nhật ký</h4>
+                                    <button
+                                        onClick={() => setActiveTab('info')}
+                                        className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                                            activeTab === 'info' ? 'bg-violet-600 text-white shadow-md shadow-violet-500/20' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                                        }`}
+                                    >
+                                        <User className="w-4 h-4" />
+                                        <span>Thông tin chung</span>
+                                    </button>
+                                    <button
+                                        onClick={() => setActiveTab('notes')}
+                                        className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                                            activeTab === 'notes' ? 'bg-violet-600 text-white shadow-md shadow-violet-500/20' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                                        }`}
+                                    >
+                                        <Tag className="w-4 h-4" />
+                                        <span>Tags & Ghi chú</span>
+                                    </button>
+                                    <button
+                                        onClick={() => setActiveTab('stats')}
+                                        className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                                            activeTab === 'stats' ? 'bg-violet-600 text-white shadow-md shadow-violet-500/20' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                                        }`}
+                                    >
+                                        <BarChart2 className="w-4 h-4" />
+                                        <span>Số liệu & Insights</span>
+                                    </button>
+                                    <button
+                                        onClick={() => setActiveTab('automation')}
+                                        className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                                            activeTab === 'automation' ? 'bg-violet-600 text-white shadow-md shadow-violet-500/20' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                                        }`}
+                                    >
+                                        <GitMerge className="w-4 h-4" />
+                                        <span>Công việc & Flow</span>
+                                    </button>
+                                    <button
+                                        onClick={() => setActiveTab('activity')}
+                                        className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                                            activeTab === 'activity' ? 'bg-violet-600 text-white shadow-md shadow-violet-500/20' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                                        }`}
+                                    >
+                                        <History className="w-4 h-4" />
+                                        <span>Hành trình tương tác</span>
+                                    </button>
+                                </div>
+
+                                {/* Group 2 */}
+                                <div className="space-y-1 pt-4 border-t border-slate-100 dark:border-slate-800">
+                                    <h4 className="px-3 text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Hội thoại & Thao tác</h4>
+                                    <button
+                                        onClick={() => setActiveTab('chat')}
+                                        className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                                            activeTab === 'chat' ? 'bg-violet-600 text-white shadow-md shadow-violet-500/20' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                                        }`}
+                                    >
+                                        <MessageSquare className="w-4 h-4" />
+                                        <span>Hội thoại Chat</span>
+                                    </button>
+                                    <button
+                                        onClick={() => setIsManualTriggerOpen(true)}
+                                        className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-950/40 transition-all border border-violet-200 dark:border-violet-800/40"
+                                    >
+                                        <Zap className="w-4 h-4 text-violet-500" />
+                                        <span>Kích hoạt Flow thủ công</span>
+                                    </button>
+                                </div>
+
+                                {/* Delete Button */}
+                                <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
+                                    <button
+                                        onClick={() => setConfirmConfig({
+                                            isOpen: true,
+                                            title: "Xóa hồ sơ khách hàng?",
+                                            message: "Tất cả dữ liệu lịch sử và phân khúc của khách hàng này sẽ bị xóa hoàn toàn.",
+                                            variant: 'danger',
+                                            onConfirm: () => { onDelete(subscriber.id); onClose(); }
+                                        })}
+                                        className="w-full flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-all border border-rose-200 dark:border-rose-900/40"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                        <span>Xóa hồ sơ</span>
+                                    </button>
+                                </div>
                             </div>
-                        )}
-                    </div>
-                </div>
 
-                <div className="shrink-0 mb-4">
-                    <Tabs variant="segmented" activeId={activeTab} onChange={setActiveTab} items={[
-                        { id: 'info', label: 'Cá nhân', icon: User },
-                        { id: 'stats', label: 'Số liệu', icon: BarChart2 },
-                        { id: 'automation', label: 'Tham gia', icon: Activity, count: memberInsights.segments.length + (Array.isArray(formData.listIds) ? formData.listIds.length : 0) },
-                        { id: 'activity', label: 'Hành trình', icon: History },
-                        { id: 'chat', label: 'Hội thoại', icon: MessageSquare },
-                        { id: 'notes', label: 'Ghi chú', icon: FileText },
-                    ]} />
-                </div>
-
-                {/* SCROLLABLE CONTENT AREA */}
-                <div className="mt-2">
-                    <div key={activeTab} className="animate-in fade-in slide-in-from-right-2 duration-300 pb-10">
-
-                        {activeTab === 'info' && (
-                            <div className="space-y-6 md:space-y-10">
+                            {/* RIGHT MAIN CONTENT CANVAS */}
+                            <div className="flex-1 overflow-y-auto p-6 sm:p-8 bg-slate-50/50 dark:bg-slate-950/50 space-y-6">
+                                {activeTab === 'info' && (
+                                    <div className="space-y-6">
+                                        {/* 4 Summary Insight Metric Cards */}
+                                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                                            <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm">
+                                                <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">Điểm tích lũy</span>
+                                                <span className="text-lg font-black text-violet-600 dark:text-violet-400 mt-1 block">{formData.leadScore || formData.score || 0} Points</span>
+                                                <span className="text-[10px] font-semibold text-slate-400 mt-0.5 block">Lead score tự động</span>
+                                            </div>
+                                            <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm">
+                                                <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">Tương tác đã ghi nhận</span>
+                                                <span className="text-lg font-black text-slate-800 dark:text-white mt-1 block">{activities.length || 0} sự kiện</span>
+                                                <span className="text-[10px] font-semibold text-slate-400 mt-0.5 block">Hoạt động hệ thống</span>
+                                            </div>
+                                            <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm">
+                                                <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">Phân khúc phù hợp</span>
+                                                <span className="text-lg font-black text-slate-800 dark:text-white mt-1 block">{memberInsights.segments.length} nhóm</span>
+                                                <span className="text-[10px] font-semibold text-slate-400 mt-0.5 block">Segment matching</span>
+                                            </div>
+                                            <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm">
+                                                <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">Lần tương tác cuối</span>
+                                                <span className="text-base font-black text-slate-800 dark:text-white mt-1 block">{formatRelativeTime(formData.lastActiveAt || formData.updatedAt || formData.joinedAt)}</span>
+                                            </div>
+                                        </div>
                                 {/* Nhóm 1: Định danh */}
                                 <section className="space-y-4">
                                     <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-1 flex items-center gap-2">
@@ -941,29 +1051,6 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                                     <Globe className="w-6 h-6 text-slate-200" />
                                                 </div>
                                                 <p className="text-xs text-slate-400 font-bold italic tracking-tight">Chưa có thông tin mở rộng.</p>
-                                            </div>
-                                        )}
-                                    </div>
-                                </section>
-
-                                {/* Nhóm 4: Tags */}
-                                <section className="space-y-4">
-                                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-1 flex items-center gap-2">
-                                        <div className="w-4 h-px bg-slate-200"></div> Nhãn phân loại (Tags)
-                                    </h4>
-                                    <div className="p-6 bg-slate-50 dark:bg-slate-950/50 rounded-[28px] border border-slate-200 dark:border-slate-700/60 border-dashed">
-                                        <div className="flex flex-wrap gap-2 mb-5">
-                                            {(Array.isArray(formData.tags) ? formData.tags : []).map((tag: string) => (
-                                                <span key={tag} className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/60 rounded-xl text-[10px] font-black text-slate-700 dark:text-slate-200 shadow-sm uppercase tracking-tight group/tag transition-all hover:border-violet-200 hover:bg-violet-50/30">
-                                                    <Tag className="w-3 h-3 text-violet-600" /> {tag}
-                                                    {isEditing && <button onClick={() => setFormData({ ...formData, tags: (Array.isArray(formData.tags) ? formData.tags : []).filter((t: string) => t !== tag) })} className="text-slate-300 hover:text-rose-500 transition-colors ml-1"><X className="w-3 h-3" /></button>}
-                                                </span>
-                                            ))}
-                                            {(!Array.isArray(formData.tags) || formData.tags.length === 0) && <p className="text-xs text-slate-400 font-bold italic">Chưa gắn nhãn.</p>}
-                                        </div>
-                                        {isEditing && (
-                                            <div className="max-w-xs">
-                                                <Select placeholder="Thêm nhãn mới..." options={allTags.filter(t => !(Array.isArray(formData.tags) ? formData.tags : []).includes(t.name)).map(t => ({ value: t.name, label: t.name }))} value={tagPickerValue} onChange={handleAddTag} variant="outline" direction="top" />
                                             </div>
                                         )}
                                     </div>
@@ -1566,11 +1653,33 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                         )}
 
                         {activeTab === 'notes' && (
-                            <div className="h-[400px] flex flex-col">
-                                <div className="flex items-center justify-between mb-2 px-1">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Nội dung ghi chú</label>
-                                    {!isEditing && <span className="text-[10px] text-slate-300 italic">Bấm "Sửa hồ sơ" để chỉnh sửa</span>}
-                                </div>
+                            <div className="space-y-6">
+                                {/* Nhãn phân loại (Tags) */}
+                                <section className="space-y-3">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block px-1">Nhãn phân loại (Tags)</label>
+                                    <div className="p-5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm">
+                                        <div className="flex flex-wrap gap-2 mb-3">
+                                            {(Array.isArray(formData.tags) ? formData.tags : []).map((tag: string) => (
+                                                <span key={tag} className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 rounded-xl text-[11px] font-black text-slate-700 dark:text-slate-200 shadow-sm uppercase tracking-tight group/tag transition-all hover:border-violet-200 hover:bg-violet-50/30">
+                                                    <Tag className="w-3.5 h-3.5 text-violet-600" /> {tag}
+                                                    {isEditing && <button onClick={() => setFormData({ ...formData, tags: (Array.isArray(formData.tags) ? formData.tags : []).filter((t: string) => t !== tag) })} className="text-slate-300 hover:text-rose-500 transition-colors ml-1"><X className="w-3.5 h-3.5" /></button>}
+                                                </span>
+                                            ))}
+                                            {(!Array.isArray(formData.tags) || formData.tags.length === 0) && <p className="text-xs text-slate-400 font-bold italic">Chưa gắn nhãn.</p>}
+                                        </div>
+                                        {isEditing && (
+                                            <div className="max-w-xs">
+                                                <Select placeholder="Thêm nhãn mới..." options={allTags.filter(t => !(Array.isArray(formData.tags) ? formData.tags : []).includes(t.name)).map(t => ({ value: t.name, label: t.name }))} value={tagPickerValue} onChange={handleAddTag} variant="outline" direction="bottom" />
+                                            </div>
+                                        )}
+                                    </div>
+                                </section>
+
+                                <div className="min-h-[300px] flex flex-col">
+                                    <div className="flex items-center justify-between mb-2 px-1">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Nội dung ghi chú</label>
+                                        {!isEditing && <span className="text-[10px] text-slate-300 italic">Bấm "Sửa hồ sơ" để chỉnh sửa</span>}
+                                    </div>
                                 {isEditing ? (
                                     <>
                                         <textarea
@@ -1634,10 +1743,13 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                     </div>
                                 )}
                             </div>
-                        )}
-                    </div>
+                        </div>
+                    )}
                 </div>
-            </Modal>
+            </div>
+        </div>
+    </div>
+</div>
 
             {/* AUTOMATION TRIGGER WARNING MODAL */}
             <ConfirmModal
@@ -2134,8 +2246,7 @@ const SubscriberChatHistory = ({ subscriber }: { subscriber: any }) => {
                                                         </div>
                                                     </div>
                                                 </div>
-                                            ))
-                                        )}
+                                            )))}
                                     </div>
                                 )}
                             </div>

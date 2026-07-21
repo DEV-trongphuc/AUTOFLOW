@@ -4,7 +4,7 @@ import {
     X, User, History, Edit2, Check,
     Copy, Calendar, Clock, ArrowRight, ExternalLink,
     Send, MailOpen, MessageCircle, Info, Trash2, ChevronDown,
-    Activity, FileText, Mail, Phone, Globe, Briefcase, Building, MapPin, PenLine, Star, Plus, RefreshCw
+    Activity, FileText, Mail, Phone, Globe, Briefcase, Building, MapPin, PenLine, Star, Plus, RefreshCw, ArrowLeft
 } from 'lucide-react';
 import { api } from '../../services/storageAdapter';
 import Input from '../common/Input';
@@ -165,17 +165,27 @@ export const ZaloUserProfileModal: React.FC<ZaloUserProfileModalProps> = ({
 
     const initials = getInitials(formData.displayName);
 
+    if (!animateIn) return null;
+
     return (
-        <Modal
-            isOpen={animateIn}
-            onClose={handleClose}
-            size="lg"
-            noHeader
-            noPadding
-        >
-            <div className="relative bg-white w-full flex flex-col h-full overflow-hidden">
-                {/* Header */}
-                <div className="px-6 py-5 flex justify-between items-center bg-white border-b border-slate-100 shrink-0">
+        <>
+            <div className="fixed inset-0 z-[300] overflow-hidden animate-fade-in">
+                {/* Backdrop Blur Overlay with Floating Circular Arrow Close Button */}
+                <div
+                    className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm transition-opacity duration-300 z-[300] cursor-pointer group"
+                    onClick={handleClose}
+                >
+                    {/* Floating Circular Arrow Button (Centered over 230px sidebar) */}
+                    <div className="hidden lg:flex absolute left-[115px] top-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-slate-900/90 border border-slate-700/80 text-white items-center justify-center shadow-2xl transition-all duration-300 group-hover:scale-110 group-hover:bg-violet-600 group-hover:border-violet-500">
+                        <ArrowLeft className="w-6 h-6 stroke-[2.5]" />
+                    </div>
+                </div>
+
+                {/* Slide-over Right Drawer Panel - Anchored to 230px sidebar */}
+                <div className="fixed inset-y-0 right-0 z-[310] max-w-full flex pl-0 lg:pl-[230px] pointer-events-none">
+                    <div className="w-screen max-w-none lg:w-[calc(100vw-230px)] bg-white dark:bg-slate-950 shadow-2xl flex flex-col transition-all duration-300 overflow-hidden pointer-events-auto">
+                    {/* Header */}
+                    <div className="px-6 py-4 flex justify-between items-center bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 shrink-0">
                     <div>
                         <h3 className="text-lg font-bold text-slate-800 tracking-tight">Hồ sơ chi tiết</h3>
                     </div>
@@ -542,20 +552,21 @@ export const ZaloUserProfileModal: React.FC<ZaloUserProfileModalProps> = ({
                     </div>
                 </div>
 
+                </div>
             </div>
+        </div>
 
-            <ConfirmModal
-                isOpen={showDeleteConfirm}
-                onClose={() => setShowDeleteConfirm(false)}
-                onConfirm={handleDelete}
-                title="Xóa kết nối Zalo"
-                message="Bạn có chắc chắn muốn xóa kết nối Zalo này? Hành động này sẽ xóa lịch sử tin nhắn và hoạt động Zalo của người dùng này nhưng không ảnh hưởng đến hồ sơ chính."
-                confirmText="Xác nhận xóa"
-                cancelText="Hủy"
-                variant="danger"
-            />
-        </Modal>
-    );
+        <ConfirmModal
+            isOpen={showDeleteConfirm}
+            onClose={() => setShowDeleteConfirm(false)}
+            onConfirm={handleDelete}
+            title="Xóa kết nối Zalo"
+            message="Bạn có chắc chắn muốn xóa kết nối Zalo này? Hành động này sẽ xóa lịch sử tin nhắn và hoạt động Zalo của người dùng này nhưng không ảnh hưởng đến hồ sơ chính."
+            confirmLabel="Xác nhận xóa"
+            variant="danger"
+        />
+    </>
+);
 };
 
 /* --- Helpers & Sub-components --- */

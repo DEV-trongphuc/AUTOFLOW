@@ -368,7 +368,7 @@ const Settings: React.FC = () => {
                         isLoading={isSaving}
                         onClick={handleSave}
                         size="lg"
-                        className="w-full sm:w-auto shadow-lg shadow-orange-500/20 bg-[#683df2] hover:bg-[#e69800] text-white border-none h-12 lg:h-14 px-8 rounded-2xl"
+                        className="w-full sm:w-auto bg-violet-600 hover:bg-violet-700 text-white font-extrabold uppercase tracking-wider h-12 lg:h-14 px-8 rounded-2xl shadow-md shadow-violet-500/25 transition-all border-none"
                     >
                         Lưu cấu hình
                     </Button>
@@ -455,7 +455,7 @@ const Settings: React.FC = () => {
                                             isLoading={isTesting}
                                             disabled={!selectedFormId}
                                             fullWidth
-                                            className="h-12 bg-slate-900 hover:bg-black text-white rounded-xl font-black text-xs tracking-widest"
+                                            className="h-12 bg-violet-600 hover:bg-violet-700 text-white rounded-2xl font-extrabold text-xs tracking-wider uppercase shadow-md shadow-violet-500/25"
                                             icon={ArrowRight}
                                         >
                                             GIẢ LẬP ĐIỀN FORM
@@ -497,7 +497,7 @@ const Settings: React.FC = () => {
                                             isLoading={isTesting}
                                             disabled={!selectedEventId}
                                             fullWidth
-                                            className="h-12 bg-pink-600 hover:bg-pink-700 text-white rounded-xl font-black text-xs tracking-widest shadow-lg shadow-pink-200"
+                                            className="h-12 bg-violet-600 hover:bg-violet-700 text-white rounded-2xl font-extrabold text-xs tracking-wider uppercase shadow-md shadow-violet-500/25"
                                             icon={ArrowRight}
                                         >
                                             GIẢ LẬP MUA HÀNG THÀNH CÔNG
@@ -532,7 +532,7 @@ const Settings: React.FC = () => {
                                             isLoading={isTesting}
                                             disabled={!selectedCustomEventId}
                                             fullWidth
-                                            className="h-12 bg-violet-600 hover:bg-violet-700 text-white rounded-xl font-black text-xs tracking-widest shadow-lg shadow-violet-200"
+                                            className="h-12 bg-violet-600 hover:bg-violet-700 text-white rounded-2xl font-extrabold text-xs tracking-wider uppercase shadow-md shadow-violet-500/25"
                                             icon={ArrowRight}
                                         >
                                             GIẢ LẬP SỰ KIỆN TÙY CHỈNH

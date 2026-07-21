@@ -177,16 +177,43 @@ if ($method === 'GET' && $action === 'ping') {
 
 // Get access logs for current user (Sync real history)
 if ($method === 'GET' && $action === 'logs') {
-
-        $hasAuth = !empty($GLOBALS['current_admin_id']) || !empty($_SESSION['user_id']) || !empty($_SESSION['org_user_id']) || !empty($_SERVER['HTTP_AUTHORIZATION']) || !empty($_SERVER['HTTP_X_ADMIN_TOKEN']) || !empty($_SERVER['HTTP_X_LOCAL_DEV_USER']);
+    $hasAuth = !empty($GLOBALS['current_admin_id']) || !empty($_SESSION['user_id']) || !empty($_SESSION['org_user_id']) || !empty($_SERVER['HTTP_AUTHORIZATION']) || !empty($_SERVER['HTTP_X_ADMIN_TOKEN']) || !empty($_SERVER['HTTP_X_LOCAL_DEV_USER']);
     if (!$hasAuth) {
         jsonResponse(false, null, 'Unauthorized');
     }
-    
+
     try {
+        // Ensure table exists
+        $pdo->exec("CREATE TABLE IF NOT EXISTS `user_access_logs` (
+          `id` varchar(64) NOT NULL,
+          `user_id` varchar(64) NOT NULL,
+          `ip_address` varchar(64) DEFAULT NULL,
+          `device` varchar(255) DEFAULT NULL,
+          `action` varchar(50) DEFAULT 'login',
+          `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          PRIMARY KEY (`id`),
+          KEY `idx_user_created` (`user_id`, `created_at`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $userId = $_SESSION['user_id'] ?? $_SESSION['org_user_id'] ?? $GLOBALS['current_admin_id'] ?? ($_SERVER['HTTP_X_LOCAL_DEV_USER'] ?? '1');
+
         $stmt = $pdo->prepare("SELECT ip_address, device, created_at FROM user_access_logs WHERE user_id = ? ORDER BY created_at DESC LIMIT 10");
-        $stmt->execute([$_SESSION['user_id']]);
-        $logs = $stmt->fetchAll();
+        $stmt->execute([$userId]);
+        $logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // If no logs found, insert an active session entry
+        if (empty($logs)) {
+            $clientIp = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+            $clientIp = trim(explode(',', $clientIp)[0]);
+            $ua = $_SERVER['HTTP_USER_AGENT'] ?? 'Chrome (Web Desktop)';
+            $logId = bin2hex(random_bytes(16));
+            try {
+                $stmtInsert = $pdo->prepare("INSERT INTO user_access_logs (id, user_id, ip_address, device, action, created_at) VALUES (?, ?, ?, ?, 'login', NOW())");
+                $stmtInsert->execute([$logId, $userId, $clientIp, $ua]);
+                $logs = [['ip_address' => $clientIp, 'device' => $ua, 'created_at' => date('Y-m-d H:i:s')]];
+            } catch (Exception $e) {}
+        }
+
         jsonResponse(true, $logs);
     } catch (Exception $e) {
         jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');

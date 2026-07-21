@@ -218,6 +218,10 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose, isCollapsed, onToggleCollaps
 
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const isAdmin = user.role === 'admin';
+  const isProfileActive = location.pathname === '/profile';
+  const userName = user.name || 'Dev Admin';
+  const userRole = user.role || 'Admin';
+  const userPicture = user.picture || "/imgs/ICON.png";
 
   return (
     <div className={`flex flex-col h-full bg-[#0d0331] text-[#dadada] border-r border-[#1a134d]/40 shadow-[4px_0_24px_rgba(0,0,0,0.12)] transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-[230px]'} group/sidebar z-20 relative`}>
@@ -302,58 +306,65 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose, isCollapsed, onToggleCollaps
       </nav>
 
       {/* SIDEBAR FOOTER - PROFILE & SETTING */}
-      <div className={`${isCollapsed ? 'p-2' : 'p-4'} border-t border-white/10 bg-transparent space-y-2`}>
-        {/* Profile & Logout Unified Container */}
-        <div className={`bg-white/5 border border-white/10 rounded-2xl flex items-center backdrop-blur-md shadow-lg ${isCollapsed ? 'flex-col p-2 gap-2' : 'p-1.5 gap-1'}`}>
+      <div className={`${isCollapsed ? 'p-2' : 'p-3'} border-t border-white/5 bg-gradient-to-b from-transparent to-black/30`}>
+        {/* Borderless Profile Card */}
+        <div
+          className={`relative group/profile rounded-2xl transition-all duration-300 backdrop-blur-md ${
+            isProfileActive
+              ? 'bg-gradient-to-r from-violet-600/35 via-violet-500/25 to-purple-600/25 shadow-lg shadow-violet-950/60'
+              : 'bg-white/[0.04] hover:bg-white/[0.08]'
+          } ${isCollapsed ? 'flex flex-col items-center p-2 gap-2' : 'flex items-center justify-between p-2 pl-2.5 pr-2 gap-2'}`}
+        >
+          {/* User Profile Info Link */}
           <NavLink
             to="/profile"
             onClick={onClose}
-            className={({ isActive }) => `
-                flex items-center ${isCollapsed ? 'justify-center p-2' : 'gap-3 px-3 flex-1'} py-2 rounded-xl transition-all duration-300
-                ${isActive
-                ? 'bg-white/15 text-white shadow-sm border border-white/20 scale-[1.02]'
-                : 'text-white/60 hover:bg-white/10 border border-transparent hover:border-white/10'}`
-            }
-            title={isCollapsed ? 'Thông tin cá nhân' : undefined}
+            className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3 min-w-0 flex-1'} transition-all duration-200 group/nav`}
+            title={isCollapsed ? userName : undefined}
           >
-            <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border-2 border-white/10 bg-white/10 shadow-sm">
-              <img src={user.picture || "/imgs/ICON.png"} className="w-full h-full object-cover" alt="" />
+            <div className="relative shrink-0">
+              <div className="w-9 h-9 rounded-full overflow-hidden group-hover/profile:scale-105 transition-all shadow-md bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center">
+                <img
+                  src={userPicture}
+                  onError={(e) => {
+                    (e.target as HTMLElement).style.display = 'none';
+                  }}
+                  className="w-full h-full object-cover"
+                  alt={userName}
+                />
+              </div>
+              <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 rounded-full shadow-sm"></span>
             </div>
+
             {!isCollapsed && (
-              <div className="flex flex-col min-w-0">
-                <span className="text-[11px] font-black tracking-tight text-white truncate uppercase">{user.name}</span>
-                <span className="text-[9px] font-bold text-violet-350 uppercase tracking-tighter">{user.role}</span>
+              <div className="flex flex-col min-w-0 pr-1">
+                <span className="text-[12px] font-bold text-white tracking-wide truncate group-hover/nav:text-violet-200 transition-colors">
+                  {userName}
+                </span>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-semibold bg-violet-500/20 text-violet-300 uppercase tracking-wider leading-none">
+                    {userRole}
+                  </span>
+                </div>
               </div>
             )}
           </NavLink>
 
-          {!isCollapsed ? (
-            <button
-              onClick={() => {
-                localStorage.removeItem('user');
-                localStorage.removeItem('isAuthenticated');
-                localStorage.setItem('explicit_logout', 'true');
-                window.location.reload();
-              }}
-              className="w-9 h-9 flex items-center justify-center text-white/40 hover:text-rose-450 hover:bg-white/10 rounded-xl transition-all border border-transparent hover:border-rose-500/20 hover:shadow-sm shrink-0"
-              title="Đăng xuất"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
-          ) : (
-            <button
-              onClick={() => {
-                localStorage.removeItem('user');
-                localStorage.removeItem('isAuthenticated');
-                localStorage.setItem('explicit_logout', 'true');
-                window.location.reload();
-              }}
-              className="flex w-full items-center justify-center p-2 rounded-xl transition-all text-rose-400 hover:text-rose-500 hover:bg-white/5 border border-transparent hover:border-rose-500/20"
-              title="Đăng xuất"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
-          )}
+          {/* Logout Action Button */}
+          <button
+            onClick={() => {
+              localStorage.removeItem('user');
+              localStorage.removeItem('isAuthenticated');
+              localStorage.setItem('explicit_logout', 'true');
+              window.location.reload();
+            }}
+            className={`w-8 h-8 rounded-xl flex items-center justify-center text-white/40 hover:text-rose-400 hover:bg-rose-500/20 transition-all duration-200 shrink-0 ${
+              isCollapsed ? 'w-full py-1.5 h-auto' : ''
+            }`}
+            title="Đăng xuất"
+          >
+            <LogOut className="w-4 h-4 transition-transform group-hover/profile:scale-105" />
+          </button>
         </div>
       </div>
 

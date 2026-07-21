@@ -327,8 +327,6 @@ const Dashboard: React.FC = () => {
                             <Zap className="w-6 h-6 animate-bounce" />
                         </div>
                         <div>
-                            <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">Cơ sở dữ liệu cần cập nhật ⚙️</h4>
-                            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">Hệ thống đã được nâng cấp nhưng cấu trúc cơ sở dữ liệu hiện tại chưa đồng bộ với phiên bản mới (phiên bản target: 35).</p>
                         </div>
                     </div>
                     <a
