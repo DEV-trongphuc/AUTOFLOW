@@ -1,5 +1,5 @@
 <?php
-$_GET['secret'] = getenv('CRON_SECRET') ?: 'autoflow_cron_2026';
+define('WORKER_GUARD_LOADED', true);
 require_once __DIR__ . '/db_connect.php';
 require_once __DIR__ . '/worker_flow.php';
 
