@@ -373,8 +373,14 @@ try {
     $items[] = chk('Waiting flow states with NULL step_id', $r == 0 ? 'PASS' : 'WARN',
         "$r rows", $r > 0 ? 'These subscribers may be stuck — check trigger_helper.php enrollment' : '');
 
-    // Flow states with scheduled_at in the past not yet processed
-    $overdue = $pdo->query("SELECT COUNT(*) FROM subscriber_flow_states WHERE status='waiting' AND scheduled_at < DATE_SUB(NOW(), INTERVAL 30 MINUTE)")->fetchColumn();
+    // Flow states with scheduled_at in the past not yet processed (only for active flows)
+    $overdue = $pdo->query("
+        SELECT COUNT(q.id) 
+        FROM subscriber_flow_states q
+        JOIN flows f ON q.flow_id = f.id
+        WHERE q.status='waiting' AND q.scheduled_at < DATE_SUB(NOW(), INTERVAL 30 MINUTE)
+        AND f.status = 'active'
+    ")->fetchColumn();
     $items[] = chk('Overdue waiting states (scheduled >30min ago)', $overdue == 0 ? 'PASS' : ($overdue < 100 ? 'WARN' : 'FAIL'),
         "$overdue rows", $overdue > 0 ? 'Worker not picking these up — check cron/worker triggers' : '');
 
