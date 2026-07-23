@@ -1315,7 +1315,7 @@ const Audience: React.FC = () => {
                                     Churn: {Math.round(stats.unsubscribed * 0.05).toLocaleString()}
                                 </span>
                                 <span className="flex items-center gap-1.5">
-                                    <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#64748b' }}></span>
+                                    <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#94a3b8' }}></span>
                                     Khác: {Math.round(stats.unsubscribed * 0.95).toLocaleString()}
                                 </span>
                             </>

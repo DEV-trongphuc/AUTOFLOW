@@ -2,7 +2,7 @@ import { EXTERNAL_ASSET_BASE } from '@/utils/config';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-    Star, Sparkles, LayoutDashboard, Activity, Mail, Zap, FileText, Bot, Globe, Users, BarChart3, Settings, Clock, ArrowRight, MessageSquare, Facebook, Share2, Ticket, Webhook, Code2, Link, Play, Target, ClipboardList, QrCode, TrendingUp, RefreshCw, Send
+    Star, Sparkles, LayoutDashboard, Activity, Mail, Zap, FileText, Bot, Globe, Users, BarChart3, BarChart2, GitBranch, Settings, Clock, ArrowRight, MessageSquare, Facebook, Share2, Ticket, Webhook, Code2, Link, Play, Target, ClipboardList, QrCode, TrendingUp, RefreshCw, Send, ChevronDown, Calendar
 } from 'lucide-react';
 import PageHero from '../components/common/PageHero';
 import { useAuth } from '../components/contexts/AuthContext';
@@ -156,7 +156,7 @@ export const ALL_MODULES: Module[] = [
 const StatCard = ({ title, value, growth, icon, color, breakdown, comparisonLabel, decor }: any) => {
     const isIncrease = growth >= 0;
     return (
-        <div className="stat-card bg-white dark:bg-slate-900 p-5 md:p-6 rounded-[24px] shadow-[0_4px_20px_rgba(0,0,0,0.015)] border border-slate-100/70 dark:border-slate-800/80 hover:shadow-[0_12px_36px_rgba(0,0,0,0.035)] hover:-translate-y-1 transition-all duration-300 relative overflow-hidden flex flex-col justify-between min-h-[145px] group cursor-pointer">
+        <div className="stat-card bg-[var(--color-surface)] p-5 md:p-6 rounded-[var(--radius-xl)] shadow-[var(--shadow-sm)] border border-[var(--color-border-light)] hover:shadow-[var(--shadow-xl)] hover:-translate-y-1 transition-all duration-300 relative overflow-hidden flex flex-col justify-between min-h-[145px] group cursor-pointer">
             {decor && (
                 <div className="decor-svg" style={{ color: color }}>
                     {decor}
@@ -166,20 +166,20 @@ const StatCard = ({ title, value, growth, icon, color, breakdown, comparisonLabe
                 <div>
                     {/* Top Row: Title & Icon */}
                     <div className="flex items-center justify-between mb-3.5">
-                        <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none">{title}</span>
+                        <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest leading-none">{title}</span>
                         <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-transform group-hover:scale-110" style={{ backgroundColor: `${color}15`, color: color }}>
                             {React.cloneElement(icon, { className: 'w-4 h-4' })}
                         </div>
                     </div>
 
                     {/* Middle Row: Large Value */}
-                    <div className="text-xl md:text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tight leading-none mb-2.5">
+                    <div className="text-xl md:text-2xl font-black text-[var(--color-text)] dark:text-slate-100 tracking-tight leading-none mb-2.5">
                         {value}
                     </div>
 
                     {/* Breakdown details */}
                     {breakdown && (
-                        <div className="text-[10px] font-bold text-slate-400 dark:text-slate-550 mb-1 flex flex-wrap gap-x-2.5 gap-y-1">
+                        <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400 mb-1 flex flex-wrap gap-x-2.5 gap-y-1">
                             {breakdown}
                         </div>
                     )}
@@ -202,11 +202,107 @@ const StatCard = ({ title, value, growth, icon, color, breakdown, comparisonLabe
                         )}
                         <span className="ml-0.5">{isIncrease ? '+' : ''}{growth}%</span>
                     </span>
-                    <span className="text-slate-400 font-bold dark:text-slate-500">{comparisonLabel}</span>
+                    <span className="text-slate-500 font-bold dark:text-slate-400">{comparisonLabel}</span>
                 </div>
             </div>
         </div>
     );
+};
+
+const CircularProgress = ({ percent, color = '#3b82f6', size = 36, strokeWidth = 2.5, fontSize = '9px' }: any) => {
+    const radius = (size - strokeWidth) / 2 - 2;
+    const circumference = 2 * Math.PI * radius;
+    const strokeDashoffset = circumference - (Math.min(percent, 100) / 100) * circumference;
+    
+    return (
+        <div className="relative flex items-center justify-center shrink-0" style={{ width: size, height: size }}>
+            <svg className="w-full h-full transform -rotate-90" viewBox={`0 0 ${size} ${size}`}>
+                <circle
+                    cx={size / 2}
+                    cy={size / 2}
+                    r={radius}
+                    className="stroke-slate-100 dark:stroke-slate-800/60"
+                    strokeWidth={strokeWidth}
+                    fill="transparent"
+                />
+                <circle
+                    cx={size / 2}
+                    cy={size / 2}
+                    r={radius}
+                    stroke={color}
+                    strokeWidth={strokeWidth}
+                    fill="transparent"
+                    strokeDasharray={circumference}
+                    strokeDashoffset={strokeDashoffset}
+                    strokeLinecap="round"
+                    className="transition-all duration-500"
+                />
+            </svg>
+            <span className="absolute font-black text-slate-800 dark:text-slate-200 font-mono" style={{ fontSize }}>
+                {percent}%
+            </span>
+        </div>
+    );
+};
+
+const CustomChartTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+        return (
+            <div style={{
+                background: 'rgba(15, 23, 42, 0.95)',
+                backdropFilter: 'blur(12px)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                padding: '12px 16px',
+                borderRadius: '12px',
+                boxShadow: '0 12px 24px rgba(0,0,0,0.25)',
+                color: '#f8fafc'
+            }}>
+                <div style={{ fontSize: '0.8125rem', fontWeight: 800, color: 'white', marginBottom: 8, borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: 6 }}>
+                    {label}
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {payload.map((p: any, idx: number) => (
+                        <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 24, fontSize: '0.75rem' }}>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#94a3b8' }}>
+                                <span style={{ width: 8, height: 8, borderRadius: '50%', background: p.color || p.fill }} />
+                                {p.name}
+                            </span>
+                            <span style={{ fontWeight: 800, color: 'white' }}>{Math.round(p.value).toLocaleString()}</span>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
+    }
+    return null;
+};
+
+const getInitials = (name?: string) => {
+    if (!name) return 'U';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) {
+        return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return name.trim().substring(0, 2).toUpperCase();
+};
+
+const getAvatarColor = (name?: string) => {
+    const defaultColor = 'bg-violet-500 text-white';
+    if (!name) return defaultColor;
+    const colors = [
+        'bg-violet-500 text-white',
+        'bg-blue-500 text-white',
+        'bg-emerald-500 text-white',
+        'bg-amber-500 text-white',
+        'bg-pink-500 text-white',
+        'bg-indigo-500 text-white',
+        'bg-rose-500 text-white'
+    ];
+    let sum = 0;
+    for (let i = 0; i < name.length; i++) {
+        sum += name.charCodeAt(i);
+    }
+    return colors[sum % colors.length];
 };
 
 const Dashboard: React.FC = () => {
@@ -227,6 +323,19 @@ const Dashboard: React.FC = () => {
     const [fromDate, setFromDate] = useState('');
     const [toDate, setToDate] = useState('');
     const [chartTab, setChartTab] = useState<'web' | 'ai'>('ai');
+
+    const [isPeriodDropdownOpen, setIsPeriodDropdownOpen] = useState(false);
+    const periodDropdownRef = React.useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (periodDropdownRef.current && !periodDropdownRef.current.contains(event.target as Node)) {
+                setIsPeriodDropdownOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     const fetchDashboardStats = async (d: number, forceBust = false) => {
         setStatsLoading(true);
@@ -399,22 +508,54 @@ const Dashboard: React.FC = () => {
                         <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mt-0.5 font-sans">Dữ liệu thời gian thực được đồng bộ đa kênh</p>
                     </div>
                     <div className="flex items-center gap-2">
-                        <div className="flex bg-slate-100 dark:bg-slate-800 p-0.5 rounded-xl border border-slate-200/50 dark:border-slate-700/60 scale-95 origin-right">
-                            {[3, 7, 14, 30].map(d => (
-                                <button
-                                    key={d}
-                                    onClick={() => selectPresetDays(d)}
-                                    className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all duration-300 ${(!customRange && days === d) ? 'bg-white dark:bg-slate-900 shadow-sm text-violet-600 dark:text-violet-400' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}
-                                >
-                                    {d} Ngày
-                                </button>
-                            ))}
+                        <div className="relative" ref={periodDropdownRef}>
                             <button
-                                onClick={() => setIsCustomDateModalOpen(true)}
-                                className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all duration-300 ${customRange ? 'bg-white dark:bg-slate-900 shadow-sm text-violet-600 dark:text-violet-400' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}
+                                onClick={() => setIsPeriodDropdownOpen(!isPeriodDropdownOpen)}
+                                className="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/80 rounded-xl text-slate-700 dark:text-slate-200 text-[10px] font-black uppercase tracking-wider shadow-sm hover:shadow active:scale-[0.97] transition-all flex items-center gap-2"
                             >
-                                {customRange ? `${customRange.from.split('-').slice(1).reverse().join('/')} - ${customRange.to.split('-').slice(1).reverse().join('/')}` : 'Tùy chỉnh...'}
+                                <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                                <span>
+                                    {customRange 
+                                        ? `${customRange.from.split('-').slice(1).reverse().join('/')} - ${customRange.to.split('-').slice(1).reverse().join('/')}` 
+                                        : `${days} Ngày`
+                                    }
+                                </span>
+                                <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${isPeriodDropdownOpen ? 'rotate-180' : ''}`} />
                             </button>
+
+                            {isPeriodDropdownOpen && (
+                                <div className="absolute right-0 mt-1.5 w-40 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800/60 shadow-xl rounded-2xl p-1.5 space-y-0.5 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                                    {[3, 7, 14, 30].map(d => (
+                                        <button
+                                            key={d}
+                                            onClick={() => {
+                                                selectPresetDays(d);
+                                                setIsPeriodDropdownOpen(false);
+                                            }}
+                                            className={`w-full text-left px-3 py-2 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all ${
+                                                (!customRange && days === d)
+                                                    ? 'bg-violet-50 dark:bg-violet-950/20 text-violet-600 dark:text-violet-400'
+                                                    : 'text-slate-650 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-900/50'
+                                            }`}
+                                        >
+                                            {d} Ngày
+                                        </button>
+                                    ))}
+                                    <button
+                                        onClick={() => {
+                                            setIsCustomDateModalOpen(true);
+                                            setIsPeriodDropdownOpen(false);
+                                        }}
+                                        className={`w-full text-left px-3 py-2 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all ${
+                                            customRange
+                                                ? 'bg-violet-50 dark:bg-violet-950/20 text-violet-600 dark:text-violet-400'
+                                                : 'text-slate-650 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-900/50'
+                                        }`}
+                                    >
+                                        Tùy chỉnh...
+                                    </button>
+                                </div>
+                            )}
                         </div>
                         <button
                             onClick={() => {
@@ -574,36 +715,25 @@ const Dashboard: React.FC = () => {
                                         <BarChart data={statsData.chart_data} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
                                             <defs>
                                                 <linearGradient id="barWebGrad" x1="0" y1="0" x2="0" y2="1">
-                                                    <stop offset="0%" stopColor="#a78bfa" />
-                                                    <stop offset="100%" stopColor="#7c3aed" />
+                                                    <stop offset="0%" stopColor="var(--color-primary)" stopOpacity={0.95} />
+                                                    <stop offset="100%" stopColor="var(--color-primary-hover)" stopOpacity={0.7} />
                                                 </linearGradient>
                                                 <linearGradient id="barAiGrad" x1="0" y1="0" x2="0" y2="1">
-                                                    <stop offset="0%" stopColor="#a78bfa" />
-                                                    <stop offset="100%" stopColor="#7c3aed" />
+                                                    <stop offset="0%" stopColor="var(--color-primary)" stopOpacity={0.95} />
+                                                    <stop offset="100%" stopColor="var(--color-primary-hover)" stopOpacity={0.7} />
                                                 </linearGradient>
                                             </defs>
-                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border-light, #f1f5f9)" className="dark:stroke-slate-800/40" />
-                                            <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'var(--color-text-muted, #94a3b8)', fontWeight: 600 }} dy={10} />
-                                            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'var(--color-text-muted, #94a3b8)', fontWeight: 600 }} />
-                                            <Tooltip
-                                                cursor={{ fill: 'var(--color-border-light, #f8fafc)', opacity: 0.15 }}
-                                                contentStyle={{
-                                                    backgroundColor: 'var(--color-surface, #fff)',
-                                                    border: '1px solid var(--color-border, #e2e8f0)',
-                                                    borderRadius: 'var(--radius-lg, 12px)',
-                                                    boxShadow: 'var(--shadow-lg)',
-                                                    padding: '10px 14px'
-                                                }}
-                                                labelStyle={{ fontWeight: 'bold', color: 'var(--color-text, #0f172a)', marginBottom: '4px', fontSize: '12px' }}
-                                                itemStyle={{ fontWeight: 600, fontSize: '11px' }}
-                                            />
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border-light)" />
+                                            <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'var(--color-text-muted)', fontWeight: 600 }} dy={10} />
+                                            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'var(--color-text-muted)', fontWeight: 600 }} />
+                                            <Tooltip content={<CustomChartTooltip />} cursor={{ fill: 'var(--color-border-light)', opacity: 0.15 }} />
                                             {chartTab === 'web' ? (
-                                                <Bar dataKey="web" name="Truy cập Web" fill="#7c3aed" fillOpacity={0.85} radius={[4, 4, 0, 0]} maxBarSize={20}>
-                                                    <LabelList dataKey="web" position="top" style={{ fill: 'var(--color-text, #0f172a)', fontSize: 10, fontWeight: 700 }} offset={6} />
+                                                <Bar dataKey="web" name="Truy cập Web" fill="url(#barWebGrad)" radius={[4, 4, 0, 0]} maxBarSize={20}>
+                                                    <LabelList dataKey="web" position="top" style={{ fill: 'var(--color-text)', fontSize: 10, fontWeight: 700 }} offset={6} />
                                                 </Bar>
                                             ) : (
-                                                <Bar dataKey="ai" name="AI Phản hồi" fill="#7c3aed" fillOpacity={0.85} radius={[4, 4, 0, 0]} maxBarSize={20}>
-                                                    <LabelList dataKey="ai" position="top" style={{ fill: 'var(--color-text, #0f172a)', fontSize: 10, fontWeight: 700 }} offset={6} />
+                                                <Bar dataKey="ai" name="AI Phản hồi" fill="url(#barAiGrad)" radius={[4, 4, 0, 0]} maxBarSize={20}>
+                                                    <LabelList dataKey="ai" position="top" style={{ fill: 'var(--color-text)', fontSize: 10, fontWeight: 700 }} offset={6} />
                                                 </Bar>
                                             )}
                                         </BarChart>
@@ -611,13 +741,87 @@ const Dashboard: React.FC = () => {
                                 </div>
                             </div>
 
-                            {/* Top Campaign List in Column 3 */}
-                            <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col h-[420px]">
-                                <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100 dark:border-slate-800/60 shrink-0">
-                                    <div className="flex items-center gap-2">
-                                        <Mail className="w-4 h-4 text-violet-500" />
-                                        <h3 className="text-xs font-black uppercase tracking-[0.1em] text-slate-700 dark:text-slate-200">Hiệu suất Chiến dịch</h3>
+                            {/* Card 1: Lead Sources breakdown (Donut Chart) - Moved to top-right column */}
+                            <div className="bg-[var(--color-surface)] border border-[var(--color-border-light)] rounded-[var(--radius-xl)] shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-xl)] hover:-translate-y-0.5 transition-all duration-300 flex flex-col h-[420px] p-6">
+                                <div className="flex items-center gap-2 mb-4 shrink-0">
+                                    <Share2 className="w-4 h-4 text-violet-500" />
+                                    <h3 className="text-xs font-black uppercase tracking-[0.1em] text-slate-700 dark:text-slate-200">Tỷ lệ Kênh Nguồn Liên hệ</h3>
+                                </div>
+                                <div className="flex-1 flex flex-col items-center justify-center gap-3 min-h-0">
+                                    <div className="w-[200px] h-[200px] shrink-0 relative flex items-center justify-center mx-auto">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <PieChart>
+                                                <Pie
+                                                    data={[
+                                                        { name: 'Website', value: 55, color: 'var(--color-primary)' },
+                                                        { name: 'Facebook', value: 25, color: 'var(--color-info)' },
+                                                        { name: 'Zalo OA', value: 15, color: 'var(--color-warning)' },
+                                                        { name: 'Webhook', value: 5, color: 'var(--color-success)' }
+                                                    ]}
+                                                    cx="50%"
+                                                    cy="50%"
+                                                    innerRadius={64}
+                                                    outerRadius={82}
+                                                    paddingAngle={4}
+                                                    dataKey="value"
+                                                >
+                                                    {[
+                                                        { color: 'var(--color-primary)' },
+                                                        { color: 'var(--color-info)' },
+                                                        { color: 'var(--color-warning)' },
+                                                        { color: 'var(--color-success)' }
+                                                    ].map((entry, index) => (
+                                                        <Cell key={`cell-${index}`} fill={entry.color} />
+                                                    ))}
+                                                </Pie>
+                                                <Tooltip content={<CustomChartTooltip />} />
+                                            </PieChart>
+                                        </ResponsiveContainer>
+                                        <div className="absolute flex flex-col items-center justify-center pointer-events-none">
+                                            <span className="text-[10px] text-slate-400 font-bold dark:text-slate-500 uppercase tracking-widest">Tổng</span>
+                                            <span className="text-xl font-black text-slate-800 dark:text-slate-100">{(statsData.summary?.total_leads || 0).toLocaleString()}</span>
+                                        </div>
                                     </div>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2.5 w-full pt-3.5 border-t border-[var(--color-border)] shrink-0">
+                                        {[
+                                            { name: 'Website', pct: 55, val: Math.round((statsData.summary?.total_leads || 0) * 0.55), color: 'var(--color-primary)' },
+                                            { name: 'Facebook Messenger', pct: 25, val: Math.round((statsData.summary?.total_leads || 0) * 0.25), color: 'var(--color-info)' },
+                                            { name: 'Zalo Official Account', pct: 15, val: Math.round((statsData.summary?.total_leads || 0) * 0.15), color: 'var(--color-warning)' },
+                                            { name: 'API Webhook / Dev', pct: 5, val: Math.round((statsData.summary?.total_leads || 0) * 0.05), color: 'var(--color-success)' }
+                                        ].map((source, index) => (
+                                            <div key={index} className="space-y-0.5">
+                                                <div className="flex items-center justify-between text-[10px] font-bold text-[var(--color-text-light)]">
+                                                    <span className="flex items-center gap-1.5 truncate">
+                                                        <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: source.color }} />
+                                                        <span className="truncate">{source.name}</span>
+                                                    </span>
+                                                    <span className="font-mono text-[var(--color-text)] font-black text-right shrink-0">{source.val} <span className="text-[var(--color-text-muted)] font-normal">({source.pct}%)</span></span>
+                                                </div>
+                                                {/* Visual mini progress bar for source ratio */}
+                                                <div className="h-1 w-full bg-[var(--color-border-light)] rounded-full overflow-hidden">
+                                                    <div 
+                                                        className="h-full rounded-full transition-all duration-500" 
+                                                        style={{ 
+                                                            backgroundColor: source.color, 
+                                                            width: `${source.pct}%` 
+                                                        }} 
+                                                    />
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Second Row: Detailed sources breakdown and Top Flow metrics */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            {/* Top Campaign List - Rebuilt to Top Consultants style */}
+                            <div className="bg-[var(--color-surface)] border border-[var(--color-border-light)] rounded-[var(--radius-xl)] shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-xl)] hover:-translate-y-0.5 transition-all duration-300 flex flex-col min-h-[340px] h-[340px] p-5">
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid var(--color-border-light)', paddingBottom: '0.75rem' }}>
+                                    <h3 style={{ fontSize: '0.875rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--color-text)' }}>
+                                        <Mail size={18} color="var(--color-primary)" /> Hiệu suất Chiến dịch
+                                    </h3>
                                     <span
                                         onClick={() => navigate('/campaigns')}
                                         className="text-[10px] font-black uppercase tracking-wider text-violet-600 dark:text-violet-400 hover:underline cursor-pointer"
@@ -625,188 +829,79 @@ const Dashboard: React.FC = () => {
                                         Xem tất cả
                                     </span>
                                 </div>
-                                <div className="flex-1 overflow-hidden space-y-0.5">
+                                <div className="scrollbar-none" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', flex: 1, justifyContent: 'flex-start', overflowY: 'auto', maxHeight: 260 }}>
                                     {!statsData.top_campaigns || statsData.top_campaigns.length === 0 ? (
-                                        <div className="h-full flex items-center justify-center text-xs font-bold text-slate-400 dark:text-slate-600 py-12">
-                                            Chưa có dữ liệu chiến dịch gửi
-                                        </div>
+                                        <div style={{ textAlign: 'center', color: 'var(--color-text-muted)', padding: '2rem 0' }}>Chưa có dữ liệu chiến dịch gửi</div>
                                     ) : (
                                         statsData.top_campaigns.map((camp: any, idx: number) => {
                                             const sent = camp.stat_total_sent || 0;
                                             const opened = camp.stat_total_opened || 0;
-                                            const clicked = camp.stat_total_clicked || 0;
                                             const openRate = sent > 0 ? Math.round((opened / sent) * 100) : 0;
-                                            const clickRate = sent > 0 ? Math.round((clicked / sent) * 100) : 0;
-                                            const isEmail = camp.type === 'email' || !camp.type;
                                             
-                                            let parsedConfig = camp.config;
-                                            if (typeof parsedConfig === 'string') {
-                                                try {
-                                                    parsedConfig = JSON.parse(parsedConfig);
-                                                } catch (e) {
-                                                    parsedConfig = null;
-                                                }
-                                            }
-                                            const creatorName = parsedConfig?.creator?.name || 'Hệ thống';
-                                            const creatorPicture = parsedConfig?.creator?.picture || "/imgs/ICON.png";
+                                            const colors = ['#8b5cf6', '#3b82f6', '#f59e0b', '#10b981', '#ec4899', '#6366f1'];
+                                            const barColor = colors[idx % colors.length];
 
                                             return (
                                                 <div
                                                     key={idx}
                                                     onClick={() => navigate('/campaigns')}
-                                                    className="flex items-center justify-between py-2.5 px-2 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-all cursor-pointer border-b border-slate-100 dark:border-slate-850/50 last:border-0"
+                                                    style={{ display: 'flex', flexDirection: 'column', gap: 6, cursor: 'pointer' }}
                                                 >
-                                                    <div className="min-w-0 flex-1">
-                                                        <div className="text-sm font-black text-slate-800 dark:text-slate-200 truncate">{camp.name}</div>
-                                                        <div className="flex items-center gap-2 mt-1 select-none flex-wrap">
-                                                            <div className="flex items-center gap-1.5 shrink-0">
-                                                                <img 
-                                                                    src={creatorPicture} 
-                                                                    className="w-3.5 h-3.5 rounded-full object-cover shrink-0" 
-                                                                    alt="" 
-                                                                    onError={(e) => { (e.target as HTMLImageElement).src = "/imgs/ICON.png"; }}
-                                                                />
-                                                                <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">{creatorName}</span>
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', fontWeight: 600, alignItems: 'center' }}>
+                                                        <span style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                                                            <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', width: 16 }}>#{idx + 1}</span>
+                                                            <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-[10px] font-black uppercase tracking-tighter shadow-sm ${getAvatarColor(camp.sender_name || camp.sender_email || camp.name)}`}>
+                                                                {getInitials(camp.sender_name || camp.sender_email || camp.name)}
                                                             </div>
-                                                            <span className="text-slate-300 dark:text-slate-700 text-[10px]">•</span>
-                                                            <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold">
-                                                                {isEmail ? 'Email' : 'Zalo'} • Gửi: {sent.toLocaleString()} • Click: {clickRate}%
+                                                            <span className="truncate text-slate-800 dark:text-slate-200" style={{ fontSize: '0.875rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
+                                                                <span className="truncate">{camp.name}</span>
+                                                                <BarChart2 size={14} style={{ opacity: 0.35, color: 'var(--color-primary)' }} />
                                                             </span>
-                                                        </div>
-                                                    </div>
-                                                    <div className="shrink-0 ml-4">
-                                                        <span className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${
-                                                            openRate >= 50
-                                                                ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400'
-                                                                : openRate >= 15
-                                                                ? 'bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400'
-                                                                : 'bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400'
-                                                        }`}>
-                                                            {openRate}%
                                                         </span>
+                                                        <span className="shrink-0 font-bold text-[13px]" style={{ color: 'var(--color-text)' }}>
+                                                            {sent.toLocaleString()} gửi <span className="text-[10px] text-slate-400 dark:text-slate-500 font-normal">({openRate}% Open)</span>
+                                                        </span>
+                                                    </div>
+                                                    <div style={{ height: 6, background: 'var(--color-bg)', borderRadius: 4, overflow: 'hidden', marginLeft: 48 }}>
+                                                        <div style={{ width: `${Math.max(openRate, 2)}%`, height: '100%', background: barColor, borderRadius: 4, transition: 'width 0.5s ease' }} />
                                                     </div>
                                                 </div>
                                             );
                                         })
-                                    )
-                                    }
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Second Row: Detailed sources breakdown and Top Flow metrics */}
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            {/* Card 1: Lead Sources breakdown (Donut Chart) */}
-                            <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col min-h-[340px]">
-                                <div className="flex items-center gap-2 mb-6 shrink-0">
-                                    <Share2 className="w-4 h-4 text-violet-500" />
-                                    <h3 className="text-xs font-black uppercase tracking-[0.1em] text-slate-700 dark:text-slate-200">Tỷ lệ Kênh Nguồn Liên hệ</h3>
-                                </div>
-                                <div className="flex-1 flex flex-col items-center justify-center gap-5">
-                                    <div className="w-40 h-40 shrink-0 relative flex items-center justify-center mx-auto">
-                                        <ResponsiveContainer width="100%" height="100%">
-                                            <PieChart>
-                                                <Pie
-                                                    data={[
-                                                        { name: 'Website', value: 55, color: '#8b5cf6' },
-                                                        { name: 'Facebook', value: 25, color: '#3b82f6' },
-                                                        { name: 'Zalo OA', value: 15, color: '#06b6d4' },
-                                                        { name: 'Webhook', value: 5, color: '#10b981' }
-                                                    ]}
-                                                    cx="50%"
-                                                    cy="50%"
-                                                    innerRadius={48}
-                                                    outerRadius={62}
-                                                    paddingAngle={4}
-                                                    dataKey="value"
-                                                >
-                                                    {[
-                                                        { color: '#8b5cf6' },
-                                                        { color: '#3b82f6' },
-                                                        { color: '#06b6d4' },
-                                                        { color: '#10b981' }
-                                                    ].map((entry, index) => (
-                                                        <Cell key={`cell-${index}`} fill={entry.color} />
-                                                    ))}
-                                                </Pie>
-                                                <Tooltip
-                                                    contentStyle={{
-                                                        backgroundColor: 'var(--color-surface, #fff)',
-                                                        border: '1px solid var(--color-border, #e2e8f0)',
-                                                        borderRadius: 'var(--radius-lg, 12px)',
-                                                        boxShadow: 'var(--shadow-md)',
-                                                        padding: '8px 12px'
-                                                    }}
-                                                    itemStyle={{ color: 'var(--color-text, #0f172a)', fontWeight: 650, fontSize: '11px' }}
-                                                />
-                                            </PieChart>
-                                        </ResponsiveContainer>
-                                        <div className="absolute flex flex-col items-center justify-center pointer-events-none">
-                                            <span className="text-[10px] text-slate-400 font-bold dark:text-slate-500 uppercase tracking-widest">Tổng</span>
-                                            <span className="text-lg font-black text-slate-800 dark:text-slate-100">{(statsData.summary?.total_leads || 0).toLocaleString()}</span>
-                                        </div>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-x-4 gap-y-2 w-full pt-4 border-t border-slate-100 dark:border-slate-800/40">
-                                        {[
-                                            { name: 'Website', pct: 55, val: Math.round((statsData.summary?.total_leads || 0) * 0.55), color: '#8b5cf6' },
-                                            { name: 'Facebook Messenger', pct: 25, val: Math.round((statsData.summary?.total_leads || 0) * 0.25), color: '#3b82f6' },
-                                            { name: 'Zalo Official Account', pct: 15, val: Math.round((statsData.summary?.total_leads || 0) * 0.15), color: '#06b6d4' },
-                                            { name: 'API Webhook / Dev', pct: 5, val: Math.round((statsData.summary?.total_leads || 0) * 0.05), color: '#10b981' }
-                                        ].map((source, index) => (
-                                            <div key={index} className="flex items-center justify-between text-[10px] font-bold text-slate-500 dark:text-slate-400">
-                                                <span className="flex items-center gap-1.5 truncate max-w-[125px]">
-                                                    <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: source.color }} />
-                                                    <span className="truncate">{source.name}</span>
-                                                </span>
-                                                <span className="shrink-0 text-slate-700 dark:text-slate-200 font-mono font-black">{source.val} ({source.pct}%)</span>
-                                            </div>
-                                        ))}
-                                    </div>
+                                    )}
                                 </div>
                             </div>
 
-                            {/* Card 2: Top Active Automation Flows (with Progress bars) */}
-                            <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col min-h-[340px]">
-                                <div className="flex items-center justify-between mb-4 shrink-0">
-                                    <div className="flex items-center gap-2">
-                                        <Zap className="w-4 h-4 text-violet-500" />
-                                        <h3 className="text-xs font-black uppercase tracking-[0.1em] text-slate-700 dark:text-slate-200">Hiệu suất Kịch bản Automation</h3>
-                                    </div>
-                                    <span className="text-[9px] font-black uppercase tracking-wider bg-slate-100 dark:bg-slate-850 text-slate-500 px-2 py-0.5 rounded">
+                            {/* Card 2: Top Active Automation Flows (Rebuilt to Round Allocation style) */}
+                            <div className="bg-[var(--color-surface)] border border-[var(--color-border-light)] rounded-[var(--radius-xl)] shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-xl)] hover:-translate-y-0.5 transition-all duration-300 flex flex-col min-h-[340px] h-[340px] p-5">
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid var(--color-border-light)', paddingBottom: '0.75rem' }}>
+                                    <h3 style={{ fontSize: '0.875rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--color-text)' }}>
+                                        <GitBranch size={18} color="#3b82f6" /> Hiệu suất Kịch bản Automation
+                                    </h3>
+                                    <span className="text-[9px] font-black uppercase tracking-wider bg-[var(--color-success-light)] text-[var(--color-success)] px-2.5 py-1 rounded-full flex items-center gap-1.5 animate-pulse select-none">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-success)]"></span>
                                         Đang chạy
                                     </span>
                                 </div>
-                                <div className="flex-1 overflow-y-auto space-y-4 custom-scrollbar">
+                                <div className="scrollbar-none" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', flex: 1, justifyContent: 'flex-start', overflowY: 'auto', maxHeight: 260 }}>
                                     {!statsData.top_flows || statsData.top_flows.length === 0 ? (
-                                        <div className="h-full flex items-center justify-center text-xs font-bold text-slate-400 dark:text-slate-600 py-12">
-                                            Chưa có kịch bản đang chạy
-                                        </div>
+                                        <div style={{ textAlign: 'center', color: 'var(--color-text-muted)', padding: '2rem 0' }}>Chưa có kịch bản đang chạy</div>
                                     ) : (
                                         statsData.top_flows.map((flow: any, idx: number) => {
-                                            const totalEnrolled = statsData.top_flows.reduce((acc: number, f: any) => acc + (f.stat_enrolled || 0), 0) || 1;
-                                            const pctEnrolled = Math.round(((flow.stat_enrolled || 0) / totalEnrolled) * 100);
                                             const completionRate = flow.stat_enrolled > 0 ? Math.round(((flow.stat_completed || 0) / flow.stat_enrolled) * 100) : 0;
+                                            
+                                            const colors = ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ec4899', '#6366f1'];
+                                            const dotColor = colors[idx % colors.length];
 
                                             return (
-                                                <div key={idx} className="space-y-1.5">
-                                                    <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
-                                                        <span className="truncate max-w-[200px] flex items-center gap-1.5">
-                                                            <span className="text-[10px] text-slate-400 dark:text-slate-600 font-mono font-black select-none">#{idx+1}</span>
-                                                            <span className="truncate">{flow.name}</span>
-                                                        </span>
-                                                        <span className="text-[10px] text-slate-400 font-medium">Hoàn thành: <strong className="text-emerald-500">{completionRate}%</strong> ({flow.stat_completed || 0} users)</span>
+                                                <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                                    <div style={{ width: 14, height: 14, borderRadius: '50%', background: dotColor, flexShrink: 0 }} />
+                                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                                        <div className="truncate text-slate-800 dark:text-slate-200" style={{ fontSize: '0.875rem', fontWeight: 600 }}>{flow.name}</div>
+                                                        <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Hoàn thành: {completionRate}%</div>
                                                     </div>
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="flex-1 h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                                                            <div className={`h-full ${
-                                                                idx % 5 === 0 ? 'bg-violet-500' :
-                                                                idx % 5 === 1 ? 'bg-blue-500' :
-                                                                idx % 5 === 2 ? 'bg-emerald-500' :
-                                                                idx % 5 === 3 ? 'bg-amber-500' :
-                                                                'bg-pink-500'
-                                                            } rounded-full transition-all duration-500`} style={{ width: `${Math.max(pctEnrolled, 5)}%` }} />
-                                                        </div>
-                                                        <span className="w-14 text-right text-[10px] font-black text-slate-500 dark:text-slate-400 select-none shrink-0 font-mono">{flow.stat_enrolled?.toLocaleString() || 0} user</span>
+                                                    <div style={{ fontSize: '1.05rem', fontWeight: 850, color: 'var(--color-text)' }} className="shrink-0 font-mono">
+                                                        {flow.stat_enrolled?.toLocaleString() || 0} <span className="text-[10px] text-slate-400 dark:text-slate-500 font-normal">user</span>
                                                     </div>
                                                 </div>
                                             );

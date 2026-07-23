@@ -153,7 +153,7 @@ function safeRebuildPK($pdo, $table, $columnsArray, $execSql, $logMsg) {
     }
 }
 
-$targetVersion = 37;
+$targetVersion = 38;
 $currentVersion = 0;
 
 // Query current DB version
@@ -692,6 +692,50 @@ try {
         safeDropIndex($pdo, 'subscriber_lists', 'list_id_2', $execSql, $logMsg);
 
         $currentVersion = 37;
+    }
+
+    // --------------------------------------------------
+    // Version 38: Subscriber Activity workspace_id repair & trigger
+    // --------------------------------------------------
+    if ($currentVersion < 38) {
+        $logMsg("Đang chạy cập nhật v38 (Sửa và tự động duy trì workspace_id cho activity)...", "info");
+
+        // 1. Repair NULL workspace_id in subscriber_activity
+        try {
+            $sqlRepair = "UPDATE subscriber_activity sa
+                          JOIN subscribers s ON sa.subscriber_id = s.id
+                          SET sa.workspace_id = s.workspace_id
+                          WHERE sa.workspace_id IS NULL";
+            $execSql($pdo, $sqlRepair);
+            $logMsg("Đã sửa các hoạt động có workspace_id trống", "success");
+        } catch (Throwable $e) {
+            $logMsg("Lỗi sửa workspace_id trống: " . $e->getMessage(), "error");
+        }
+
+        // 2. Drop trigger if exists
+        try {
+            $pdo->exec("DROP TRIGGER IF EXISTS before_insert_subscriber_activity");
+        } catch (Throwable $e) {}
+
+        // 3. Create BEFORE INSERT trigger
+        try {
+            $sqlTrigger = "
+                CREATE TRIGGER before_insert_subscriber_activity
+                BEFORE INSERT ON subscriber_activity
+                FOR EACH ROW
+                BEGIN
+                    IF NEW.workspace_id IS NULL AND NEW.subscriber_id IS NOT NULL THEN
+                        SET NEW.workspace_id = (SELECT workspace_id FROM subscribers WHERE id = NEW.subscriber_id LIMIT 1);
+                    END IF;
+                END;
+            ";
+            $pdo->exec($sqlTrigger);
+            $logMsg("Đã tạo trigger before_insert_subscriber_activity thành công!", "success");
+        } catch (Throwable $e) {
+            $logMsg("Lỗi tạo trigger database: " . $e->getMessage(), "error");
+        }
+
+        $currentVersion = 38;
     }
 
     // Update settings table with new db_version

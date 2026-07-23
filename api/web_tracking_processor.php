@@ -382,8 +382,16 @@ function syncWebJourney($pdo, $payload)
     if (!$subscriberId || empty($events))
         return false;
 
+    // Fetch workspace_id for the subscriber
+    $workspaceId = null;
+    try {
+        $stmtSub = $pdo->prepare("SELECT workspace_id FROM subscribers WHERE id = ?");
+        $stmtSub->execute([$subscriberId]);
+        $workspaceId = $stmtSub->fetchColumn();
+    } catch (Exception $e) { /* ignore */ }
+
     // We only sync "Meaningful" events to the Journey to keep it readable
-// Pageview, Click, Form Submit, Lead Captured
+    // Pageview, Click, Form Submit, Lead Captured
     $syncTypes = ['pageview', 'click', 'form', 'lead_capture'];
 
     $placeholders = [];
@@ -424,8 +432,9 @@ function syncWebJourney($pdo, $payload)
             $refId = $data['formId'] ?? null;
         }
 
-        $placeholders[] = "(?, ?, ?, ?, ?, NOW())";
+        $placeholders[] = "(?, ?, ?, ?, ?, ?, NOW())";
         $params[] = $subscriberId;
+        $params[] = $workspaceId;
         $params[] = "web_" . $type; // e.g. web_pageview
         $params[] = $refId;
         $params[] = $refName;
@@ -433,7 +442,7 @@ function syncWebJourney($pdo, $payload)
     }
 
     if (!empty($params)) {
-        $sql = "INSERT INTO subscriber_activity (subscriber_id, type, reference_id, reference_name, details, created_at) VALUES
+        $sql = "INSERT INTO subscriber_activity (subscriber_id, workspace_id, type, reference_id, reference_name, details, created_at) VALUES
 " . implode(', ', $placeholders);
         $pdo->prepare($sql)->execute($params);
 

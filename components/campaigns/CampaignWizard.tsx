@@ -913,7 +913,7 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                     className={`absolute inset-0 bg-slate-950/70 transition-opacity duration-500 ${animateWizardIn ? 'opacity-100' : 'opacity-0'}`}
                     onClick={handleIntentClose}
                 />
-                <div className={`relative w-full lg:max-w-[calc(100vw-230px)] bg-[#fdfdfd] shadow-2xl h-full flex flex-col border-l border-slate-100 transform transition-all duration-500 cubic-bezier(0.16, 1, 0.3, 1) ${animateWizardIn ? 'translate-x-0 opacity-100' : 'translate-x-full lg:translate-x-[100px] opacity-0'}`}>
+                <div className={`campaign-wizard-drawer relative w-full bg-[#fdfdfd] shadow-2xl h-full flex flex-col border-l border-slate-100 transform transition-all duration-500 cubic-bezier(0.16, 1, 0.3, 1) ${animateWizardIn ? 'translate-x-0 opacity-100' : 'translate-x-full lg:translate-x-[100px] opacity-0'}`}>
                     <div className="px-4 lg:px-8 py-4 lg:py-5 bg-white flex justify-between items-center shrink-0 border-b border-slate-100">
                         <div className="flex items-center gap-3 lg:gap-4 flex-1 min-w-0 mr-4">
                             <div className="w-9 h-9 lg:w-10 lg:h-10 bg-violet-600 rounded-xl flex items-center justify-center shadow-md text-white shrink-0"><Wand2 className="w-5 h-5" /></div>
@@ -1838,8 +1838,15 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                                 Bỏ qua & Thoát
                             </button>
                         </div>
-                    </div>
                 </div>
+                <style>{`
+                  @media (min-width: 1024px) {
+                    .campaign-wizard-drawer {
+                      max-width: calc(100vw - var(--sidebar-width, 260px)) !important;
+                    }
+                  }
+                `}</style>
+            </div>
             )}
         </>,
         document.body

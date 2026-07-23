@@ -181,7 +181,8 @@ const VisitorsTab: React.FC<VisitorsTabProps> = ({
             <Tabs
                 activeId={mainTab}
                 onChange={setMainTab as any}
-                variant="segmented"
+                variant="sub-segmented"
+                layoutId="visitorMainSubTabs"
                 items={[
                     { id: 'list', label: 'Danh sách Visitor', icon: List },
                     { id: "loyalty", label: "Báo cáo Trung thành", icon: BarChart3 },

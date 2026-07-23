@@ -665,7 +665,7 @@ const Campaigns: React.FC = () => {
                                     Đang chạy: {campaigns.filter(c => c.status === CampaignStatus.SCHEDULED || c.status === CampaignStatus.SENDING || c.status === CampaignStatus.PAUSED).length}
                                 </span>
                                 <span className="flex items-center gap-1.5">
-                                    <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#64748b' }}></span>
+                                    <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#94a3b8' }}></span>
                                     Bản nháp: {campaigns.filter(c => c.status === CampaignStatus.DRAFT).length}
                                 </span>
                             </>
@@ -728,7 +728,7 @@ const Campaigns: React.FC = () => {
                                     Lượt mở: {Math.round(stats.totalSent * Number(stats.openRate) / 100).toLocaleString()}
                                 </span>
                                 <span className="flex items-center gap-1.5">
-                                    <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#64748b' }}></span>
+                                    <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#94a3b8' }}></span>
                                     Không mở: {Math.max(0, stats.totalSent - Math.round(stats.totalSent * Number(stats.openRate) / 100)).toLocaleString()}
                                 </span>
                             </>

@@ -35,7 +35,7 @@ const StatCard: React.FC<StatCardProps> = ({
     if (loading) {
         return (
             <div 
-                className={`bg-white dark:bg-slate-900 p-5 md:p-6 rounded-[24px] shadow-[0_4px_20px_rgba(0,0,0,0.015)] border border-slate-100/70 dark:border-slate-800/80 min-h-[145px] flex flex-col justify-between ${className}`}
+                className={`bg-[var(--color-surface)] p-5 md:p-6 rounded-[var(--radius-xl)] border border-[var(--color-border-light)] min-h-[145px] flex flex-col justify-between ${className}`}
                 style={style}
             >
                 <div>
@@ -61,7 +61,7 @@ const StatCard: React.FC<StatCardProps> = ({
 
     return (
         <div 
-            className={`stat-card bg-white dark:bg-slate-900 p-5 md:p-6 rounded-[24px] shadow-[0_4px_20px_rgba(0,0,0,0.015)] border border-slate-100/70 dark:border-slate-800/80 hover:shadow-[0_12px_36px_rgba(0,0,0,0.035)] hover:-translate-y-1 transition-all duration-300 relative overflow-hidden flex flex-col justify-between min-h-[145px] group cursor-pointer ${className}`}
+            className={`stat-card bg-[var(--color-surface)] p-5 md:p-6 rounded-[var(--radius-xl)] shadow-[var(--shadow-sm)] border border-[var(--color-border-light)] hover:shadow-[var(--shadow-xl)] hover:-translate-y-1 transition-all duration-300 relative overflow-hidden flex flex-col justify-between min-h-[145px] group cursor-pointer ${className}`}
             style={style}
             onClick={onClick}
         >
@@ -74,20 +74,20 @@ const StatCard: React.FC<StatCardProps> = ({
                 <div>
                     {/* Top Row: Title & Icon */}
                     <div className="flex items-center justify-between mb-3.5">
-                        <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none">{title}</span>
+                        <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest leading-none">{title}</span>
                         <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-transform group-hover:scale-110" style={{ backgroundColor: `${color}15`, color: color }}>
                             {React.cloneElement(icon as React.ReactElement<any>, { className: 'w-4 h-4' })}
                         </div>
                     </div>
 
                     {/* Middle Row: Large Value */}
-                    <div className="text-xl md:text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tight leading-none mb-2.5">
+                    <div className="text-xl md:text-2xl font-black text-[var(--color-text)] dark:text-slate-100 tracking-tight leading-none mb-2.5">
                         {value}
                     </div>
 
                     {/* Breakdown details */}
                     {breakdown && (
-                        <div className="text-[10px] font-bold text-slate-400 dark:text-slate-550 mb-1 flex flex-wrap gap-x-2.5 gap-y-1">
+                        <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400 mb-1 flex flex-wrap gap-x-2.5 gap-y-1">
                             {breakdown}
                         </div>
                     )}
@@ -111,7 +111,7 @@ const StatCard: React.FC<StatCardProps> = ({
                             )}
                             <span className="ml-0.5">{isIncrease ? '+' : ''}{growth}%</span>
                         </span>
-                        {comparisonLabel && <span className="text-slate-400 font-bold dark:text-slate-500">{comparisonLabel}</span>}
+                        {comparisonLabel && <span className="text-slate-500 font-bold dark:text-slate-400">{comparisonLabel}</span>}
                     </div>
                 )}
             </div>

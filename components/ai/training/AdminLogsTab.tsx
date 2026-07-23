@@ -712,7 +712,7 @@ const StatCard = ({ icon: Icon, label, value, color, isRatio, trend, className, 
     };
 
     return (
-        <div className={`p-5 rounded-2xl border transition-all duration-300 flex flex-col group relative overflow-hidden h-full ${className || ''} ${isDarkTheme ? 'bg-[rgba(13,17,23,0.6)] backdrop-blur-md border-slate-800 shadow-none' : 'bg-white border-slate-100 shadow-sm hover:shadow-md'}`}>
+        <div className={`p-5 rounded-[var(--radius-xl)] border transition-all duration-300 flex flex-col group relative overflow-hidden h-full ${className || ''} ${isDarkTheme ? 'bg-[rgba(13,17,23,0.6)] backdrop-blur-md border-slate-800 shadow-none' : 'bg-[var(--color-surface)] border-[var(--color-border-light)] shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-xl)] hover:-translate-y-1'}`}>
             {/* Background Decoration */}
             <div className={`absolute -right-2 -top-2 w-24 h-24 rounded-full opacity-0 group-hover:opacity-5 transition-all duration-700 ${colorClasses[color].split(' ')[0]}`}></div>
 
@@ -720,12 +720,12 @@ const StatCard = ({ icon: Icon, label, value, color, isRatio, trend, className, 
                 <div className={`p-2.5 rounded-xl group-hover:scale-105 transition-transform duration-500 ${colorClasses[color]}`}>
                     <Icon size={isRatio ? 18 : 22} />
                 </div>
-                <p className={`text-[9px] font-bold uppercase tracking-wider leading-tight ${isRatio ? 'max-w-[70px]' : ''} ${isDarkTheme ? 'text-slate-500' : 'text-slate-400'}`}>{label}</p>
+                <p className={`text-[9px] font-bold uppercase tracking-wider leading-tight ${isRatio ? 'max-w-[70px]' : ''} ${isDarkTheme ? 'text-slate-500' : 'text-[var(--color-text-light)] dark:text-slate-400'}`}>{label}</p>
             </div>
 
             <div className="mt-auto flex items-end justify-between gap-3">
                 <div>
-                    <p className={`${isRatio ? 'text-2xl' : 'text-3xl'} font-bold tabular-nums leading-none tracking-tight ${isDarkTheme ? 'text-slate-200' : 'text-slate-700'}`}>
+                    <p className={`${isRatio ? 'text-2xl' : 'text-3xl'} font-bold tabular-nums leading-none tracking-tight ${isDarkTheme ? 'text-slate-200' : 'text-[var(--color-text)] dark:text-slate-100'}`}>
                         {typeof value === 'number' ? value.toLocaleString() : value}
                     </p>
                     {isRatio && (

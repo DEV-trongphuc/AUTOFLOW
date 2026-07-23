@@ -28,9 +28,10 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ stats, formatDuration, shorte
             <Tabs
                 activeId={activeTab}
                 onChange={setActiveTab as any}
-                variant="segmented"
+                variant="sub-segmented"
+                layoutId="webTrackingOverviewSubTabs"
                 items={[
-                    { id: 'general', label: 'Tổng quan', icon: Zap },
+                    { id: 'general', label: 'Chỉ số chính', icon: Zap },
                     { id: 'audience', label: 'Thiết bị - Vị trí', icon: Smartphone },
                     { id: 'sources', label: 'Nguồn truy cập', icon: Share2 },
                     { id: 'pages', label: 'Trang & sự kiện', icon: FileText },

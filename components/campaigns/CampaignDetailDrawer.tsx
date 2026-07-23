@@ -492,7 +492,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
             </div>
 
             <div
-                className={`relative w-full lg:max-w-[calc(100vw-230px)] bg-[#f8fafc] shadow-2xl h-full lg:h-screen flex flex-col transition-all duration-500 cubic-bezier(0.16, 1, 0.3, 1) ${animateIn ? 'translate-x-0 opacity-100' : 'translate-x-full lg:translate-x-[100px] opacity-0'}`}
+                className={`campaign-detail-drawer relative w-full bg-[#f8fafc] shadow-2xl h-full lg:h-screen flex flex-col transition-all duration-500 cubic-bezier(0.16, 1, 0.3, 1) ${animateIn ? 'translate-x-0 opacity-100' : 'translate-x-full lg:translate-x-[100px] opacity-0'}`}
             >
                 {/* Header */}
                 <div className="bg-white border-b border-slate-100 px-4 md:px-8 py-4 md:py-5 flex flex-col sm:flex-row justify-between items-start gap-4 shrink-0 shadow-sm z-30">
@@ -1520,6 +1520,13 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                     variant="danger"
                     confirmLabel={deleteModal.loading ? "ĐANG XÓA..." : "XÓA VĨNH VIỄN"}
                 />
+                <style>{`
+                  @media (min-width: 1024px) {
+                    .campaign-detail-drawer {
+                      max-width: calc(100vw - var(--sidebar-width, 260px)) !important;
+                    }
+                  }
+                `}</style>
             </div>
         </div>,
         document.body

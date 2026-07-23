@@ -175,15 +175,28 @@ export const ZaloUserProfileModal: React.FC<ZaloUserProfileModalProps> = ({
                     className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm transition-opacity duration-300 z-[300] cursor-pointer group"
                     onClick={handleClose}
                 >
-                    {/* Floating Circular Arrow Button (Centered over 230px sidebar) */}
-                    <div className="hidden lg:flex absolute left-[115px] top-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-slate-900/90 border border-slate-700/80 text-white items-center justify-center shadow-2xl transition-all duration-300 group-hover:scale-110 group-hover:bg-violet-600 group-hover:border-violet-500">
+                    {/* Floating Circular Arrow Button (Centered over sidebar) */}
+                    <div className="zalo-user-profile-modal-back-btn hidden lg:flex absolute top-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-slate-900/90 border border-slate-700/80 text-white items-center justify-center shadow-2xl transition-all duration-300 group-hover:scale-110 group-hover:bg-violet-600 group-hover:border-violet-500">
                         <ArrowLeft className="w-6 h-6 stroke-[2.5]" />
                     </div>
                 </div>
 
-                {/* Slide-over Right Drawer Panel - Anchored to 230px sidebar */}
-                <div className="fixed inset-y-0 right-0 z-[310] max-w-full flex pl-0 lg:pl-[230px] pointer-events-none">
-                    <div className="w-screen max-w-none lg:w-[calc(100vw-230px)] bg-white dark:bg-slate-950 shadow-2xl flex flex-col transition-all duration-300 overflow-hidden pointer-events-auto">
+                {/* Slide-over Right Drawer Panel - Anchored to sidebar */}
+                <div className="zalo-user-profile-modal-container fixed inset-y-0 right-0 z-[310] max-w-full flex pl-0 pointer-events-none">
+                    <div className="zalo-user-profile-modal-panel w-screen max-w-none bg-white dark:bg-slate-950 shadow-2xl flex flex-col transition-all duration-300 overflow-hidden pointer-events-auto">
+                    <style>{`
+                      @media (min-width: 1024px) {
+                        .zalo-user-profile-modal-container {
+                          padding-left: var(--sidebar-width, 260px) !important;
+                        }
+                        .zalo-user-profile-modal-panel {
+                          width: calc(100vw - var(--sidebar-width, 260px)) !important;
+                        }
+                        .zalo-user-profile-modal-back-btn {
+                          left: calc(var(--sidebar-width, 260px) / 2) !important;
+                        }
+                      }
+                    `}</style>
                     {/* Header */}
                     <div className="px-6 py-4 flex justify-between items-center bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 shrink-0">
                     <div>

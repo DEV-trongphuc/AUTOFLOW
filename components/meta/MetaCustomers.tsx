@@ -592,15 +592,15 @@ const StatCard = ({ label, value, icon: Icon, color }: any) => {
     );
 
     return (
-        <div className="stat-card bg-white dark:bg-slate-900 p-5 md:p-6 rounded-[24px] border border-slate-100/70 dark:border-slate-800/80 shadow-[0_2px_8px_rgba(0,0,0,0.02)] flex items-center justify-between group hover:shadow-[0_12px_36px_rgba(0,0,0,0.035)] hover:-translate-y-1 transition-all duration-300 relative overflow-hidden min-h-[90px]">
+        <div className="stat-card bg-[var(--color-surface)] p-5 md:p-6 rounded-[var(--radius-xl)] border border-[var(--color-border-light)] shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-xl)] hover:-translate-y-1 transition-all duration-300 relative overflow-hidden flex items-center justify-between min-h-[90px] group cursor-pointer w-full">
             {decorSvg && (
                 <div className="decor-svg" style={{ color: hexColor }}>
                     {decorSvg}
                 </div>
             )}
             <div className="relative z-10 flex flex-col justify-between h-full">
-                <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5 leading-none">{label}</p>
-                <h4 className="text-xl md:text-2xl font-black text-slate-850 dark:text-slate-100 tracking-tight leading-none">{(value || 0).toLocaleString()}</h4>
+                <p className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5 leading-none">{label}</p>
+                <h4 className="text-xl md:text-2xl font-black text-[var(--color-text)] dark:text-slate-100 tracking-tight leading-none">{(value || 0).toLocaleString()}</h4>
             </div>
             <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-transform group-hover:scale-110 relative z-10" style={{ backgroundColor: `${hexColor}15`, color: hexColor }}>
                 {Icon && <Icon className="w-4 h-4" />}

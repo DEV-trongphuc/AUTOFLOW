@@ -1,5 +1,6 @@
 <?php
 require_once 'db_connect.php';
+/** @var PDO $pdo */
 // [FIX P34-A1] Added auth_middleware — web_tracking.php previously had NO authentication.
 // Any request with a valid session could read/delete ALL workspaces' web properties.
 require_once 'auth_middleware.php';
@@ -644,15 +645,17 @@ if ($method === 'GET' && $action === 'visitors') {
             // 0. Summary Stats
             $stmtStats = $pdo->prepare("
                 SELECT 
-                    (SELECT COUNT(*) FROM web_events WHERE visitor_id = ? AND property_id = ? AND workspace_id = ? AND event_type = 'click') as clicks,
-                    (SELECT COUNT(*) FROM web_events WHERE visitor_id = ? AND property_id = ? AND workspace_id = ? AND event_type = 'canvas_click') as canvas_clicks,
-                    (SELECT COUNT(*) FROM web_page_views WHERE visitor_id = ? AND property_id = ? AND workspace_id = ?) as page_views,
-                    (SELECT SUM(COALESCE(NULLIF(pv.time_on_page, 0), s.duration_seconds)) 
-                     FROM web_page_views pv 
-                     JOIN web_sessions s ON pv.session_id = s.id 
-                     WHERE pv.visitor_id = ? AND pv.property_id = ? AND pv.workspace_id = ? AND s.property_id = ? AND s.workspace_id = ?) as total_time
+                    (SELECT COUNT(*) FROM web_events WHERE visitor_id = ? AND property_id = ? AND (workspace_id = ? OR workspace_id IS NULL) AND event_type = 'click') as clicks,
+                    (SELECT COUNT(*) FROM web_events WHERE visitor_id = ? AND property_id = ? AND (workspace_id = ? OR workspace_id IS NULL) AND event_type = 'canvas_click') as canvas_clicks,
+                    (SELECT COUNT(*) FROM web_page_views WHERE visitor_id = ? AND property_id = ? AND (workspace_id = ? OR workspace_id IS NULL)) as page_views,
+                    (SELECT COALESCE(SUM(duration_seconds), 0) FROM web_sessions WHERE visitor_id = ? AND property_id = ? AND (workspace_id = ? OR workspace_id IS NULL)) as total_time
             ");
-            $stmtStats->execute([$visitorId, $id, $workspace_id, $visitorId, $id, $workspace_id, $visitorId, $id, $workspace_id, $visitorId, $id, $workspace_id, $id, $workspace_id]);
+            $stmtStats->execute([
+                $visitorId, $id, $workspace_id,
+                $visitorId, $id, $workspace_id,
+                $visitorId, $id, $workspace_id,
+                $visitorId, $id, $workspace_id
+            ]);
             $stats = $stmtStats->fetch(PDO::FETCH_ASSOC);
 
             // 1. Get PageViews
@@ -668,12 +671,12 @@ if ($method === 'GET' && $action === 'visitors') {
                     pv.time_on_page as duration,
                     CONCAT(COALESCE(s.utm_source, 'direct'), ' / ', COALESCE(s.utm_medium, 'none')) as source
                 FROM web_page_views pv
-                JOIN web_sessions s ON pv.session_id = s.id
-                WHERE pv.visitor_id = ? AND pv.property_id = ? AND pv.workspace_id = ? AND s.workspace_id = ?
+                LEFT JOIN web_sessions s ON pv.session_id = s.id
+                WHERE pv.visitor_id = ? AND pv.property_id = ? AND (pv.workspace_id = ? OR pv.workspace_id IS NULL)
                 ORDER BY pv.loaded_at DESC 
                 LIMIT 100
             ");
-            $stmtPv->execute([$visitorId, $id, $workspace_id, $workspace_id]);
+            $stmtPv->execute([$visitorId, $id, $workspace_id]);
             $pvs = $stmtPv->fetchAll(PDO::FETCH_ASSOC);
 
             // 2. Get Events joined with PageView info
@@ -689,7 +692,7 @@ if ($method === 'GET' && $action === 'visitors') {
                     e.created_at as time 
                 FROM web_events e
                 LEFT JOIN web_page_views pv ON e.page_view_id = pv.id
-                WHERE e.visitor_id = ? AND e.property_id = ? AND e.workspace_id = ?
+                WHERE e.visitor_id = ? AND e.property_id = ? AND (e.workspace_id = ? OR e.workspace_id IS NULL)
                 AND e.event_type != 'ping'
                 ORDER BY e.created_at DESC 
                 LIMIT 100

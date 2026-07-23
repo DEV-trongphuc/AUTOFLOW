@@ -54,17 +54,17 @@ const PageHero: React.FC<PageHeroProps> = ({
                                     title={action.title || action.label}
                                     className={`flex items-center justify-center transition-all duration-200 ${
                                         action.label 
-                                            ? 'gap-2 h-[42px] rounded-2xl font-extrabold text-xs uppercase tracking-wider px-5' 
-                                            : 'h-[42px] w-[42px] rounded-2xl'
+                                            ? 'gap-1.5 h-[38px] rounded-xl font-bold text-xs uppercase tracking-wider px-4' 
+                                            : 'h-[38px] w-[38px] rounded-xl'
                                     } ${
                                         action.customClass 
                                         ? action.customClass
                                         : action.primary 
-                                          ? 'bg-violet-600 hover:bg-violet-700 text-white shadow-md shadow-violet-500/25 active:scale-95 transition-all duration-200' 
-                                          : 'bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-800 active:scale-95 transition-all duration-200'
+                                          ? 'bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white shadow-[var(--shadow-primary)] hover:-translate-y-0.5 active:scale-[0.97] transition-all duration-200' 
+                                          : 'bg-[var(--color-surface)] hover:bg-[var(--color-bg)] text-[var(--color-text-light)] hover:text-[var(--color-text)] border border-[var(--color-border)] hover:-translate-y-0.5 active:scale-[0.97] transition-all duration-200'
                                     }`}
                                 >
-                                    {action.icon && <action.icon className={action.label ? "w-4 h-4" : "w-5 h-5"} />}
+                                    {action.icon && <action.icon className={action.label ? "w-3.5 h-3.5" : "w-4 h-4"} />}
                                     {action.label && (
                                         <span>{action.label}</span>
                                     )}

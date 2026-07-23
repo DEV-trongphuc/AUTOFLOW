@@ -196,7 +196,7 @@ try {
 
     // 4. Top Campaigns — scoped by workspace_id
     $stmtCamp = $pdo->prepare("
-        SELECT name, type, status, count_opened as stat_total_opened, count_sent as stat_total_sent, count_clicked as stat_total_clicked, config 
+        SELECT name, type, status, count_opened as stat_total_opened, count_sent as stat_total_sent, count_clicked as stat_total_clicked, config, sender_name, sender_email 
         FROM campaigns 
         WHERE workspace_id = ? AND status IN ('sent', 'sending', 'scheduled') 
         ORDER BY sent_at DESC, created_at DESC 

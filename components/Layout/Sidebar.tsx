@@ -3,8 +3,8 @@ import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
   Send, Users, FileEdit, BarChart3,
   Settings, Mail, GitMerge, Tag, Webhook, Link, QrCode,
-  ExternalLink, Zap, ChevronRight, LogOut, Globe, Shield,
-  LayoutDashboard, Key, Bot, PanelLeftClose, PanelLeft, Facebook, Gift, FileText
+  ExternalLink, Zap, ChevronRight, ChevronLeft, Globe, Shield,
+  LayoutDashboard, Key, Bot, Facebook, Gift, FileText, Cpu
 } from 'lucide-react';
 import { api } from '../../services/storageAdapter';
 
@@ -101,11 +101,12 @@ const NavItem: React.FC<{ item: NavItemConfig; onClose: () => void; isCollapsed:
       onClick={handleClick}
       onMouseEnter={handleMouseEnter}
       className={({ isActive }) => `
-        relative flex items-center ${isCollapsed ? 'justify-center py-2' : 'px-4 py-2 mx-2.5 rounded-xl'} transition-all duration-200 group outline-none focus:outline-none focus:ring-0
+        relative flex items-center w-full transition-all duration-200 group outline-none focus:outline-none focus:ring-0
+        ${isCollapsed ? 'justify-center py-3 border-l-[3px]' : 'px-6 py-3 border-l-[3px]'}
         ${isPending ? 'opacity-70 scale-[0.98]' : ''}
         ${isActive
-          ? 'bg-white/10 text-white shadow-sm font-semibold'
-          : 'text-white/50 hover:bg-white/5 hover:text-white'
+          ? 'bg-white/[0.12] text-white border-l-[var(--color-primary)] font-bold'
+          : 'text-white/60 hover:bg-white/[0.08] hover:text-white/90 border-l-transparent'
         }
       `}
       title={isCollapsed ? item.name : undefined}
@@ -114,13 +115,13 @@ const NavItem: React.FC<{ item: NavItemConfig; onClose: () => void; isCollapsed:
         <>
           <div className="flex items-center gap-3">
             {/* Icon Wrapper Box */}
-            <div className={`w-8 h-8 rounded-[8px] flex items-center justify-center shrink-0 transition-all duration-200 relative ${isActive ? 'bg-white/15' : 'bg-white/5'}`}>
+            <div className={`w-9 h-9 rounded-[10px] flex items-center justify-center shrink-0 transition-all duration-200 relative ${isActive ? 'bg-white/[0.15] text-white' : 'bg-white/[0.06] text-white/50 group-hover:text-white/80'}`}>
               <item.icon
-                className={`w-[16px] h-[16px] transition-transform duration-200 ${isActive ? 'text-white' : 'text-white/50 group-hover:text-white/80'}`}
+                className={`w-[18px] h-[18px] transition-transform duration-200 ${isActive ? 'text-white' : 'text-white/50 group-hover:text-white/80'}`}
                 strokeWidth={2}
               />
               {isCollapsed && badgeOverride && (
-                <span className="absolute -top-1 -right-1 w-2 h-2 bg-amber-500 rounded-full border border-[#0d0331] shadow-sm animate-pulse"></span>
+                <span className="absolute -top-1 -right-1 w-2 h-2 bg-amber-500 rounded-full border border-[#080424] shadow-sm animate-pulse"></span>
               )}
             </div>
             {!isCollapsed && (
@@ -153,18 +154,17 @@ const NavItem: React.FC<{ item: NavItemConfig; onClose: () => void; isCollapsed:
 });
 
 const SidebarSection: React.FC<{ title: string; children: React.ReactNode; isCollapsed: boolean }> = React.memo(({ title, children, isCollapsed }) => (
-  <div className="mb-8">
-    {!isCollapsed && (
-      <h4 className="px-6 mb-3 text-[10px] font-black text-white/30 uppercase tracking-[0.2em]">
+  <div className="mb-6">
+    {!isCollapsed ? (
+      <h4 className="px-6 mb-2 text-[10px] font-bold text-white/30 uppercase tracking-[0.15em]">
         {title}
       </h4>
-    )}
-    {isCollapsed && (
-      <div className="px-4 mb-3 flex justify-center">
+    ) : (
+      <div className="px-4 mb-2 flex justify-center">
         <div className="w-8 h-px bg-white/10"></div>
       </div>
     )}
-    <div className="space-y-1">
+    <div className="space-y-0.5">
       {children}
     </div>
   </div>
@@ -202,6 +202,10 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose, isCollapsed, onToggleCollaps
   }, [location.pathname]);
 
   useEffect(() => {
+    document.documentElement.style.setProperty('--sidebar-width', isCollapsed ? '80px' : '260px');
+  }, [isCollapsed]);
+
+  useEffect(() => {
     api.get<any>('flows')
       .then(res => {
         if (res && res.success) {
@@ -218,65 +222,71 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose, isCollapsed, onToggleCollaps
 
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const isAdmin = user.role === 'admin';
-  const isProfileActive = location.pathname === '/profile';
-  const userName = user.name || 'Dev Admin';
-  const userRole = user.role || 'Admin';
-  const userPicture = user.picture || "/imgs/ICON.png";
 
   return (
-    <div className={`flex flex-col h-full bg-[#0d0331] text-[#dadada] border-r border-[#1a134d]/40 shadow-[4px_0_24px_rgba(0,0,0,0.12)] transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-[230px]'} group/sidebar z-20 relative`}>
+    <div 
+      className={`flex flex-col h-full text-[#dadada] border-r border-[var(--color-border-light)] shadow-[4px_0_24px_rgba(0,0,0,0.12)] transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-[260px]'} group/sidebar z-20 relative bg-[var(--sidebar-bg)]`}
+    >
 
       {/* BRAND HEADER */}
-      <div className={`h-16 lg:h-20 ${isCollapsed ? 'px-3' : 'px-6'} flex items-center justify-center shrink-0 relative border-b border-white/5`}>
+      <div className={`h-[92px] ${isCollapsed ? 'px-3' : 'px-6'} flex items-center justify-center shrink-0 relative border-b border-white/10`}>
         {isCollapsed ? (
-          <div className="relative w-9 h-9 shrink-0 group cursor-pointer mx-auto">
-            <div className="absolute inset-0 bg-violet-500 blur-md opacity-20 group-hover:opacity-50 transition-opacity duration-500 rounded-full animate-logo-pulse"></div>
-            <div className="relative w-full h-full flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 ease-out overflow-hidden rounded-full border-2 border-white/20 shadow-lg shadow-violet-500/10">
-              <img src="https://crm-domation.vercel.app/LOGO.jpg" className="w-full h-full object-contain relative z-10" alt="Logo" />
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full animate-logo-shine pointer-events-none z-20"></div>
+          <div className="relative w-[42px] h-[42px] shrink-0 group cursor-pointer mx-auto">
+            <div className="relative w-full h-full flex items-center justify-center rounded-full border-2 border-purple-400/80 shadow-[0_0_12px_rgba(192,132,252,0.5),0_2px_8px_rgba(0,0,0,0.3)] overflow-hidden">
+              <img src="https://crm-domation.vercel.app/LOGO.jpg" className="w-full h-full object-cover" alt="Logo" />
             </div>
           </div>
         ) : (
-          <div className="relative flex items-center gap-3 w-full group cursor-pointer">
-            {/* Animated Logo Icon */}
-            <div className="relative w-9 h-9 shrink-0">
-              <div className="absolute inset-0 bg-violet-500 blur-md opacity-20 group-hover:opacity-50 transition-opacity duration-500 rounded-full animate-logo-pulse"></div>
-              <div className="relative w-full h-full flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 ease-out overflow-hidden rounded-full border-2 border-white/20 shadow-lg shadow-violet-500/10">
-                <img src="https://crm-domation.vercel.app/LOGO.jpg" className="w-full h-full object-contain relative z-10" alt="Logo" />
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full animate-logo-shine pointer-events-none z-20"></div>
-              </div>
+          <div className="relative flex items-center gap-[0.875rem] w-full group cursor-pointer">
+            <div className="relative w-[42px] h-[42px] shrink-0 rounded-full border-2 border-purple-400/80 shadow-[0_0_12px_rgba(192,132,252,0.5),0_2px_8px_rgba(0,0,0,0.3)] overflow-hidden">
+              <img src="https://crm-domation.vercel.app/LOGO.jpg" className="w-full h-full object-cover" alt="Logo" />
             </div>
 
             <div className="flex flex-col min-w-0">
-              <h1 className="text-lg font-black text-white tracking-tighter leading-none group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-violet-400 group-hover:to-violet-600 transition-all duration-500">
+              <h1 className="text-[1.45rem] font-black text-white tracking-tight leading-none">
                 DOMATION
               </h1>
-              <div className="flex items-center gap-1.5 mt-1 opacity-60 group-hover:opacity-100 transition-opacity duration-500">
-                <span className="h-2 w-[1px] bg-violet-400 rotate-12"></span>
-                <span className="text-[8px] font-black text-violet-400 uppercase tracking-[0.2em] truncate group-hover:text-violet-300 transition-colors">
-                  Digital AI Vision
-                </span>
-              </div>
+              <span className="text-[0.625rem] font-extrabold tracking-widest mt-1 uppercase bg-gradient-to-r from-[#d8b4fe] via-[#c084fc] to-[#a855f7] bg-clip-text text-transparent">
+                / AUTOMATION
+              </span>
             </div>
           </div>
         )}
 
-        {/* Toggle Button */}
+        {/* Floating Toggle Button */}
         <button
           onClick={onToggleCollapse}
-          className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-[#0a0426] border border-white/10 rounded-full flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition-all shadow-md z-10 group/toggle opacity-0 group-hover/sidebar:opacity-100"
+          className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-[var(--color-surface)] text-[var(--color-text)] border border-[var(--color-border)] rounded-full flex items-center justify-center shadow-md z-[60] hover:scale-110 active:scale-95 transition-all opacity-100 cursor-pointer"
           title={isCollapsed ? 'Mở rộng' : 'Thu gọn'}
         >
           {isCollapsed ? (
-            <PanelLeft className="w-3.5 h-3.5 group-hover/toggle:scale-110 transition-transform" />
+            <ChevronRight className="w-3.5 h-3.5" />
           ) : (
-            <PanelLeftClose className="w-3.5 h-3.5 group-hover/toggle:scale-110 transition-transform" />
+            <ChevronLeft className="w-3.5 h-3.5" />
           )}
         </button>
       </div>
 
+      {/* QUICK ACTION BUTTON */}
+      <div className={`py-4 ${isCollapsed ? 'px-2' : 'px-4'} flex justify-center border-b border-white/10 shrink-0`}>
+        {isCollapsed ? (
+          <button
+            className="w-11 h-11 rounded-full flex items-center justify-center text-white bg-gradient-to-r from-purple-500 to-violet-600 shadow-[0_4px_12px_rgba(168,85,247,0.4)] hover:scale-105 transition-all cursor-pointer"
+            title="AI Automation"
+          >
+            <Cpu className="w-5 h-5" />
+          </button>
+        ) : (
+          <button
+            className="w-full h-11 rounded-[12px] flex items-center justify-center gap-2 text-white text-[13px] font-bold bg-gradient-to-r from-purple-500 to-violet-600 shadow-[0_4px_12px_rgba(168,85,247,0.4)] hover:-translate-y-0.5 hover:shadow-[0_6px_16px_rgba(168,85,247,0.5)] transition-all cursor-pointer"
+          >
+            <Cpu className="w-4 h-4" /> AI Automation
+          </button>
+        )}
+      </div>
+
       {/* SCROLLABLE NAV - Hidden scrollbar */}
-      <nav className="flex-1 overflow-y-auto py-6 space-y-2 scrollbar-hide">
+      <nav className="flex-1 overflow-y-auto py-4 space-y-4 scrollbar-hide">
         <SidebarSection title="Marketing" isCollapsed={isCollapsed}>
           {MAIN_NAV.map((item) => (
             <NavItem
@@ -300,73 +310,11 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose, isCollapsed, onToggleCollaps
         {isAdmin && (
           <SidebarSection title="Administration" isCollapsed={isCollapsed}>
             <NavItem item={{ name: 'Quản lý User', href: '/admin/users', icon: Users }} onClose={onClose} isCollapsed={isCollapsed} />
-            {/* <NavItem item={{ name: 'DS Workspace', href: '/admin/workspace', icon: Shield }} onClose={onClose} isCollapsed={isCollapsed} /> */}
           </SidebarSection>
         )}
       </nav>
 
-      {/* SIDEBAR FOOTER - PROFILE & SETTING */}
-      <div className={`${isCollapsed ? 'p-2' : 'p-3'} border-t border-white/5 bg-gradient-to-b from-transparent to-black/30`}>
-        {/* Borderless Profile Card */}
-        <div
-          className={`relative group/profile rounded-2xl transition-all duration-300 backdrop-blur-md ${
-            isProfileActive
-              ? 'bg-gradient-to-r from-violet-600/35 via-violet-500/25 to-purple-600/25 shadow-lg shadow-violet-950/60'
-              : 'bg-white/[0.04] hover:bg-white/[0.08]'
-          } ${isCollapsed ? 'flex flex-col items-center p-2 gap-2' : 'flex items-center justify-between p-2 pl-2.5 pr-2 gap-2'}`}
-        >
-          {/* User Profile Info Link */}
-          <NavLink
-            to="/profile"
-            onClick={onClose}
-            className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3 min-w-0 flex-1'} transition-all duration-200 group/nav`}
-            title={isCollapsed ? userName : undefined}
-          >
-            <div className="relative shrink-0">
-              <div className="w-9 h-9 rounded-full overflow-hidden group-hover/profile:scale-105 transition-all shadow-md bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center">
-                <img
-                  src={userPicture}
-                  onError={(e) => {
-                    (e.target as HTMLElement).style.display = 'none';
-                  }}
-                  className="w-full h-full object-cover"
-                  alt={userName}
-                />
-              </div>
-              <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 rounded-full shadow-sm"></span>
-            </div>
 
-            {!isCollapsed && (
-              <div className="flex flex-col min-w-0 pr-1">
-                <span className="text-[12px] font-bold text-white tracking-wide truncate group-hover/nav:text-violet-200 transition-colors">
-                  {userName}
-                </span>
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-semibold bg-violet-500/20 text-violet-300 uppercase tracking-wider leading-none">
-                    {userRole}
-                  </span>
-                </div>
-              </div>
-            )}
-          </NavLink>
-
-          {/* Logout Action Button */}
-          <button
-            onClick={() => {
-              localStorage.removeItem('user');
-              localStorage.removeItem('isAuthenticated');
-              localStorage.setItem('explicit_logout', 'true');
-              window.location.reload();
-            }}
-            className={`w-8 h-8 rounded-xl flex items-center justify-center text-white/40 hover:text-rose-400 hover:bg-rose-500/20 transition-all duration-200 shrink-0 ${
-              isCollapsed ? 'w-full py-1.5 h-auto' : ''
-            }`}
-            title="Đăng xuất"
-          >
-            <LogOut className="w-4 h-4 transition-transform group-hover/profile:scale-105" />
-          </button>
-        </div>
-      </div>
 
       {/* CSS for hiding scrollbar */}
       <style>{`

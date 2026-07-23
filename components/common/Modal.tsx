@@ -51,13 +51,13 @@ const Modal: React.FC<ModalProps> = ({
   // Best practice is `<Modal isOpen={state} />`
 
   const sizeClasses = {
-    sm: 'max-w-md rounded-[24px] max-h-[90vh]',
-    md: 'max-w-lg rounded-[24px] max-h-[90vh]',
-    lg: 'max-w-2xl rounded-[24px] max-h-[90vh]',
-    xl: 'max-w-4xl rounded-[24px] max-h-[95vh]',
-    '2xl': 'max-w-6xl rounded-[24px] max-h-[95vh]',
-    '3xl': 'max-w-7xl rounded-[24px] max-h-[95vh]',
-    '4xl': 'max-w-[1300px] rounded-[28px] max-h-[95vh]',
+    sm: 'max-w-md rounded-[var(--radius-lg)] max-h-[90vh]',
+    md: 'max-w-lg rounded-[var(--radius-lg)] max-h-[90vh]',
+    lg: 'max-w-2xl rounded-[var(--radius-lg)] max-h-[90vh]',
+    xl: 'max-w-4xl rounded-[var(--radius-xl)] max-h-[95vh]',
+    '2xl': 'max-w-6xl rounded-[var(--radius-xl)] max-h-[95vh]',
+    '3xl': 'max-w-7xl rounded-[var(--radius-xl)] max-h-[95vh]',
+    '4xl': 'max-w-[1300px] rounded-[var(--radius-2xl)] max-h-[95vh]',
     full: 'w-full h-full rounded-none max-w-full',
   };
 
@@ -72,66 +72,65 @@ const Modal: React.FC<ModalProps> = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
-            className="absolute inset-0 bg-slate-950/45 backdrop-blur-lg"
+            transition={{ duration: 0.2 }}
+            className="absolute inset-0 bg-slate-950/50 backdrop-blur-[4px]"
             onClick={onClose}
           />
 
           {/* Modal Content */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.96, y: 15 }}
+            initial={{ opacity: 0, scale: 0.95, y: 15 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.96, y: 15 }}
-            transition={{ type: 'spring', damping: 28, stiffness: 320, mass: 0.9 }}
+            exit={{ opacity: 0, scale: 0.95, y: 15 }}
+            transition={{ type: 'spring', duration: 0.4, bounce: 0.12 }}
             className={`
-            relative w-full flex flex-col overflow-hidden border
-            ${sizeClasses[size as keyof typeof sizeClasses] || sizeClasses.md}
-            ${isDarkTheme 
-              ? 'bg-[#11151d] border-slate-800/80 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5),0_0_40px_rgba(124,58,237,0.05)]' 
-              : 'bg-white border-slate-100 shadow-[0_20px_50px_rgba(15,23,42,0.08),0_0_40px_rgba(124,58,237,0.03)]'}
-            ${className || ''}
-          `}
+              relative w-full flex flex-col overflow-hidden border border-[var(--color-border-light)]
+              bg-[var(--color-surface)] shadow-[var(--shadow-lg)]
+              dark:shadow-[0_20px_25px_-5px_rgba(0,0,0,0.5),0_10px_10px_-5px_rgba(0,0,0,0.4),0_0_40px_rgba(99,102,241,0.05)]
+              ${sizeClasses[size as keyof typeof sizeClasses] || sizeClasses.md}
+              ${className || ''}
+            `}
           >
-        {isLoading && (
-          <div className={`absolute inset-0 z-50 flex items-center justify-center ${isDarkTheme ? 'bg-[#11151d]/75' : 'bg-white/75'}`}>
-            <div className="flex flex-col items-center gap-2">
-              <Loader2 className="w-8 h-8 text-violet-500 animate-spin" />
-              <p className={`text-xs font-bold animate-pulse ${isDarkTheme ? 'text-slate-400' : 'text-slate-500'}`}>Đang xử lý...</p>
-            </div>
-          </div>
-        )}
-        {/* Header */}
-        {!noHeader && (
-          <div className={`px-6 py-5 flex justify-between items-center border-b shrink-0 ${isDarkTheme ? 'bg-[#11151d] border-slate-800/60' : 'bg-white border-slate-100'}`}>
-            <div>
-              <h3 className={`text-base md:text-lg font-bold tracking-tight ${isDarkTheme ? 'text-slate-100' : 'text-slate-800'}`}>{title}</h3>
-            </div>
-            {!hideCloseButton && (
-              <button
-                onClick={onClose}
-                className={`p-2 rounded-full transition-all duration-200 ${isDarkTheme ? 'text-slate-400 hover:text-violet-400 hover:bg-violet-500/10' : 'text-slate-500 hover:text-violet-600 hover:bg-violet-50'} hover:scale-105 active:scale-95 bg-transparent`}
-              >
-                <X className="w-5 h-5 stroke-[2px]" />
-              </button>
+            {isLoading && (
+              <div className="absolute inset-0 z-50 flex items-center justify-center bg-[var(--color-surface)]/75">
+                <div className="flex flex-col items-center gap-2">
+                  <Loader2 className="w-8 h-8 text-[var(--color-primary)] animate-spin" />
+                  <p className="text-xs font-bold animate-pulse text-[var(--color-text-light)]">Đang xử lý...</p>
+                </div>
+              </div>
             )}
-          </div>
-        )}
+            {/* Header */}
+            {!noHeader && (
+              <div className="px-[35px] py-[20px] flex justify-between items-center border-b border-[var(--color-border)] shrink-0 bg-[var(--color-surface)]">
+                <div>
+                  <h3 className="text-base md:text-lg font-bold tracking-tight text-[var(--color-text)]">{title}</h3>
+                </div>
+                {!hideCloseButton && (
+                  <button
+                    onClick={onClose}
+                    className="w-8 h-8 rounded-[var(--radius-md)] flex items-center justify-center transition-all duration-200 text-[var(--color-text-light)] hover:bg-[var(--color-bg)] hover:text-[var(--color-text)] dark:hover:bg-[rgba(99,102,241,0.15)] dark:hover:text-[var(--color-primary)] bg-transparent active:scale-95"
+                  >
+                    <X className="w-5 h-5 stroke-[2px]" />
+                  </button>
+                )}
+              </div>
+            )}
 
-        {/* Body */}
-        <div className={`${noPadding ? '' : 'px-6 py-6'} ${noScroll ? 'overflow-hidden' : 'overflow-y-auto custom-scrollbar'} flex-1 min-h-0 ${isDarkTheme ? 'bg-[#11151d]' : 'bg-white'} flex flex-col`}>
-          {children}
+            {/* Body */}
+            <div className={`${noPadding ? '' : 'px-[35px] py-[35px]'} ${noScroll ? 'overflow-hidden' : 'overflow-y-auto custom-scrollbar'} flex-1 min-h-0 bg-[var(--color-surface)] flex flex-col`}>
+              {children}
+            </div>
+
+            {/* Footer */}
+            {footer && (
+              <div className="px-[35px] py-4 border-t border-[var(--color-border)] shrink-0 flex items-center justify-end bg-[var(--color-bg)]/30">
+                {footer}
+              </div>
+            )}
+          </motion.div>
         </div>
-
-        {/* Footer */}
-        {footer && (
-          <div className={`px-6 py-4 border-t shrink-0 flex items-center justify-end ${isDarkTheme ? 'bg-[#161b24] border-slate-800/60' : 'bg-slate-50 border-slate-100'}`}>
-            {footer}
-          </div>
-        )}
-      </motion.div>
-    </div>
-    )}
-  </AnimatePresence>,
+      )}
+    </AnimatePresence>,
     document.body
   );
 };

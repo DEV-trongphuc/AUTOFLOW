@@ -28,26 +28,18 @@ const Button: React.FC<ButtonProps> = ({
   const baseStyles = 'inline-flex items-center justify-center font-extrabold uppercase tracking-wider transition-all duration-200 active:scale-[0.95] disabled:opacity-50 disabled:pointer-events-none focus:outline-none select-none';
 
   const variants = {
-    primary: 'bg-violet-600 hover:bg-violet-700 text-white shadow-md shadow-violet-500/25 active:scale-95 border border-transparent',
-    secondary: isDarkTheme
-      ? 'bg-slate-800/80 backdrop-blur-md text-slate-200 border border-slate-700/80 hover:bg-slate-700/80 hover:text-white shadow-sm'
-      : 'bg-white text-slate-700 border border-slate-200/80 hover:bg-slate-50 hover:text-slate-900 shadow-sm',
-    outline: isDarkTheme
-      ? 'bg-transparent border border-slate-700 text-slate-300 hover:border-slate-600 hover:bg-slate-800/40'
-      : 'bg-transparent border border-slate-250 text-slate-500 hover:border-slate-350 hover:bg-slate-50/50 hover:text-slate-900',
-    ghost: isDarkTheme
-      ? 'bg-transparent text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
-      : 'bg-transparent text-slate-500 hover:bg-slate-100/50 hover:text-slate-900',
-    danger: isDarkTheme
-      ? 'bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 border border-rose-500/30'
-      : 'bg-rose-50/80 text-rose-600 hover:bg-rose-100 border border-rose-100',
+    primary: 'bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white shadow-[var(--shadow-primary)] hover:-translate-y-0.5 active:scale-[0.97] border border-transparent',
+    secondary: 'bg-[var(--color-surface)] text-[var(--color-text)] border border-[var(--color-border)] hover:bg-[var(--color-bg)] hover:text-[var(--color-text-light)] shadow-sm hover:-translate-y-0.5 active:scale-[0.97]',
+    outline: 'bg-transparent border border-[var(--color-border)] text-[var(--color-text-light)] hover:border-[var(--color-text-muted)] hover:bg-[var(--color-primary-light)] hover:-translate-y-0.5 active:scale-[0.97]',
+    ghost: 'bg-transparent text-[var(--color-text-light)] hover:bg-[var(--color-bg)] hover:text-[var(--color-text)] active:scale-[0.97]',
+    danger: 'bg-[var(--color-danger-light)] text-[var(--color-danger)] hover:bg-[var(--color-danger)] hover:text-white border border-[var(--color-danger)] hover:-translate-y-0.5 active:scale-[0.97]',
     custom: '', // Allows full override via className
   };
 
   const sizes = {
-    sm: 'px-4 py-2 text-[11px] md:text-xs gap-1.5 rounded-xl',
-    md: 'px-5 py-2.5 text-xs md:text-sm gap-2 rounded-2xl',
-    lg: 'px-7 py-3.5 text-sm md:text-base gap-2.5 rounded-2xl',
+    sm: 'px-4 py-2 text-[11px] md:text-xs gap-1.5 rounded-[var(--radius-md)]',
+    md: 'px-5 py-2.5 text-xs md:text-sm gap-2 rounded-[var(--radius-lg)]',
+    lg: 'px-7 py-3.5 text-sm md:text-base gap-2.5 rounded-[var(--radius-xl)]',
   };
 
   return (

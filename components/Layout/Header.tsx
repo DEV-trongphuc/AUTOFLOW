@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Menu, Search, ChevronRight, ShieldAlert, MessageCircle, ExternalLink, Command } from 'lucide-react';
+import { Menu, Search, ChevronRight, ShieldAlert, MessageCircle, ExternalLink, Command, LogOut } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { useNavigation } from '../../contexts/NavigationContext';
 import { useIsAdmin } from '../../hooks/useAuthUser';
@@ -16,6 +16,11 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
   const path = location.pathname;
   const { handleBack } = useNavigation();
   const isAdmin = useIsAdmin();
+
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const userName = user.name || 'Dev Admin';
+  const userRole = user.role || 'Admin';
+  const userPicture = user.picture || '';
 
   const getBreadcrumb = () => {
     if (path.startsWith('/campaigns')) return 'Chiến dịch';
@@ -78,29 +83,17 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
         <div className="relative group">
           <div className="flex items-center gap-3 cursor-pointer p-1 pr-1.5 rounded-3xl bg-gradient-to-r from-amber-50/30 to-amber-50/20 hover:from-amber-50/60 hover:to-amber-50/40 transition-all group/user border border-amber-100/30 hover:border-amber-200/50 shadow-sm hover:shadow-lg hover:shadow-amber-600/10">
             <div className="hidden sm:flex flex-col items-end mr-1">
-              <p className="text-xs font-black bg-gradient-to-r from-slate-800 to-slate-700 hover:from-amber-600 hover:to-amber-600 bg-clip-text text-transparent leading-none transition-all">DOMATION</p>
+              <p className="text-xs font-black bg-gradient-to-r from-slate-800 to-slate-700 hover:from-amber-600 hover:to-amber-600 bg-clip-text text-transparent leading-none transition-all">{userName}</p>
               <div className="mt-1 relative">
-                {DEMO_MODE ? (
-                  <>
-                    {/* Glow effect - always visible */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-amber-400 to-amber-600 rounded-full blur-md opacity-20 group-hover/user:opacity-50 transition-opacity"></div>
-                    {/* Badge - gradient always visible */}
-                    <div className="relative flex items-center gap-1.5 bg-gradient-to-br from-amber-400 to-amber-600 px-2 py-0.5 rounded-full transition-all shadow-md shadow-amber-600/20 group-hover/user:shadow-lg group-hover/user:shadow-amber-600/30 group-hover/user:scale-105">
-                      <div className="w-1 h-1 rounded-full bg-white dark:bg-slate-950/80 animate-pulse"></div>
-                      <span className="text-[8px] font-black text-white uppercase tracking-widest leading-none">DEMO MODE</span>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    {/* Glow effect - always visible */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-amber-400 to-amber-600 rounded-full blur-md opacity-20 group-hover/user:opacity-50 transition-opacity"></div>
-                    {/* Badge - gradient always visible */}
-                    <div className="relative flex items-center gap-1.5 bg-gradient-to-br from-amber-400 to-amber-600 px-2 py-0.5 rounded-full transition-all shadow-md shadow-amber-600/20 group-hover/user:shadow-lg group-hover/user:shadow-amber-600/30 group-hover/user:scale-105">
-                      <div className="w-1 h-1 rounded-full bg-white dark:bg-slate-950/80 animate-pulse"></div>
-                      <span className="text-[8px] font-black text-white uppercase tracking-widest leading-none">PRO MAX</span>
-                    </div>
-                  </>
-                )}
+                {/* Glow effect - always visible */}
+                <div className="absolute inset-0 bg-gradient-to-r from-amber-400 to-amber-600 rounded-full blur-md opacity-20 group-hover/user:opacity-50 transition-opacity"></div>
+                {/* Badge - role name */}
+                <div className="relative flex items-center gap-1.5 bg-gradient-to-br from-amber-400 to-amber-600 px-2 py-0.5 rounded-full transition-all shadow-md shadow-amber-600/20 group-hover/user:shadow-lg group-hover/user:shadow-amber-600/30 group-hover/user:scale-105">
+                  <div className="w-1 h-1 rounded-full bg-white dark:bg-slate-950/80 animate-pulse"></div>
+                  <span className="text-[8px] font-black text-white uppercase tracking-widest leading-none">
+                    {userRole === 'admin' ? 'Chủ tài khoản' : 'Thành viên'}
+                  </span>
+                </div>
               </div>
             </div>
             <div className="relative">
@@ -108,9 +101,19 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
               <div className="absolute inset-0 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 blur-lg opacity-20 group-hover/user:opacity-40 transition-opacity scale-110"></div>
               {/* Avatar container - gradient always visible */}
               <div className="relative w-9 h-9 rounded-full p-[1.5px] bg-gradient-to-br from-amber-400 via-amber-600 to-amber-600 transition-all shadow-lg shadow-amber-600/20 group-hover/user:shadow-xl group-hover/user:shadow-amber-600/40 group-hover/user:scale-105">
-                <div className="w-full h-full rounded-full bg-white dark:bg-slate-950/80 flex items-center justify-center overflow-hidden">
-                  <div className="w-full h-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-white font-black text-xs group-hover/user:from-amber-600 group-hover/user:to-amber-800 transition-all">
-                    DO
+                <div className="w-full h-full rounded-full bg-white dark:bg-slate-950/80 flex items-center justify-center overflow-hidden relative">
+                  {userPicture && (
+                    <img
+                      src={userPicture}
+                      onError={(e) => {
+                        (e.target as HTMLElement).style.display = 'none';
+                      }}
+                      className="w-full h-full object-cover absolute inset-0 z-10"
+                      alt={userName}
+                    />
+                  )}
+                  <div className="w-full h-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-white font-black text-xs group-hover/user:from-amber-600 group-hover/user:to-amber-800 transition-all relative z-0 select-none">
+                    {userName.slice(0, 2).toUpperCase()}
                   </div>
                 </div>
               </div>
@@ -153,6 +156,20 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
                 </div>
                 <span>Trang chủ</span>
               </a>
+              <button
+                onClick={() => {
+                  localStorage.removeItem('user');
+                  localStorage.removeItem('isAuthenticated');
+                  localStorage.setItem('explicit_logout', 'true');
+                  window.location.reload();
+                }}
+                className="flex items-center gap-3 w-full p-3 rounded-2xl text-xs font-bold text-rose-600 hover:bg-rose-50 transition-all group/item text-left"
+              >
+                <div className="w-8 h-8 rounded-xl bg-rose-50 dark:bg-rose-950/30 flex items-center justify-center group-hover/item:bg-rose-100 transition-colors shadow-sm">
+                  <LogOut className="w-4 h-4" />
+                </div>
+                <span>Đăng xuất</span>
+              </button>
             </div>
           </div>
         </div>
