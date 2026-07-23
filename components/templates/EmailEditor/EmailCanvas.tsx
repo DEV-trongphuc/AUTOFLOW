@@ -101,6 +101,13 @@ const EmailCanvas: React.FC<EmailCanvasProps> = ({
         setDraggingBlockId(id);
     };
 
+    const handleDragEnd = (e: React.DragEvent) => {
+        e.preventDefault();
+        setDragOverId(null);
+        setDropPosition(null);
+        setDraggingBlockId(null);
+    };
+
     const handleDrop = (e: React.DragEvent, targetId: string) => {
         e.preventDefault(); e.stopPropagation();
         const type = e.dataTransfer.getData('type');
@@ -465,6 +472,7 @@ const EmailCanvas: React.FC<EmailCanvasProps> = ({
                 }}
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={(e) => handleDrop(e, 'root')}
+                onDragEnd={handleDragEnd}
                 onClick={() => handleSelectBlock(null)}
             >
                 <div className={`transition-all duration-500 ease-out mx-auto flex flex-col ${isMobile ? 'py-10 h-full' : 'p-8 pb-24'} ${!isMobile ? 'w-full' : ''}`}>
