@@ -767,7 +767,7 @@ if (!function_exists('runIntegrationSync')) {
                 UPDATE subscribers s
                 JOIN zalo_subscribers zs ON (s.email = zs.manual_email AND zs.manual_email != '') 
                                          OR (s.phone_number = zs.phone_number AND zs.phone_number != '')
-                JOIN zalo_oa zo ON zs.oa_id = zo.oa_id
+                JOIN zalo_oa_configs zo ON zs.oa_id = zo.oa_id
                 SET s.zalo_user_id = zs.zalo_user_id,
                     s.verified = 1,
                     s.avatar = CASE WHEN s.avatar IS NULL OR s.avatar = '' THEN zs.avatar ELSE s.avatar END,

@@ -153,7 +153,7 @@ function safeRebuildPK($pdo, $table, $columnsArray, $execSql, $logMsg) {
     }
 }
 
-$targetVersion = 38;
+$targetVersion = 39;
 $currentVersion = 0;
 
 // Query current DB version
@@ -736,6 +736,16 @@ try {
         }
 
         $currentVersion = 38;
+    }
+
+    // --------------------------------------------------
+    // Version 39: Add workspace_id column to zalo_user_messages
+    // --------------------------------------------------
+    if ($currentVersion < 39) {
+        $logMsg("Đang chạy cập nhật v39 (Thêm cột workspace_id vào zalo_user_messages)...", "info");
+        safeAddColumn($pdo, 'zalo_user_messages', 'workspace_id', "INT(11) NULL DEFAULT 1 AFTER zalo_user_id", $execSql, $logMsg);
+        safeAddIndex($pdo, 'zalo_user_messages', 'idx_workspace_id', 'workspace_id', $execSql, $logMsg);
+        $currentVersion = 39;
     }
 
     // Update settings table with new db_version
