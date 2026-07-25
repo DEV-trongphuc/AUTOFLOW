@@ -82,7 +82,7 @@ if ($method === 'POST' && $action === 'login') {
         } catch (Exception $e) { /* fail silently */ }
 
         // [FIX P39-AUTH] Fetch safe user profile (no password column) after successful verify
-        $stmtProfile = $pdo->prepare("SELECT id, username, email, full_name, name, picture, role, status, workspace_id, last_login FROM users WHERE id = ? LIMIT 1");
+        $stmtProfile = $pdo->prepare("SELECT id, username, email, full_name, name, picture, role, status, (SELECT workspace_id FROM workspace_users WHERE user_id = users.id LIMIT 1) as workspace_id, last_login FROM users WHERE id = ? LIMIT 1");
         $stmtProfile->execute([$pwdRow['id']]);
         $user = $stmtProfile->fetch(PDO::FETCH_ASSOC);
         if (!$user) {
@@ -123,7 +123,7 @@ if ($method === 'GET' && $action === 'check') {
     if (isset($_SESSION['user_id'])) {
         try {
             // Lấy dữ liệu mới nhất từ DB để đảm bảo Avatar/Role luôn đúng
-            $stmt = $pdo->prepare("SELECT id, email, name, picture, role, status, workspace_id FROM users WHERE id = ?");
+            $stmt = $pdo->prepare("SELECT id, email, name, picture, role, status, (SELECT workspace_id FROM workspace_users WHERE user_id = users.id LIMIT 1) as workspace_id FROM users WHERE id = ?");
             $stmt->execute([$_SESSION['user_id']]);
             $user = $stmt->fetch();
 

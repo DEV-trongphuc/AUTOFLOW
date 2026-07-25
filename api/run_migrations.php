@@ -153,7 +153,7 @@ function safeRebuildPK($pdo, $table, $columnsArray, $execSql, $logMsg) {
     }
 }
 
-$targetVersion = 41;
+$targetVersion = 42;
 $currentVersion = 0;
 
 // Query current DB version
@@ -862,6 +862,78 @@ try {
         $logMsg("Đã tạo bảng ai_org_user_activity_logs", "success");
         
         $currentVersion = 41;
+    }
+
+    // --------------------------------------------------
+    // Version 42: Add missing web tracking tables and columns
+    // --------------------------------------------------
+    if ($currentVersion < 42) {
+        $logMsg("Đang chạy cập nhật v42 (Tạo các bảng web tracking và thêm cột thiếu)...", "info");
+        
+        // 1. Create web_heatmap_data
+        $execSql($pdo, "
+            CREATE TABLE IF NOT EXISTS `web_heatmap_data` (
+              `id` INT(11) NOT NULL AUTO_INCREMENT,
+              `page_url` VARCHAR(768) NOT NULL,
+              `x_position` INT(11) NOT NULL,
+              `y_position` INT(11) NOT NULL,
+              `viewport_width` INT(11) NOT NULL,
+              `viewport_height` INT(11) NOT NULL,
+              `element_text` VARCHAR(255) NULL,
+              `clicked_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+              PRIMARY KEY (`id`),
+              INDEX `idx_page_url` (`page_url`(255))
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        ");
+        $logMsg("Đã tạo bảng web_heatmap_data", "success");
+
+        // 2. Create web_form_submissions
+        $execSql($pdo, "
+            CREATE TABLE IF NOT EXISTS `web_form_submissions` (
+              `id` INT(11) NOT NULL AUTO_INCREMENT,
+              `session_id` VARCHAR(36) NOT NULL,
+              `visitor_id` VARCHAR(36) NOT NULL,
+              `subscriber_id` VARCHAR(36) NOT NULL,
+              `form_url` VARCHAR(768) NOT NULL,
+              `form_data` LONGTEXT NOT NULL,
+              `points_awarded` INT(11) DEFAULT 10,
+              `submitted_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+              PRIMARY KEY (`id`),
+              INDEX `idx_session` (`session_id`),
+              INDEX `idx_visitor` (`visitor_id`),
+              INDEX `idx_subscriber` (`subscriber_id`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        ");
+        $logMsg("Đã tạo bảng web_form_submissions", "success");
+
+        // 3. Create web_tracking_sites
+        $execSql($pdo, "
+            CREATE TABLE IF NOT EXISTS `web_tracking_sites` (
+              `id` VARCHAR(50) NOT NULL,
+              `workspace_id` INT(11) NOT NULL,
+              `name` VARCHAR(255) NOT NULL,
+              `domain` VARCHAR(255) NOT NULL,
+              `tracking_code` VARCHAR(50) NOT NULL,
+              `description` TEXT NULL,
+              `status` ENUM('active', 'inactive') DEFAULT 'active',
+              `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+              `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+              PRIMARY KEY (`id`),
+              UNIQUE KEY `uq_tracking_code` (`tracking_code`),
+              INDEX `idx_workspace` (`workspace_id`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        ");
+        $logMsg("Đã tạo bảng web_tracking_sites", "success");
+
+        // 4. Add workspace_id column to zalo_delivery_logs
+        safeAddColumn($pdo, 'zalo_delivery_logs', 'workspace_id', "INT(11) NULL DEFAULT 1 AFTER subscriber_id", $execSql, $logMsg);
+        safeAddIndex($pdo, 'zalo_delivery_logs', 'idx_workspace_id', 'workspace_id', $execSql, $logMsg);
+
+        // 5. Add country, city columns to web_sessions
+        safeAddColumn($pdo, 'web_sessions', 'country', "VARCHAR(100) NULL AFTER os", $execSql, $logMsg);
+        safeAddColumn($pdo, 'web_sessions', 'city', "VARCHAR(100) NULL AFTER country", $execSql, $logMsg);
+        
+        $currentVersion = 42;
     }
 
     // Update settings table with new db_version

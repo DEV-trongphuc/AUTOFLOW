@@ -16,6 +16,9 @@ if (session_status() === PHP_SESSION_NONE) {
 function requireAISpaceAuth()
 {
     global $pdo;
+    if (!$pdo instanceof PDO) {
+        throw new Exception("Database connection not initialized.");
+    }
 
     $allHeaders = function_exists('getallheaders') ? getallheaders() : [];
     $normalizedHeaders = array_change_key_case($allHeaders, CASE_LOWER);
@@ -288,6 +291,9 @@ function requireAISpaceAuth()
 function requireCategoryAccess($categoryId, $user)
 {
     global $pdo;
+    if (!$pdo instanceof PDO) {
+        return false;
+    }
 
     // Only TRUE super admins bypass the category check:
     // - The hardcoded admin-001
@@ -471,6 +477,9 @@ function verifyAccessToken()
 
     // Verify token in database
     global $pdo;
+    if (!$pdo instanceof PDO) {
+        throw new Exception("Database connection not initialized.");
+    }
     try {
         $stmt = $pdo->prepare("
             SELECT u.* 
@@ -539,6 +548,9 @@ function verifyAccessToken()
 function logUserActivity($userId, $action, $details = [])
 {
     global $pdo;
+    if (!$pdo instanceof PDO) {
+        throw new Exception("Database connection not initialized.");
+    }
     try {
         $stmt = $pdo->prepare("
             INSERT INTO ai_org_user_activity_logs 

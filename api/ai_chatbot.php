@@ -2029,11 +2029,11 @@ CHÚ Ý:
                 $zaloUserId = str_replace('zalo_', '', $visitorId);
 
                 // Find OA Config ID for this subscriber
-                $stmtOA = $pdo->prepare("SELECT oa_config_id FROM zalo_subscribers WHERE zalo_user_id = ? LIMIT 1");
+                $stmtOA = $pdo->prepare("SELECT oa_id FROM zalo_subscribers WHERE zalo_user_id = ? LIMIT 1");
                 $stmtOA->execute([$zaloUserId]);
                 $oaConfigId = $stmtOA->fetchColumn();
 
-                // Robustness: Fallback if oa_config_id is missing but we have OAs
+                // Robustness: Fallback if oa_id is missing but we have OAs
                 if (!$oaConfigId) {
                     $oaConfigId = $pdo->query("SELECT id FROM zalo_oa_configs WHERE status = 'active' LIMIT 1")->fetchColumn();
                 }
@@ -2062,7 +2062,7 @@ CHÚ Ý:
                 $psid = str_replace('meta_', '', $visitorId);
 
                 // 1. Get Page ID from Property ID (Chatbot ID)
-                $stmtPage = $pdo->prepare("SELECT page_id FROM meta_app_configs WHERE chatbot_id = ? LIMIT 1");
+                $stmtPage = $pdo->prepare("SELECT c.page_id FROM meta_app_configs c INNER JOIN meta_automation_scenarios s ON s.meta_config_id = c.id WHERE s.ai_chatbot_id = ? LIMIT 1");
                 $stmtPage->execute([$input['property_id'] ?? $context['property_id'] ?? null]);
                 // Wait, conversation has property_id. Let's fetch it from conversation if input is missing
                 $propertyId = $input['property_id'] ?? null;

@@ -153,7 +153,7 @@ try {
             // Truly Global or Shared Workspace: 
             // Still check if it belongs to a property the user has access to
             if ($asset['property_id']) {
-                $stmtProp = $pdo->prepare("SELECT 1 FROM ai_chatbots WHERE id = ? AND category_id IN (SELECT category_id FROM ai_org_users_categories WHERE user_id = ?)");
+                $stmtProp = $pdo->prepare("SELECT 1 FROM ai_chatbots WHERE id = ? AND category_id IN (SELECT category_id FROM ai_org_user_categories WHERE user_id = ?)");
                 $stmtProp->execute([$asset['property_id'], $current_admin_id]);
                 if ($stmtProp->fetch() || $currentOrgUser['role'] === 'admin') {
                     $hasAccess = true;
