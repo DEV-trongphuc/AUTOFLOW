@@ -514,15 +514,15 @@ const LinksQR: React.FC = () => {
                                                         <div className="flex gap-2 relative z-10">
                                                             <button 
                                                                 onClick={(e) => { e.stopPropagation(); copyLink(link.slug || link.id); }}
-                                                                className="flex-[1.2] py-2.5 bg-slate-50 border border-slate-200/60 rounded-xl flex items-center justify-center gap-2 text-slate-600 text-[11px] font-black tracking-widest hover:bg-slate-100 transition-all shadow-sm group"
+                                                                className="flex-[1.2] h-11 rounded-xl bg-slate-50 text-slate-600 border border-slate-200 text-[10px] font-bold uppercase tracking-widest hover:bg-slate-100 transition-all flex items-center justify-center gap-2 group/btn"
                                                             >
-                                                                <Copy className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600" /> COPY LINK
+                                                                <Copy className="w-4 h-4 text-slate-400 group-hover/btn:rotate-12 transition-transform" /> COPY LINK
                                                             </button>
                                                             <button 
                                                                 onClick={(e) => { e.stopPropagation(); setSelectedLink(link); setView('report'); fetchLinkStats(link.id); }}
-                                                                className="flex-[2] py-2.5 bg-slate-50 border border-slate-200/60 rounded-xl flex items-center justify-center gap-2 text-amber-700 text-[11px] font-black tracking-widest hover:bg-amber-50 hover:border-amber-200 transition-all shadow-sm group"
+                                                                className="flex-[2] h-11 rounded-xl bg-slate-100 text-slate-700 text-[10px] font-bold uppercase tracking-widest hover:bg-slate-200 transition-all flex items-center justify-center gap-2 group/btn shadow-sm"
                                                             >
-                                                                <PenLine className="w-3.5 h-3.5 text-amber-500" /> DESIGN QR
+                                                                <PenLine className="w-4 h-4 text-slate-500 group-hover/btn:scale-110 transition-transform" /> DESIGN QR
                                                             </button>
                                                         </div>
                                                     </div>

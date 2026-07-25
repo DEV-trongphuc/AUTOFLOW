@@ -334,8 +334,20 @@ const SurveyCard: React.FC<{
                 </div>
 
                 <div className="flex items-center justify-end gap-3 shrink-0 ml-auto md:ml-0">
-                    <Button className="h-8 px-3 text-[11px] bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 hidden md:flex" variant="custom" icon={PenLine} onClick={onEdit}>Thiết kế</Button>
-                    <Button className="h-8 px-3 text-[11px]" variant="outline" iconClassName="text-violet-500" onClick={onAnalytics}>Báo cáo</Button>
+                    <button
+                        onClick={onEdit}
+                        className="hidden md:flex h-11 px-5 rounded-xl bg-slate-50 text-slate-600 border border-slate-200 text-[10px] font-bold uppercase tracking-widest hover:bg-slate-100 transition-all items-center justify-center gap-2 group/btn"
+                    >
+                        <PenLine className="w-4 h-4 text-slate-400 group-hover/btn:rotate-12 transition-transform" />
+                        Thiết kế
+                    </button>
+                    <button
+                        onClick={onAnalytics}
+                        className="h-11 px-5 rounded-xl bg-slate-100 text-slate-700 text-[10px] font-bold uppercase tracking-widest hover:bg-slate-200 transition-all flex items-center justify-center gap-2 group/btn shadow-sm"
+                    >
+                        <BarChart2 className="w-4 h-4 text-slate-500 group-hover/btn:scale-110 transition-transform" />
+                        Báo cáo
+                    </button>
                     
                     <div className="w-px h-8 bg-slate-100 mx-1 hidden sm:block"></div>
                     
@@ -418,23 +430,20 @@ const SurveyCard: React.FC<{
 
             {/* CTA buttons */}
             <div className="flex gap-2 mt-auto">
-                <Button
-                    variant="custom"
-                    className="flex-1 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200"
-                    icon={PenLine}
+                <button
                     onClick={onEdit}
+                    className="flex-1 h-11 rounded-xl bg-slate-50 text-slate-600 border border-slate-200 text-[10px] font-bold uppercase tracking-widest hover:bg-slate-100 transition-all flex items-center justify-center gap-2 group/btn"
                 >
+                    <PenLine className="w-4 h-4 text-slate-400 group-hover/btn:rotate-12 transition-transform" />
                     Thiết kế
-                </Button>
-                <Button
-                    variant="outline"
-                    className="flex-[2] border-violet-200 text-violet-700 hover:bg-violet-50 dark:border-violet-800 dark:text-violet-300 dark:hover:bg-violet-950/20"
-                    icon={BarChart2}
-                    iconClassName="text-violet-500"
+                </button>
+                <button
                     onClick={onAnalytics}
+                    className="flex-[2] h-11 rounded-xl bg-slate-100 text-slate-700 text-[10px] font-bold uppercase tracking-widest hover:bg-slate-200 transition-all flex items-center justify-center gap-2 group/btn shadow-sm"
                 >
+                    <BarChart2 className="w-4 h-4 text-slate-500 group-hover/btn:scale-110 transition-transform" />
                     Xem báo cáo
-                </Button>
+                </button>
             </div>
         </div>
     );

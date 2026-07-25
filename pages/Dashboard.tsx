@@ -418,14 +418,15 @@ const Dashboard: React.FC = () => {
     return (
         <div className="animate-fade-in min-h-screen pb-20">
             <PageHero
-                title={`Ready to Scale, ${userName}`}
-                subtitle="Hệ thống Automation đa thông điệp hỗ trợ quản lý và tối ưu hóa trải nghiệm Khách hàng."
+                asBanner={true}
+                title={<>Ready to Scale, {userName}! 🚀</>}
+                subtitle={<>Hệ thống Automation đa thông điệp đã sẵn sàng. Tối ưu hóa trải nghiệm Khách hàng với sức mạnh từ <span className="underline decoration-white/40 underline-offset-4 font-black">Email, Zalo, Meta & AI Automation.</span></>}
                 showStatus={true}
                 statusText="Multi-Channel Active"
                 actions={[
-                    { label: 'TỔNG QUAN HỆ THỐNG', icon: BarChart3, onClick: () => setIsOverviewOpen(true) },
-                    { label: 'CẤU HÌNH LEADSCORE', icon: Target, onClick: () => setIsLeadscoreOpen(true), customClass: 'bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50/50 dark:hover:bg-slate-950/20 active:scale-95' },
-                    { label: 'KẾT NỐI CẤU HÌNH', icon: (props: any) => <Play {...props} className={`${props.className} text-white fill-white opacity-90`} />, onClick: () => setIsConnectionsOpen(true), primary: true }
+                    { label: 'KẾT NỐI CẤU HÌNH', icon: Play, onClick: () => setIsConnectionsOpen(true), primary: true },
+                    { label: 'CẤU HÌNH LEADSCORE', icon: Settings, onClick: () => setIsLeadscoreOpen(true), primary: false },
+                    { label: 'TỔNG QUAN HỆ THỐNG', icon: BarChart3, onClick: () => setIsOverviewOpen(true), primary: false }
                 ]}
             />
 
@@ -817,7 +818,7 @@ const Dashboard: React.FC = () => {
                         {/* Second Row: Detailed sources breakdown and Top Flow metrics */}
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             {/* Top Campaign List - Rebuilt to Top Consultants style */}
-                            <div className="bg-[var(--color-surface)] border border-[var(--color-border-light)] rounded-[var(--radius-xl)] shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-xl)] hover:-translate-y-0.5 transition-all duration-300 flex flex-col min-h-[340px] h-[340px] p-5">
+                            <div className="bg-[var(--color-surface)] border border-[var(--color-border-light)] rounded-[var(--radius-xl)] shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-xl)] hover:-translate-y-0.5 transition-all duration-300 flex flex-col min-h-[380px] h-[380px] p-5">
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid var(--color-border-light)', paddingBottom: '0.75rem' }}>
                                     <h3 style={{ fontSize: '0.875rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--color-text)' }}>
                                         <Mail size={18} color="var(--color-primary)" /> Hiệu suất Chiến dịch
@@ -829,41 +830,99 @@ const Dashboard: React.FC = () => {
                                         Xem tất cả
                                     </span>
                                 </div>
-                                <div className="scrollbar-none" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', flex: 1, justifyContent: 'flex-start', overflowY: 'auto', maxHeight: 260 }}>
+                                <div className="scrollbar-none" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', flex: 1, justifyContent: 'flex-start', overflowY: 'auto', maxHeight: 300 }}>
                                     {!statsData.top_campaigns || statsData.top_campaigns.length === 0 ? (
                                         <div style={{ textAlign: 'center', color: 'var(--color-text-muted)', padding: '2rem 0' }}>Chưa có dữ liệu chiến dịch gửi</div>
                                     ) : (
                                         statsData.top_campaigns.map((camp: any, idx: number) => {
                                             const sent = camp.stat_total_sent || 0;
                                             const opened = camp.stat_total_opened || 0;
+                                            const clicked = camp.stat_total_clicked || 0;
                                             const openRate = sent > 0 ? Math.round((opened / sent) * 100) : 0;
-                                            
-                                            const colors = ['#8b5cf6', '#3b82f6', '#f59e0b', '#10b981', '#ec4899', '#6366f1'];
-                                            const barColor = colors[idx % colors.length];
+                                            const clickRate = sent > 0 ? Math.round((clicked / sent) * 100) : 0;
+                                            const isZalo = camp.type === 'zalo' || camp.type === 'zalo_zns';
+
+                                            // Parse out date if format is [dd/mm/yyyy] - Name
+                                            const dateMatch = camp.name.match(/^\[(\d{2}\/\d{2}\/\d{4})\]\s*(?:-\s*)?(.+)/);
+                                            let cleanName = camp.name;
+                                            let dateStr = '';
+                                            if (dateMatch) {
+                                                dateStr = dateMatch[1];
+                                                cleanName = dateMatch[2];
+                                            }
 
                                             return (
                                                 <div
                                                     key={idx}
                                                     onClick={() => navigate('/campaigns')}
-                                                    style={{ display: 'flex', flexDirection: 'column', gap: 6, cursor: 'pointer' }}
+                                                    className="group/item flex items-center justify-between p-2 hover:bg-slate-50 dark:hover:bg-slate-800/30 rounded-xl transition-all duration-200 cursor-pointer border border-transparent hover:border-slate-100 dark:hover:border-slate-850"
                                                 >
-                                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', fontWeight: 600, alignItems: 'center' }}>
-                                                        <span style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-                                                            <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', width: 16 }}>#{idx + 1}</span>
-                                                            <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-[10px] font-black uppercase tracking-tighter shadow-sm ${getAvatarColor(camp.sender_name || camp.sender_email || camp.name)}`}>
-                                                                {getInitials(camp.sender_name || camp.sender_email || camp.name)}
+                                                    {/* Left side: Rank + Channel Icon + Name/Sub */}
+                                                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                                                        <span className="text-xs font-bold text-slate-400 dark:text-slate-650 w-5 shrink-0 text-center">#{idx + 1}</span>
+                                                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-sm transition-all duration-300 ${
+                                                            isZalo 
+                                                                ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400' 
+                                                                : 'bg-violet-50 dark:bg-violet-950/40 text-violet-600 dark:text-violet-400'
+                                                        }`}>
+                                                            {isZalo ? <MessageSquare size={16} /> : <Mail size={16} />}
+                                                        </div>
+                                                        <div className="min-w-0 flex-1">
+                                                            <div className="flex items-center gap-1.5">
+                                                                <span className="font-bold text-sm text-slate-800 dark:text-slate-200 truncate group-hover/item:text-violet-600 dark:group-hover/item:text-violet-400 transition-colors">
+                                                                    {cleanName}
+                                                                </span>
                                                             </div>
-                                                            <span className="truncate text-slate-800 dark:text-slate-200" style={{ fontSize: '0.875rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
-                                                                <span className="truncate">{camp.name}</span>
-                                                                <BarChart2 size={14} style={{ opacity: 0.35, color: 'var(--color-primary)' }} />
-                                                            </span>
-                                                        </span>
-                                                        <span className="shrink-0 font-bold text-[13px]" style={{ color: 'var(--color-text)' }}>
-                                                            {sent.toLocaleString()} gửi <span className="text-[10px] text-slate-400 dark:text-slate-500 font-normal">({openRate}% Open)</span>
-                                                        </span>
+                                                            <div className="flex items-center gap-2 mt-0.5 text-[10px] text-slate-400 dark:text-slate-500 font-semibold">
+                                                                <span>{isZalo ? 'Zalo ZNS' : 'Email Marketing'}</span>
+                                                                {dateStr && (
+                                                                    <>
+                                                                        <span className="w-1.5 h-1.5 rounded-full bg-slate-200 dark:bg-slate-800" />
+                                                                        <span className="flex items-center gap-1">
+                                                                            <Calendar size={10} className="opacity-70" />
+                                                                            {dateStr}
+                                                                        </span>
+                                                                    </>
+                                                                )}
+                                                            </div>
+                                                        </div>
                                                     </div>
-                                                    <div style={{ height: 6, background: 'var(--color-bg)', borderRadius: 4, overflow: 'hidden', marginLeft: 48 }}>
-                                                        <div style={{ width: `${Math.max(openRate, 2)}%`, height: '100%', background: barColor, borderRadius: 4, transition: 'width 0.5s ease' }} />
+                                                    
+                                                    {/* Right side: Performance Metrics (Sent, Open, Click) */}
+                                                    <div className="flex items-center gap-4 shrink-0 ml-4">
+                                                        {/* Sent */}
+                                                        <div className="text-right min-w-[55px]">
+                                                            <div className="text-[9px] font-bold text-slate-400 dark:text-slate-550 uppercase tracking-wider">Đã gửi</div>
+                                                            <div className="text-xs font-black text-slate-800 dark:text-slate-200 mt-0.5">{sent.toLocaleString()}</div>
+                                                        </div>
+                                                        
+                                                        {/* Open rate */}
+                                                        <div className="w-16">
+                                                            <div className="flex justify-between items-baseline mb-0.5">
+                                                                <span className="text-[9px] font-bold text-slate-400 dark:text-slate-550 uppercase tracking-wider">Mở</span>
+                                                                <span className="text-xs font-black text-violet-600 dark:text-violet-400">{openRate}%</span>
+                                                            </div>
+                                                            <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                                                <div 
+                                                                    className="h-full bg-gradient-to-r from-violet-500 to-indigo-500 rounded-full transition-all duration-500" 
+                                                                    style={{ width: `${Math.min(openRate, 100)}%` }}
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Click rate */}
+                                                        <div className="w-16">
+                                                            <div className="flex justify-between items-baseline mb-0.5">
+                                                                <span className="text-[9px] font-bold text-slate-400 dark:text-slate-555 uppercase tracking-wider">Click</span>
+                                                                <span className="text-xs font-black text-emerald-600 dark:text-emerald-400">{clickRate}%</span>
+                                                            </div>
+                                                            <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                                                <div 
+                                                                    className="h-full bg-gradient-to-r from-emerald-550 to-teal-500 rounded-full transition-all duration-500" 
+                                                                    style={{ width: `${Math.min(clickRate, 100)}%` }}
+                                                                />
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             );
@@ -873,7 +932,7 @@ const Dashboard: React.FC = () => {
                             </div>
 
                             {/* Card 2: Top Active Automation Flows (Rebuilt to Round Allocation style) */}
-                            <div className="bg-[var(--color-surface)] border border-[var(--color-border-light)] rounded-[var(--radius-xl)] shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-xl)] hover:-translate-y-0.5 transition-all duration-300 flex flex-col min-h-[340px] h-[340px] p-5">
+                            <div className="bg-[var(--color-surface)] border border-[var(--color-border-light)] rounded-[var(--radius-xl)] shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-xl)] hover:-translate-y-0.5 transition-all duration-300 flex flex-col min-h-[380px] h-[380px] p-5">
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid var(--color-border-light)', paddingBottom: '0.75rem' }}>
                                     <h3 style={{ fontSize: '0.875rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--color-text)' }}>
                                         <GitBranch size={18} color="#3b82f6" /> Hiệu suất Kịch bản Automation
@@ -883,25 +942,62 @@ const Dashboard: React.FC = () => {
                                         Đang chạy
                                     </span>
                                 </div>
-                                <div className="scrollbar-none" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', flex: 1, justifyContent: 'flex-start', overflowY: 'auto', maxHeight: 260 }}>
+                                <div className="scrollbar-none" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', flex: 1, justifyContent: 'flex-start', overflowY: 'auto', maxHeight: 300 }}>
                                     {!statsData.top_flows || statsData.top_flows.length === 0 ? (
                                         <div style={{ textAlign: 'center', color: 'var(--color-text-muted)', padding: '2rem 0' }}>Chưa có kịch bản đang chạy</div>
                                     ) : (
                                         statsData.top_flows.map((flow: any, idx: number) => {
-                                            const completionRate = flow.stat_enrolled > 0 ? Math.round(((flow.stat_completed || 0) / flow.stat_enrolled) * 100) : 0;
-                                            
-                                            const colors = ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ec4899', '#6366f1'];
-                                            const dotColor = colors[idx % colors.length];
+                                            const enrolled = flow.stat_enrolled || 0;
+                                            const completed = flow.stat_completed || 0;
+                                            const completionRate = enrolled > 0 ? Math.round((completed / enrolled) * 100) : 0;
 
                                             return (
-                                                <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                                    <div style={{ width: 14, height: 14, borderRadius: '50%', background: dotColor, flexShrink: 0 }} />
-                                                    <div style={{ flex: 1, minWidth: 0 }}>
-                                                        <div className="truncate text-slate-800 dark:text-slate-200" style={{ fontSize: '0.875rem', fontWeight: 600 }}>{flow.name}</div>
-                                                        <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Hoàn thành: {completionRate}%</div>
+                                                <div 
+                                                    key={idx}
+                                                    onClick={() => navigate('/flows')}
+                                                    className="group/item flex items-center justify-between p-2 hover:bg-slate-50 dark:hover:bg-slate-800/30 rounded-xl transition-all duration-200 cursor-pointer border border-transparent hover:border-slate-100 dark:hover:border-slate-850"
+                                                >
+                                                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                                                        {/* Rank */}
+                                                        <span className="text-xs font-bold text-slate-400 dark:text-slate-650 w-5 shrink-0 text-center">#{idx + 1}</span>
+                                                        
+                                                        {/* Flow Icon */}
+                                                        <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-sm bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400">
+                                                            <GitBranch size={16} />
+                                                        </div>
+                                                        
+                                                        {/* Flow Name & Trigger */}
+                                                        <div className="min-w-0 flex-1">
+                                                            <div className="font-bold text-sm text-slate-800 dark:text-slate-200 truncate group-hover/item:text-blue-600 dark:group-hover/item:text-blue-400 transition-colors">
+                                                                {flow.name}
+                                                            </div>
+                                                            <div className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold mt-0.5 uppercase tracking-wider">
+                                                                {flow.trigger_type || 'Manual Trigger'}
+                                                            </div>
+                                                        </div>
                                                     </div>
-                                                    <div style={{ fontSize: '1.05rem', fontWeight: 850, color: 'var(--color-text)' }} className="shrink-0 font-mono">
-                                                        {flow.stat_enrolled?.toLocaleString() || 0} <span className="text-[10px] text-slate-400 dark:text-slate-500 font-normal">user</span>
+
+                                                    {/* Right side: Enrolled and Completion Rate */}
+                                                    <div className="flex items-center gap-4 shrink-0 ml-4">
+                                                        {/* Enrolled */}
+                                                        <div className="text-right min-w-[65px]">
+                                                            <div className="text-[9px] font-bold text-slate-400 dark:text-slate-550 uppercase tracking-wider">Tham gia</div>
+                                                            <div className="text-xs font-black text-slate-800 dark:text-slate-200 mt-0.5">{enrolled.toLocaleString()} <span className="text-[9px] font-normal text-slate-400 dark:text-slate-500">user</span></div>
+                                                        </div>
+
+                                                        {/* Completion rate */}
+                                                        <div className="w-24">
+                                                            <div className="flex justify-between items-baseline mb-0.5">
+                                                                <span className="text-[9px] font-bold text-slate-400 dark:text-slate-555 uppercase tracking-wider">Hoàn thành</span>
+                                                                <span className="text-xs font-black text-blue-600 dark:text-blue-400">{completionRate}%</span>
+                                                            </div>
+                                                            <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                                                <div 
+                                                                    className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full transition-all duration-500" 
+                                                                    style={{ width: `${Math.min(completionRate, 100)}%` }}
+                                                                />
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             );
@@ -979,17 +1075,9 @@ const Dashboard: React.FC = () => {
                     }
                 ].map((group, groupIdx) => (
                     <div key={groupIdx} className="space-y-5">
-                        <div className="flex items-center gap-3">
-                            <span className={`w-2.5 h-2.5 rounded-full bg-gradient-to-r ${
-                                groupIdx === 0 ? 'from-violet-500 to-indigo-500' :
-                                groupIdx === 1 ? 'from-rose-500 to-red-500' :
-                                groupIdx === 2 ? 'from-pink-500 to-rose-500' :
-                                'from-cyan-500 to-blue-500'
-                            }`} />
-                            <div>
-                                <h3 className="text-sm font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider">{group.title}</h3>
-                                <p className="text-[11px] text-slate-400 font-semibold mt-0.5">{group.desc}</p>
-                            </div>
+                        <div>
+                            <h3 className="text-sm font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider">{group.title}</h3>
+                            <p className="text-[11px] text-slate-400 font-semibold mt-0.5">{group.desc}</p>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 stagger-grid">

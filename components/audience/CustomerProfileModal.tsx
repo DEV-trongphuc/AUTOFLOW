@@ -734,7 +734,7 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                     <h4 className="px-3 text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Thông tin & Nhật ký</h4>
                                     <button
                                         onClick={() => setActiveTab('info')}
-                                        className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                                        className={`w-full flex items-center gap-3 px-3.5 py-3.5 rounded-xl text-xs font-bold transition-all ${
                                             activeTab === 'info' ? 'bg-violet-600 text-white shadow-md shadow-violet-500/20' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
                                         }`}
                                     >
@@ -743,7 +743,7 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                     </button>
                                     <button
                                         onClick={() => setActiveTab('notes')}
-                                        className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                                        className={`w-full flex items-center gap-3 px-3.5 py-3.5 rounded-xl text-xs font-bold transition-all ${
                                             activeTab === 'notes' ? 'bg-violet-600 text-white shadow-md shadow-violet-500/20' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
                                         }`}
                                     >
@@ -752,7 +752,7 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                     </button>
                                     <button
                                         onClick={() => setActiveTab('stats')}
-                                        className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                                        className={`w-full flex items-center gap-3 px-3.5 py-3.5 rounded-xl text-xs font-bold transition-all ${
                                             activeTab === 'stats' ? 'bg-violet-600 text-white shadow-md shadow-violet-500/20' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
                                         }`}
                                     >
@@ -761,7 +761,7 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                     </button>
                                     <button
                                         onClick={() => setActiveTab('automation')}
-                                        className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                                        className={`w-full flex items-center gap-3 px-3.5 py-3.5 rounded-xl text-xs font-bold transition-all ${
                                             activeTab === 'automation' ? 'bg-violet-600 text-white shadow-md shadow-violet-500/20' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
                                         }`}
                                     >
@@ -770,7 +770,7 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                     </button>
                                     <button
                                         onClick={() => setActiveTab('activity')}
-                                        className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                                        className={`w-full flex items-center gap-3 px-3.5 py-3.5 rounded-xl text-xs font-bold transition-all ${
                                             activeTab === 'activity' ? 'bg-violet-600 text-white shadow-md shadow-violet-500/20' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
                                         }`}
                                     >
@@ -784,7 +784,7 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                     <h4 className="px-3 text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Hội thoại & Thao tác</h4>
                                     <button
                                         onClick={() => setActiveTab('chat')}
-                                        className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                                        className={`w-full flex items-center gap-3 px-3.5 py-3.5 rounded-xl text-xs font-bold transition-all ${
                                             activeTab === 'chat' ? 'bg-violet-600 text-white shadow-md shadow-violet-500/20' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
                                         }`}
                                     >
@@ -793,7 +793,7 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                     </button>
                                     <button
                                         onClick={() => setIsManualTriggerOpen(true)}
-                                        className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-950/40 transition-all border border-violet-200 dark:border-violet-800/40"
+                                        className="w-full flex items-center gap-3 px-3.5 py-3.5 rounded-xl text-xs font-bold text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-950/40 transition-all border border-violet-200 dark:border-violet-800/40"
                                     >
                                         <Zap className="w-4 h-4 text-violet-500" />
                                         <span>Kích hoạt Flow thủ công</span>
@@ -810,7 +810,7 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                             variant: 'danger',
                                             onConfirm: () => { onDelete(subscriber.id); onClose(); }
                                         })}
-                                        className="w-full flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-all border border-rose-200 dark:border-rose-900/40"
+                                        className="w-full flex items-center gap-2 px-3.5 py-3.5 rounded-xl text-xs font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-all border border-rose-200 dark:border-rose-900/40"
                                     >
                                         <Trash2 className="w-4 h-4" />
                                         <span>Xóa hồ sơ</span>

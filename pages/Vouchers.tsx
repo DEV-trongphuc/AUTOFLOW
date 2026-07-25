@@ -279,8 +279,20 @@ const Vouchers: React.FC = () => {
                                                 </div>
                                             </div>
                                             <div className="flex gap-2">
-                                                <Button className="flex-[3] bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200" variant="custom" icon={Code} onClick={() => setSelectedCampaignForApi(campaign)}>API</Button>
-                                                <Button className="flex-[7]" variant="outline" icon={LayoutGrid} iconClassName="text-orange-500 stroke-[1.5px]" onClick={() => setSelectedCampaignForCodes(campaign)}>Quản lý mã</Button>
+                                                <button
+                                                    onClick={() => setSelectedCampaignForApi(campaign)}
+                                                    className="flex-[3] h-11 rounded-xl bg-slate-50 text-slate-600 border border-slate-200 text-[10px] font-bold uppercase tracking-widest hover:bg-slate-100 transition-all flex items-center justify-center gap-2 group/btn"
+                                                >
+                                                    <Code className="w-4 h-4 text-slate-400 group-hover/btn:rotate-12 transition-transform" />
+                                                    API
+                                                </button>
+                                                <button
+                                                    onClick={() => setSelectedCampaignForCodes(campaign)}
+                                                    className="flex-[7] h-11 rounded-xl bg-slate-100 text-slate-700 text-[10px] font-bold uppercase tracking-widest hover:bg-slate-200 transition-all flex items-center justify-center gap-2 group/btn shadow-sm"
+                                                >
+                                                    <LayoutGrid className="w-4 h-4 text-slate-500 group-hover/btn:scale-110 transition-transform" />
+                                                    Quản lý mã
+                                                </button>
                                             </div>
                                         </div>
                                     </>
@@ -316,8 +328,20 @@ const Vouchers: React.FC = () => {
                                         </div>
 
                                         <div className="flex items-center justify-end gap-3 shrink-0 ml-auto md:ml-0">
-                                            <Button className="h-8 w-8 !p-0 bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 hidden md:flex" variant="custom" icon={Code} onClick={() => setSelectedCampaignForApi(campaign)} title="Lấy mã nhúng API" />
-                                            <Button className="h-8 px-3 text-[11px]" variant="outline" icon={LayoutGrid} iconClassName="text-orange-500" onClick={() => setSelectedCampaignForCodes(campaign)}>Quản lý</Button>
+                                            <button
+                                                onClick={() => setSelectedCampaignForApi(campaign)}
+                                                className="hidden md:flex h-11 w-11 rounded-xl bg-slate-50 text-slate-600 border border-slate-200 text-[10px] font-bold uppercase tracking-widest hover:bg-slate-100 transition-all items-center justify-center gap-2 group/btn"
+                                                title="Lấy mã nhúng API"
+                                            >
+                                                <Code className="w-4 h-4 text-slate-400 group-hover/btn:rotate-12 transition-transform" />
+                                            </button>
+                                            <button
+                                                onClick={() => setSelectedCampaignForCodes(campaign)}
+                                                className="h-11 px-5 rounded-xl bg-slate-100 text-slate-700 text-[10px] font-bold uppercase tracking-widest hover:bg-slate-200 transition-all flex items-center justify-center gap-2 group/btn shadow-sm"
+                                            >
+                                                <LayoutGrid className="w-4 h-4 text-slate-500 group-hover/btn:scale-110 transition-transform" />
+                                                Quản lý
+                                            </button>
                                             
                                             <div className="w-px h-8 bg-slate-100 mx-1 hidden sm:block"></div>
                                             
