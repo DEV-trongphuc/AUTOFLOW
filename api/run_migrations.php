@@ -153,7 +153,7 @@ function safeRebuildPK($pdo, $table, $columnsArray, $execSql, $logMsg) {
     }
 }
 
-$targetVersion = 39;
+$targetVersion = 40;
 $currentVersion = 0;
 
 // Query current DB version
@@ -746,6 +746,76 @@ try {
         safeAddColumn($pdo, 'zalo_user_messages', 'workspace_id', "INT(11) NULL DEFAULT 1 AFTER zalo_user_id", $execSql, $logMsg);
         safeAddIndex($pdo, 'zalo_user_messages', 'idx_workspace_id', 'workspace_id', $execSql, $logMsg);
         $currentVersion = 39;
+    }
+
+    // --------------------------------------------------
+    // Version 40: Add AI group tables and owner_email column
+    // --------------------------------------------------
+    if ($currentVersion < 40) {
+        $logMsg("Đang chạy cập nhật v40 (Tạo các bảng AI group và thêm owner_email)...", "info");
+        
+        // 1. Create ai_usage_analytics
+        $execSql($pdo, "
+            CREATE TABLE IF NOT EXISTS `ai_usage_analytics` (
+              `id` INT(11) NOT NULL AUTO_INCREMENT,
+              `group_id` VARCHAR(50) NOT NULL,
+              `ai_id` VARCHAR(50) NOT NULL,
+              `user_email` VARCHAR(191) NOT NULL,
+              `conversation_id` VARCHAR(100) NULL,
+              `message_count` INT(11) DEFAULT 1,
+              `tokens_used` INT(11) DEFAULT 0,
+              `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+              PRIMARY KEY (`id`),
+              INDEX `idx_group_id` (`group_id`),
+              INDEX `idx_ai_id` (`ai_id`),
+              INDEX `idx_user_email` (`user_email`),
+              INDEX `idx_created_at` (`created_at`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        ");
+        $logMsg("Đã tạo bảng ai_usage_analytics", "success");
+
+        // 2. Create ai_group_members
+        $execSql($pdo, "
+            CREATE TABLE IF NOT EXISTS `ai_group_members` (
+              `id` INT(11) NOT NULL AUTO_INCREMENT,
+              `group_id` VARCHAR(100) NOT NULL,
+              `user_email` VARCHAR(191) NOT NULL,
+              `role` ENUM('admin', 'editor', 'viewer') DEFAULT 'viewer',
+              `invited_by` VARCHAR(191) NOT NULL,
+              `joined_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+              `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+              PRIMARY KEY (`id`),
+              UNIQUE KEY `uq_group_user` (`group_id`, `user_email`),
+              INDEX `idx_group_id` (`group_id`),
+              INDEX `idx_user_email` (`user_email`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        ");
+        $logMsg("Đã tạo bảng ai_group_members", "success");
+
+        // 3. Create ai_group_audit_logs
+        $execSql($pdo, "
+            CREATE TABLE IF NOT EXISTS `ai_group_audit_logs` (
+              `id` INT(11) NOT NULL AUTO_INCREMENT,
+              `group_id` VARCHAR(100) NOT NULL,
+              `user_email` VARCHAR(191) NOT NULL,
+              `action` VARCHAR(50) NOT NULL,
+              `target_email` VARCHAR(191) NULL,
+              `details` TEXT NULL,
+              `ip_address` VARCHAR(45) NULL,
+              `user_agent` VARCHAR(255) NULL,
+              `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+              PRIMARY KEY (`id`),
+              INDEX `idx_group_id` (`group_id`),
+              INDEX `idx_user_email` (`user_email`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        ");
+        $logMsg("Đã tạo bảng ai_group_audit_logs", "success");
+
+        // 4. Add owner_email column to ai_chatbot_categories
+        safeAddColumn($pdo, 'ai_chatbot_categories', 'owner_email', "VARCHAR(191) NULL AFTER admin_id", $execSql, $logMsg);
+        safeAddIndex($pdo, 'ai_chatbot_categories', 'idx_owner_email', 'owner_email', $execSql, $logMsg);
+        
+        $currentVersion = 40;
     }
 
     // Update settings table with new db_version
