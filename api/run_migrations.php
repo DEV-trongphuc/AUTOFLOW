@@ -153,7 +153,7 @@ function safeRebuildPK($pdo, $table, $columnsArray, $execSql, $logMsg) {
     }
 }
 
-$targetVersion = 40;
+$targetVersion = 41;
 $currentVersion = 0;
 
 // Query current DB version
@@ -816,6 +816,52 @@ try {
         safeAddIndex($pdo, 'ai_chatbot_categories', 'idx_owner_email', 'owner_email', $execSql, $logMsg);
         
         $currentVersion = 40;
+    }
+
+    // --------------------------------------------------
+    // Version 41: Add approval_requests and ai_org_user_activity_logs tables
+    // --------------------------------------------------
+    if ($currentVersion < 41) {
+        $logMsg("Đang chạy cập nhật v41 (Tạo bảng approval_requests và ai_org_user_activity_logs)...", "info");
+        
+        // 1. Create approval_requests
+        $execSql($pdo, "
+            CREATE TABLE IF NOT EXISTS `approval_requests` (
+              `id` INT(11) NOT NULL AUTO_INCREMENT,
+              `workspace_id` INT(11) NOT NULL,
+              `target_type` VARCHAR(50) NOT NULL,
+              `target_id` VARCHAR(100) NOT NULL,
+              `request_user_id` VARCHAR(100) NOT NULL,
+              `status` ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
+              `reason` TEXT NULL,
+              `approver_id` VARCHAR(100) NULL,
+              `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+              `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+              PRIMARY KEY (`id`),
+              INDEX `idx_workspace_target` (`workspace_id`, `target_type`, `target_id`),
+              INDEX `idx_status` (`status`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        ");
+        $logMsg("Đã tạo bảng approval_requests", "success");
+
+        // 2. Create ai_org_user_activity_logs
+        $execSql($pdo, "
+            CREATE TABLE IF NOT EXISTS `ai_org_user_activity_logs` (
+              `id` INT(11) NOT NULL AUTO_INCREMENT,
+              `user_id` VARCHAR(100) NOT NULL,
+              `action` VARCHAR(100) NOT NULL,
+              `details` TEXT NULL,
+              `ip_address` VARCHAR(45) NULL,
+              `user_agent` VARCHAR(255) NULL,
+              `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+              PRIMARY KEY (`id`),
+              INDEX `idx_user_action` (`user_id`, `action`),
+              INDEX `idx_created_at` (`created_at`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        ");
+        $logMsg("Đã tạo bảng ai_org_user_activity_logs", "success");
+        
+        $currentVersion = 41;
     }
 
     // Update settings table with new db_version

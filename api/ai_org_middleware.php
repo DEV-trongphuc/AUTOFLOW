@@ -312,7 +312,7 @@ function requireCategoryAccess($categoryId, $user)
         $userOrgAdminId = !empty($user['admin_id']) ? $user['admin_id'] : $user['id'];
 
         if (strpos($categoryId, 'chatbot_') === 0) {
-            $stmtResolve = $pdo->prepare("SELECT category_id, admin_id FROM ai_chatbots WHERE id = ? LIMIT 1");
+            $stmtResolve = $pdo->prepare("SELECT c.category_id, cat.admin_id FROM ai_chatbots c LEFT JOIN ai_chatbot_categories cat ON c.category_id = cat.id WHERE c.id = ? LIMIT 1");
             $stmtResolve->execute([$categoryId]);
             $botData = $stmtResolve->fetch(PDO::FETCH_ASSOC);
             if ($botData) {
