@@ -9,6 +9,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 require_once 'db_connect.php';
+/** @var PDO $pdo */
 require_once 'tracking_helper.php';
 
 try {
