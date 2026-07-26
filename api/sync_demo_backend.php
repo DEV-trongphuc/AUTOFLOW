@@ -22,10 +22,15 @@ if (!is_dir($destDir)) {
 }
 
 function copyFolder($src, $dst) {
-    $dir = opendir($src);
+    $dir = @opendir($src);
+    if (!$dir) return;
     @mkdir($dst, 0755, true);
     while (false !== ($file = readdir($dir))) {
         if (($file != '.') && ($file != '..')) {
+            // Skip hidden folders and dev archives
+            if (strpos($file, '_') === 0 || strpos($file, '.') === 0) {
+                continue;
+            }
             if (is_dir($src . '/' . $file)) {
                 copyFolder($src . '/' . $file, $dst . '/' . $file);
             } else {
