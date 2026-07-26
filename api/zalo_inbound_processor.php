@@ -104,7 +104,7 @@ function handleZaloInboundJob($pdo, $payload)
             if ($scenario && !empty($scenario['ai_chatbot_id'])) {
                 $aiPropId = $scenario['ai_chatbot_id'];
             } else {
-                $stmtProp = $pdo->prepare("SELECT ai_chatbot_id FROM zalo_automation_scenarios WHERE oa_config_id = ? AND type = 'ai_reply' AND ai_chatbot_id IS NOT NULL AND status = 'active' ORDER BY priority DESC, created_at DESC LIMIT 1");
+                $stmtProp = $pdo->prepare("SELECT ai_chatbot_id FROM zalo_automation_scenarios WHERE oa_config_id = ? AND type = 'ai_reply' AND ai_chatbot_id IS NOT NULL AND status = 'active' ORDER BY priority_override DESC, created_at DESC LIMIT 1");
                 $stmtProp->execute([$oaConfigId]);
                 $aiPropId = $stmtProp->fetchColumn();
             }
