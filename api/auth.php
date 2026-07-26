@@ -19,7 +19,7 @@ if ($action === 'demo_login') {
 
     if ($isDemo) {
         try {
-            $stmtAdmin = $pdo->query("SELECT id, username, email, full_name, name, picture, role, status, (SELECT workspace_id FROM workspace_users WHERE user_id = users.id LIMIT 1) as workspace_id FROM users WHERE role = 'admin' LIMIT 1");
+            $stmtAdmin = $pdo->query("SELECT id, username, email, full_name, name, picture, role, status, (SELECT workspace_id FROM workspace_users WHERE BINARY user_id = BINARY users.id LIMIT 1) as workspace_id FROM users WHERE role = 'admin' LIMIT 1");
             $user = $stmtAdmin->fetch(PDO::FETCH_ASSOC);
 
             if (!$user) {
@@ -31,7 +31,7 @@ if ($action === 'demo_login') {
                 $pdo->prepare("INSERT IGNORE INTO workspace_users (workspace_id, user_id, role) VALUES (?, ?, 'admin')")
                     ->execute([$wsId, $adminId]);
 
-                $stmtAdmin = $pdo->prepare("SELECT id, username, email, full_name, name, picture, role, status, (SELECT workspace_id FROM workspace_users WHERE user_id = users.id LIMIT 1) as workspace_id FROM users WHERE id = ?");
+                $stmtAdmin = $pdo->prepare("SELECT id, username, email, full_name, name, picture, role, status, (SELECT workspace_id FROM workspace_users WHERE BINARY user_id = BINARY users.id LIMIT 1) as workspace_id FROM users WHERE id = ?");
                 $stmtAdmin->execute([$adminId]);
                 $user = $stmtAdmin->fetch(PDO::FETCH_ASSOC);
             }
