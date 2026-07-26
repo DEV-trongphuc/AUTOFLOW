@@ -9,7 +9,6 @@ export const isLocal = typeof window !== 'undefined' &&
 
 // Enable Demo Mode if running on specific demo domains (No manual toggle needed)
 export const DEMO_MODE = typeof window !== 'undefined' && (
-    window.location.hostname === 'open.domation.net' || 
     window.location.hostname === 'open.automation.net'
 );
 
