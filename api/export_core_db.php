@@ -35,51 +35,61 @@ $structureOnlyTables = [
 ];
 
 try {
+    // Open target file stream
+    $fileName = 'domation_demo_clean.sql';
+    $filePath = __DIR__ . '/' . $fileName;
+    $fOut = fopen($filePath, 'w');
+    if (!$fOut) {
+        throw new Exception("Could not open file for writing: " . $filePath);
+    }
+
     // Fetch all tables in the database
     $tablesQuery = $pdo->query("SHOW TABLES");
     $tables = $tablesQuery->fetchAll(PDO::FETCH_COLUMN);
 
-    $sqlDump = "";
-    $sqlDump .= "-- DOMATION Clean Pre-Anonymized Database Dump\n";
-    $sqlDump .= "-- Target Database: {$targetDb}\n";
-    $sqlDump .= "-- Generated: " . date('Y-m-d H:i:s') . "\n\n";
-    $sqlDump .= "SET SQL_MODE = \"NO_AUTO_VALUE_ON_ZERO\";\n";
-    $sqlDump .= "START TRANSACTION;\n";
-    $sqlDump .= "SET time_zone = \"+00:00\";\n\n";
+    fwrite($fOut, "-- DOMATION Clean Pre-Anonymized Database Dump\n");
+    fwrite($fOut, "-- Target Database: {$targetDb}\n");
+    fwrite($fOut, "-- Generated: " . date('Y-m-d H:i:s') . "\n\n");
+    fwrite($fOut, "SET SQL_MODE = \"NO_AUTO_VALUE_ON_ZERO\";\n");
+    fwrite($fOut, "START TRANSACTION;\n");
+    fwrite($fOut, "SET time_zone = \"+00:00\";\n\n");
 
     foreach ($tables as $table) {
         // 1. Drop Table IF EXISTS
-        $sqlDump .= "DROP TABLE IF EXISTS `{$table}`;\n";
+        fwrite($fOut, "DROP TABLE IF EXISTS `{$table}`;\n");
 
         // 2. Get Create Table statement
         $createTableQuery = $pdo->query("SHOW CREATE TABLE `{$table}`");
         $createTableRow = $createTableQuery->fetch(PDO::FETCH_NUM);
         $createSql = $createTableRow[1];
 
-        // Replace any auto_increment defaults to keep it clean if necessary
-        $sqlDump .= $createSql . ";\n\n";
+        fwrite($fOut, $createSql . ";\n\n");
 
         // If it's a structure-only table, skip exporting rows
         if (in_array($table, $structureOnlyTables)) {
-            $sqlDump .= "-- Table `{$table}` is log table: structure-only (truncated data for demo)\n\n";
+            fwrite($fOut, "-- Table `{$table}` is log table: structure-only (truncated data for demo)\n\n");
             continue;
         }
 
-        // 3. Export Data rows with anonymization
+        // 3. Export Data rows in chunks to prevent memory limit exhaustion
         $rowsQuery = $pdo->query("SELECT * FROM `{$table}`");
-        $rows = $rowsQuery->fetchAll(PDO::FETCH_ASSOC);
-
-        if (empty($rows)) {
-            continue;
-        }
-
-        $sqlDump .= "INSERT INTO `{$table}` (";
-        $columns = array_keys($rows[0]);
-        $sqlDump .= implode(", ", array_map(function($c) { return "`$c`"; }, $columns));
-        $sqlDump .= ") VALUES\n";
-
-        $valueStrings = [];
-        foreach ($rows as $row) {
+        $columns = [];
+        $isFirstChunk = true;
+        
+        while ($row = $rowsQuery->fetch(PDO::FETCH_ASSOC)) {
+            if (empty($columns)) {
+                $columns = array_keys($row);
+            }
+            
+            if ($isFirstChunk) {
+                fwrite($fOut, "INSERT INTO `{$table}` (");
+                fwrite($fOut, implode(", ", array_map(function($c) { return "`$c`"; }, $columns)));
+                fwrite($fOut, ") VALUES\n");
+                $isFirstChunk = false;
+            } else {
+                fwrite($fOut, ",\n");
+            }
+            
             $values = [];
             foreach ($columns as $col) {
                 $val = $row[$col];
@@ -121,42 +131,43 @@ try {
                         }
                     }
 
-                    // Escape strings safely for SQL insertion
                     $values[] = $pdo->quote($val);
                 }
             }
-            $valueStrings[] = "(" . implode(", ", $values) . ")";
+            fwrite($fOut, "(" . implode(", ", $values) . ")");
         }
-
-        $sqlDump .= implode(",\n", $valueStrings) . ";\n\n";
+        
+        if (!$isFirstChunk) {
+            fwrite($fOut, ";\n\n");
+        }
     }
 
     // Include DELIMITER and routines
-    $sqlDump .= "-- Procedures\n";
-    $sqlDump .= "DROP PROCEDURE IF EXISTS `RenameFlowStatClickRate`;\n";
-    $sqlDump .= "DELIMITER $$\n";
-    $sqlDump .= "CREATE PROCEDURE `RenameFlowStatClickRate` () BEGIN\n";
-    $sqlDump .= "IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'flows' AND COLUMN_NAME = 'stat_click_rate') THEN\n";
-    $sqlDump .= "ALTER TABLE `flows` CHANGE COLUMN `stat_click_rate` `stat_total_clicked` INT DEFAULT 0;\n";
-    $sqlDump .= "END IF;\n";
-    $sqlDump .= "END$$\n";
-    $sqlDump .= "DELIMITER ;\n\n";
+    fwrite($fOut, "-- Procedures\n");
+    fwrite($fOut, "DROP PROCEDURE IF EXISTS `RenameFlowStatClickRate`;\n");
+    fwrite($fOut, "DELIMITER $$\n");
+    fwrite($fOut, "CREATE PROCEDURE `RenameFlowStatClickRate` () BEGIN\n");
+    fwrite($fOut, "IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'flows' AND COLUMN_NAME = 'stat_click_rate') THEN\n");
+    fwrite($fOut, "ALTER TABLE `flows` CHANGE COLUMN `stat_click_rate` `stat_total_clicked` INT DEFAULT 0;\n");
+    fwrite($fOut, "END IF;\n");
+    fwrite($fOut, "END$$\n");
+    fwrite($fOut, "DELIMITER ;\n\n");
 
-    $sqlDump .= "COMMIT;\n";
-
-    // Write file to web server root
-    $fileName = 'domation_demo_clean.sql';
-    file_put_contents(__DIR__ . '/' . $fileName, $sqlDump);
+    fwrite($fOut, "COMMIT;\n");
+    fclose($fOut);
 
     echo json_encode([
         'success' => true,
         'message' => 'Clean database dump generated successfully!',
         'file_name' => $fileName,
         'download_url' => API_BASE_URL . '/' . $fileName,
-        'size_mb' => round(strlen($sqlDump) / 1024 / 1024, 2)
+        'size_mb' => round(filesize($filePath) / 1024 / 1024, 2)
     ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
 
 } catch (Throwable $e) {
+    if (isset($fOut) && is_resource($fOut)) {
+        fclose($fOut);
+    }
     http_response_code(500);
     echo json_encode(['success' => false, 'error' => $e->getMessage()]);
 }
