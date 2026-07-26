@@ -121,7 +121,7 @@ try {
                     }
                     elseif ($table === 'users' || $table === 'ai_org_users') {
                         // Skip main admin
-                        if ($row['role'] !== 'admin' && $row['username'] !== 'admin' && strpos($row['email'], 'admin') !== 0) {
+                        if ($row['role'] !== 'admin' && ($row['username'] ?? '') !== 'admin' && strpos($row['email'] ?? '', 'admin') !== 0) {
                             if ($col === 'email') {
                                 $val = 'demo_user_' . $row['id'] . '@domation.net';
                             }
