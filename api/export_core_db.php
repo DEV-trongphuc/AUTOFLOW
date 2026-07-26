@@ -50,6 +50,7 @@ try {
     fwrite($fOut, "-- DOMATION Clean Pre-Anonymized Database Dump\n");
     fwrite($fOut, "-- Target Database: {$targetDb}\n");
     fwrite($fOut, "-- Generated: " . date('Y-m-d H:i:s') . "\n\n");
+    fwrite($fOut, "SET FOREIGN_KEY_CHECKS = 0;\n");
     fwrite($fOut, "SET SQL_MODE = \"NO_AUTO_VALUE_ON_ZERO\";\n");
     fwrite($fOut, "START TRANSACTION;\n");
     fwrite($fOut, "SET time_zone = \"+00:00\";\n\n");
@@ -154,6 +155,7 @@ try {
     fwrite($fOut, "DELIMITER ;\n\n");
 
     fwrite($fOut, "COMMIT;\n");
+    fwrite($fOut, "SET FOREIGN_KEY_CHECKS = 1;\n");
     fclose($fOut);
 
     echo json_encode([
