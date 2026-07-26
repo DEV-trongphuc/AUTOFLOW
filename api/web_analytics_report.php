@@ -4,7 +4,7 @@ header('Content-Type: application/json');
 require_once 'db_connect.php';
 
 try {
-    $pdo = getDbConnection();
+    /** @var PDO $pdo */
     $method = $_SERVER['REQUEST_METHOD'];
 
     if ($method === 'GET') {
@@ -55,14 +55,15 @@ function getOverview($pdo, $params)
     // Total stats
     $stmt = $pdo->prepare("
         SELECT 
-            COUNT(DISTINCT session_id) as total_sessions,
-            COUNT(DISTINCT visitor_id) as total_visitors,
-            COUNT(DISTINCT subscriber_id) as identified_users,
+            COUNT(DISTINCT pv.session_id) as total_sessions,
+            COUNT(DISTINCT pv.visitor_id) as total_visitors,
+            COUNT(DISTINCT v.subscriber_id) as identified_users,
             COUNT(*) as total_pageviews,
-            AVG(duration) as avg_duration,
-            AVG(scroll_depth) as avg_scroll_depth
-        FROM web_page_views
-        WHERE DATE(viewed_at) BETWEEN ? AND ?
+            AVG(pv.time_on_page) as avg_duration,
+            AVG(pv.scroll_depth) as avg_scroll_depth
+        FROM web_page_views pv
+        LEFT JOIN web_visitors v ON pv.visitor_id = v.visitor_id
+        WHERE DATE(pv.loaded_at) BETWEEN ? AND ?
     ");
     $stmt->execute([$dateFrom, $dateTo]);
     $stats = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -71,8 +72,8 @@ function getOverview($pdo, $params)
     $stmt = $pdo->prepare("
         SELECT COUNT(*) as bounced_sessions
         FROM web_sessions
-        WHERE DATE(session_start) BETWEEN ? AND ?
-        AND page_views = 1
+        WHERE DATE(started_at) BETWEEN ? AND ?
+        AND page_count = 1
     ");
     $stmt->execute([$dateFrom, $dateTo]);
     $bounced = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -102,7 +103,7 @@ function getOverview($pdo, $params)
             COUNT(*) as count,
             ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER(), 2) as percentage
         FROM web_sessions
-        WHERE DATE(session_start) BETWEEN ? AND ?
+        WHERE DATE(started_at) BETWEEN ? AND ?
         GROUP BY device_type
     ");
     $stmt->execute([$dateFrom, $dateTo]);
@@ -115,7 +116,7 @@ function getOverview($pdo, $params)
             COUNT(*) as sessions,
             COUNT(DISTINCT visitor_id) as visitors
         FROM web_sessions
-        WHERE DATE(session_start) BETWEEN ? AND ?
+        WHERE DATE(started_at) BETWEEN ? AND ?
         GROUP BY utm_source
         ORDER BY sessions DESC
         LIMIT 10
@@ -148,17 +149,17 @@ function getTopPages($pdo, $params)
 
     $stmt = $pdo->prepare("
         SELECT 
-            page_url,
-            page_title,
+            url as page_url,
+            title as page_title,
             COUNT(*) as views,
             COUNT(DISTINCT visitor_id) as unique_visitors,
-            AVG(duration) as avg_duration,
+            AVG(time_on_page) as avg_duration,
             AVG(scroll_depth) as avg_scroll_depth,
-            SUM(CASE WHEN duration < 5 THEN 1 ELSE 0 END) as quick_exits,
-            ROUND(SUM(CASE WHEN duration < 5 THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 2) as bounce_rate
+            SUM(CASE WHEN time_on_page < 5 THEN 1 ELSE 0 END) as quick_exits,
+            ROUND(SUM(CASE WHEN time_on_page < 5 THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 2) as bounce_rate
         FROM web_page_views
-        WHERE DATE(viewed_at) BETWEEN ? AND ?
-        GROUP BY page_url, page_title
+        WHERE DATE(loaded_at) BETWEEN ? AND ?
+        GROUP BY url, title
         ORDER BY views DESC
         LIMIT ?
     ");
@@ -286,19 +287,19 @@ function getRealtimeData($pdo)
             COUNT(DISTINCT session_id) as active_sessions,
             COUNT(DISTINCT visitor_id) as active_visitors
         FROM web_page_views
-        WHERE viewed_at >= DATE_SUB(NOW(), INTERVAL 5 MINUTE)
+        WHERE loaded_at >= DATE_SUB(NOW(), INTERVAL 5 MINUTE)
     ");
     $active = $stmt->fetch(PDO::FETCH_ASSOC);
 
     // Recent page views (last 10)
     $stmt = $pdo->query("
         SELECT 
-            page_url,
-            page_title,
-            viewed_at,
-            duration
+            url as page_url,
+            title as page_title,
+            loaded_at as viewed_at,
+            time_on_page as duration
         FROM web_page_views
-        ORDER BY viewed_at DESC
+        ORDER BY loaded_at DESC
         LIMIT 10
     ");
     $recentViews = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -335,23 +336,24 @@ function getVisitors($pdo, $params)
     $stmt = $pdo->prepare("
         SELECT 
             s.visitor_id,
-            s.subscriber_id,
+            v.subscriber_id,
             sub.email,
             sub.first_name,
             sub.last_name,
             COUNT(DISTINCT s.id) as session_count,
-            SUM(s.page_views) as total_pageviews,
-            SUM(s.total_duration) as total_duration,
-            MAX(s.session_end) as last_visit,
+            SUM(s.page_count) as total_pageviews,
+            SUM(s.duration_seconds) as total_duration,
+            MAX(s.last_active_at) as last_visit,
             s.device_type,
             s.browser,
             s.os,
             s.country,
             s.city
         FROM web_sessions s
-        LEFT JOIN subscribers sub ON s.subscriber_id = sub.id
-        WHERE DATE(s.session_start) BETWEEN ? AND ?
-        GROUP BY s.visitor_id, s.subscriber_id, sub.email, sub.first_name, sub.last_name, 
+        LEFT JOIN web_visitors v ON s.visitor_id = v.visitor_id
+        LEFT JOIN subscribers sub ON v.subscriber_id = sub.id
+        WHERE DATE(s.started_at) BETWEEN ? AND ?
+        GROUP BY s.visitor_id, v.subscriber_id, sub.email, sub.first_name, sub.last_name, 
                  s.device_type, s.browser, s.os, s.country, s.city
         ORDER BY last_visit DESC
         LIMIT ?
@@ -388,14 +390,14 @@ function getGrowthData($pdo, $params)
     // Growth metrics
     $stmt = $pdo->prepare("
         SELECT 
-            DATE_FORMAT(viewed_at, ?) as period,
+            DATE_FORMAT(loaded_at, ?) as period,
             COUNT(DISTINCT session_id) as sessions,
             COUNT(DISTINCT visitor_id) as visitors,
             COUNT(*) as pageviews,
-            AVG(duration) as avg_duration,
+            AVG(time_on_page) as avg_duration,
             AVG(scroll_depth) as avg_scroll_depth
         FROM web_page_views
-        WHERE DATE(viewed_at) BETWEEN ? AND ?
+        WHERE DATE(loaded_at) BETWEEN ? AND ?
         GROUP BY period
         ORDER BY period ASC
     ");

@@ -6,7 +6,7 @@ require_once 'db_connect.php';
 require_once __DIR__ . '/worker_guard.php';
 
 try {
-    $pdo = getDbConnection();
+    /** @var PDO $pdo */
     echo "[" . date('Y-m-d H:i:s') . "] Starting web analytics aggregation...\n";
 
     // Aggregate data for yesterday (to avoid incomplete data for today)
@@ -16,9 +16,9 @@ try {
 
     // Get all unique pages for the target date
     $stmt = $pdo->prepare("
-        SELECT DISTINCT page_url 
+        SELECT DISTINCT url as page_url 
         FROM web_page_views 
-        WHERE DATE(viewed_at) = ?
+        WHERE DATE(loaded_at) = ?
     ");
     $stmt->execute([$targetDate]);
     $pages = $stmt->fetchAll(PDO::FETCH_COLUMN);
@@ -45,11 +45,11 @@ function aggregatePageData($pdo, $date, $pageUrl)
         SELECT 
             COUNT(*) as total_views,
             COUNT(DISTINCT visitor_id) as unique_visitors,
-            AVG(duration) as avg_duration,
+            AVG(time_on_page) as avg_duration,
             AVG(scroll_depth) as avg_scroll_depth,
-            SUM(CASE WHEN duration < 5 THEN 1 ELSE 0 END) as bounce_count
+            SUM(CASE WHEN time_on_page < 5 THEN 1 ELSE 0 END) as bounce_count
         FROM web_page_views
-        WHERE DATE(viewed_at) = ? AND page_url = ?
+        WHERE DATE(loaded_at) = ? AND url = ?
     ");
     $stmt->execute([$date, $pageUrl]);
     $metrics = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -113,7 +113,7 @@ function cleanupOldData($pdo)
     }
 
     // Clean up sessions
-    $stmt = $pdo->prepare("DELETE FROM web_sessions WHERE DATE(session_start) < ?");
+    $stmt = $pdo->prepare("DELETE FROM web_sessions WHERE DATE(started_at) < ?");
     $stmt->execute([$cutoffDate]);
     echo "  Deleted {$stmt->rowCount()} sessions\n";
 }

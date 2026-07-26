@@ -84,7 +84,7 @@ function processTrackingEvent($pdo, $type, $payload)
                             $stmtBuf = $pdo->prepare("
                                 SELECT 1 FROM activity_buffer
                                 WHERE subscriber_id = ? AND type = ? AND (reference_id = ? OR (reference_id IS NULL AND ? IS NULL))
-                                AND payload LIKE ?
+                                AND details LIKE ?
                                 LIMIT 1
                             ");
                             $stmtBuf->execute([$sid, $subType, $rid, $rid, $urlQuery]);

@@ -96,7 +96,7 @@ try {
 function handlePageView($pdo, $visitorId, $sessionId, $pageUrl, $pageTitle, $referrer, $utmParams, $deviceType, $browser, $os, $city, $country, $timestamp)
 {
     // Check if session exists
-    $stmt = $pdo->prepare("SELECT id, page_views FROM web_sessions WHERE id = ?");
+    $stmt = $pdo->prepare("SELECT id, page_count FROM web_sessions WHERE id = ?");
     $stmt->execute([$sessionId]);
     $session = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -151,7 +151,7 @@ function handlePageExit($pdo, $sessionId, $pageUrl, $duration, $scrollDepth, $ti
         UPDATE web_page_views 
         SET time_on_page = ?, scroll_depth = ?
         WHERE session_id = ? AND url = ?
-        ORDER BY viewed_at DESC
+        ORDER BY loaded_at DESC
         LIMIT 1
     ");
     $stmt->execute([$duration, $scrollDepth, $sessionId, $pageUrl]);

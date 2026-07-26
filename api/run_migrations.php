@@ -153,7 +153,7 @@ function safeRebuildPK($pdo, $table, $columnsArray, $execSql, $logMsg) {
     }
 }
 
-$targetVersion = 42;
+$targetVersion = 43;
 $currentVersion = 0;
 
 // Query current DB version
@@ -934,6 +934,34 @@ try {
         safeAddColumn($pdo, 'web_sessions', 'city', "VARCHAR(100) NULL AFTER country", $execSql, $logMsg);
         
         $currentVersion = 42;
+    }
+
+    // --------------------------------------------------
+    // Version 43: Add phone_count column to segments table
+    // --------------------------------------------------
+    if ($currentVersion < 43) {
+        $logMsg("Đang chạy cập nhật v43 (Thêm cột phone_count và tạo bảng web_analytics_summary)...", "info");
+        safeAddColumn($pdo, 'segments', 'phone_count', "INT(11) NULL DEFAULT 0 AFTER subscriber_count", $execSql, $logMsg);
+        
+        // Create web_analytics_summary
+        $execSql($pdo, "
+            CREATE TABLE IF NOT EXISTS `web_analytics_summary` (
+              `id` INT(11) NOT NULL AUTO_INCREMENT,
+              `date` DATE NOT NULL,
+              `page_url` VARCHAR(768) NOT NULL,
+              `total_views` INT(11) DEFAULT 0,
+              `unique_visitors` INT(11) DEFAULT 0,
+              `avg_duration` FLOAT DEFAULT 0,
+              `avg_scroll_depth` FLOAT DEFAULT 0,
+              `bounce_count` INT(11) DEFAULT 0,
+              `total_events` INT(11) DEFAULT 0,
+              PRIMARY KEY (`id`),
+              UNIQUE KEY `uq_date_page` (`date`, `page_url`(255))
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        ");
+        $logMsg("Đã tạo bảng web_analytics_summary", "success");
+
+        $currentVersion = 43;
     }
 
     // Update settings table with new db_version
