@@ -1,0 +1,163 @@
+<?php
+// api/export_core_db.php
+// Secure script to export a clean, pre-anonymized, lightweight SQL dump of the core database.
+// Excludes massive tracking log data (structure-only) to prevent 'MySQL server has gone away' timeout errors.
+
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+set_time_limit(300); // 5 minutes
+
+require_once 'db_connect.php';
+
+// 1. Strict Security Safeguard
+$token = $_GET['token'] ?? '';
+if ($token !== ADMIN_BYPASS_TOKEN && empty($GLOBALS['current_admin_id'])) {
+    http_response_code(403);
+    die(json_encode(['success' => false, 'error' => 'Unauthorized access.']));
+}
+
+// 2. Database Name configurations
+$sourceDb = 'vhvxoigh_mail_auto';
+$targetDb = 'vhvxoigh_auto_demo';
+
+// Tables to export STRUCTURE ONLY (No INSERT statement data to keep it small and avoid timeout)
+$structureOnlyTables = [
+    'web_page_views',
+    'web_events',
+    'web_sessions',
+    'web_heatmap_data',
+    'web_form_submissions',
+    'user_access_logs',
+    'subscriber_activity',
+    'activity_buffer',
+    'mail_delivery_logs',
+    'zalo_delivery_logs'
+];
+
+try {
+    // Fetch all tables in the database
+    $tablesQuery = $pdo->query("SHOW TABLES");
+    $tables = $tablesQuery->fetchAll(PDO::FETCH_COLUMN);
+
+    $sqlDump = "";
+    $sqlDump .= "-- DOMATION Clean Pre-Anonymized Database Dump\n";
+    $sqlDump .= "-- Target Database: {$targetDb}\n";
+    $sqlDump .= "-- Generated: " . date('Y-m-d H:i:s') . "\n\n";
+    $sqlDump .= "SET SQL_MODE = \"NO_AUTO_VALUE_ON_ZERO\";\n";
+    $sqlDump .= "START TRANSACTION;\n";
+    $sqlDump .= "SET time_zone = \"+00:00\";\n\n";
+
+    foreach ($tables as $table) {
+        // 1. Drop Table IF EXISTS
+        $sqlDump .= "DROP TABLE IF EXISTS `{$table}`;\n";
+
+        // 2. Get Create Table statement
+        $createTableQuery = $pdo->query("SHOW CREATE TABLE `{$table}`");
+        $createTableRow = $createTableQuery->fetch(PDO::FETCH_NUM);
+        $createSql = $createTableRow[1];
+
+        // Replace any auto_increment defaults to keep it clean if necessary
+        $sqlDump .= $createSql . ";\n\n";
+
+        // If it's a structure-only table, skip exporting rows
+        if (in_array($table, $structureOnlyTables)) {
+            $sqlDump .= "-- Table `{$table}` is log table: structure-only (truncated data for demo)\n\n";
+            continue;
+        }
+
+        // 3. Export Data rows with anonymization
+        $rowsQuery = $pdo->query("SELECT * FROM `{$table}`");
+        $rows = $rowsQuery->fetchAll(PDO::FETCH_ASSOC);
+
+        if (empty($rows)) {
+            continue;
+        }
+
+        $sqlDump .= "INSERT INTO `{$table}` (";
+        $columns = array_keys($rows[0]);
+        $sqlDump .= implode(", ", array_map(function($c) { return "`$c`"; }, $columns));
+        $sqlDump .= ") VALUES\n";
+
+        $valueStrings = [];
+        foreach ($rows as $row) {
+            $values = [];
+            foreach ($columns as $col) {
+                $val = $row[$col];
+
+                if ($val === null) {
+                    $values[] = "NULL";
+                } else {
+                    // Perform on-the-fly anonymization of sensitive columns
+                    if ($table === 'subscribers') {
+                        if ($col === 'email' && strpos($val, '@') !== false) {
+                            $parts = explode('@', $val);
+                            $val = substr($parts[0], 0, 2) . '***@' . $parts[1];
+                        }
+                        if ($col === 'phone_number' && strlen($val) >= 8) {
+                            $val = substr($val, 0, 3) . '***' . substr($val, -3);
+                        }
+                        if (($col === 'zalo_user_id' || $col === 'meta_psid') && !empty($val)) {
+                            $val = substr($val, 0, 4) . '***' . substr($val, -4);
+                        }
+                    }
+                    elseif ($table === 'web_visitors') {
+                        if ($col === 'email' && strpos($val, '@') !== false) {
+                            $parts = explode('@', $val);
+                            $val = substr($parts[0], 0, 2) . '***@' . $parts[1];
+                        }
+                        if ($col === 'phone' && strlen($val) >= 8) {
+                            $val = substr($val, 0, 3) . '***' . substr($val, -3);
+                        }
+                    }
+                    elseif ($table === 'users' || $table === 'ai_org_users') {
+                        // Skip main admin
+                        if ($row['role'] !== 'admin' && $row['username'] !== 'admin' && strpos($row['email'], 'admin') !== 0) {
+                            if ($col === 'email') {
+                                $val = 'demo_user_' . $row['id'] . '@domation.net';
+                            }
+                            if ($col === 'phone') {
+                                $val = '098***1234';
+                            }
+                        }
+                    }
+
+                    // Escape strings safely for SQL insertion
+                    $values[] = $pdo->quote($val);
+                }
+            }
+            $valueStrings[] = "(" . implode(", ", $values) . ")";
+        }
+
+        $sqlDump .= implode(",\n", $valueStrings) . ";\n\n";
+    }
+
+    // Include DELIMITER and routines
+    $sqlDump .= "-- Procedures\n";
+    $sqlDump .= "DROP PROCEDURE IF EXISTS `RenameFlowStatClickRate`;\n";
+    $sqlDump .= "DELIMITER $$\n";
+    $sqlDump .= "CREATE PROCEDURE `RenameFlowStatClickRate` () BEGIN\n";
+    $sqlDump .= "IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'flows' AND COLUMN_NAME = 'stat_click_rate') THEN\n";
+    $sqlDump .= "ALTER TABLE `flows` CHANGE COLUMN `stat_click_rate` `stat_total_clicked` INT DEFAULT 0;\n";
+    $sqlDump .= "END IF;\n";
+    $sqlDump .= "END$$\n";
+    $sqlDump .= "DELIMITER ;\n\n";
+
+    $sqlDump .= "COMMIT;\n";
+
+    // Write file to web server root
+    $fileName = 'domation_demo_clean.sql';
+    file_put_contents(__DIR__ . '/' . $fileName, $sqlDump);
+
+    echo json_encode([
+        'success' => true,
+        'message' => 'Clean database dump generated successfully!',
+        'file_name' => $fileName,
+        'download_url' => API_BASE_URL . '/' . $fileName,
+        'size_mb' => round(strlen($sqlDump) / 1024 / 1024, 2)
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+
+} catch (Throwable $e) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+}
+?>
