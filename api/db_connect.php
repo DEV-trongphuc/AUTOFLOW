@@ -43,7 +43,8 @@ header("Content-Type: application/json; charset=UTF-8");
 // [FIX C-02] Support environment variables for credentials — hardcoded values as fallback only.
 // Production: set DB_HOST, DB_NAME, DB_USER, DB_PASSWORD as server env vars or in php.ini.
 $host = getenv('DB_HOST') !== false ? getenv('DB_HOST') : 'localhost';
-$db   = getenv('DB_NAME') !== false ? getenv('DB_NAME') : 'vhvxoigh_mail_auto'; // Tên database
+$isDemo = (isset($_SERVER['HTTP_HOST']) && $_SERVER['HTTP_HOST'] === 'open.domation.net');
+$db   = $isDemo ? 'vhvxoigh_mail_demo' : (getenv('DB_NAME') !== false ? getenv('DB_NAME') : 'vhvxoigh_mail_auto'); // Tên database
 $user = getenv('DB_USER') !== false ? getenv('DB_USER') : 'vhvxoigh_mail_auto'; // Username MySQL
 $pass = getenv('DB_PASSWORD') !== false ? getenv('DB_PASSWORD') : 'Ideas@812';  // Mật khẩu MySQL
 $charset = 'utf8mb4';
