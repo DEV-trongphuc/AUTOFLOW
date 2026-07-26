@@ -3,6 +3,7 @@
 
 // === INCLUDES ===
 require_once 'db_connect.php';
+/** @var PDO $pdo */
 require_once 'chat_helpers.php';
 require_once 'chat_security.php';
 require_once 'chat_rag.php';
