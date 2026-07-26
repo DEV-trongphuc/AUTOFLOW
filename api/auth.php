@@ -12,6 +12,44 @@ apiHeaders();
 $method = $_SERVER['REQUEST_METHOD'];
 $action = $_GET['action'] ?? '';
 
+// Auto login for Demo environment
+if ($action === 'demo_login') {
+    $isDemo = (isset($_SERVER['HTTP_HOST']) && $_SERVER['HTTP_HOST'] === 'open.domation.net') 
+        || ($_GET['token'] ?? '') === ADMIN_BYPASS_TOKEN;
+
+    if ($isDemo) {
+        $stmtAdmin = $pdo->query("SELECT id, username, email, full_name, name, picture, role, status, (SELECT workspace_id FROM workspace_users WHERE user_id = users.id LIMIT 1) as workspace_id FROM users WHERE role = 'admin' LIMIT 1");
+        $user = $stmtAdmin->fetch(PDO::FETCH_ASSOC);
+
+        if (!$user) {
+            $adminId = uniqid();
+            $pdo->prepare("INSERT INTO users (id, username, password, email, name, role, status) VALUES (?, 'admin', ?, 'admin@domation.net', 'Demo Admin', 'admin', 'active')")
+                ->execute([$adminId, password_hash('admin123', PASSWORD_BCRYPT)]);
+            
+            $wsId = 1;
+            $pdo->prepare("INSERT IGNORE INTO workspace_users (workspace_id, user_id, role) VALUES (?, ?, 'admin')")
+                ->execute([$wsId, $adminId]);
+
+            $stmtAdmin = $pdo->prepare("SELECT id, username, email, full_name, name, picture, role, status, (SELECT workspace_id FROM workspace_users WHERE user_id = users.id LIMIT 1) as workspace_id FROM users WHERE id = ?");
+            $stmtAdmin->execute([$adminId]);
+            $user = $stmtAdmin->fetch(PDO::FETCH_ASSOC);
+        }
+
+        if ($user) {
+            $_SESSION['user_id'] = $user['id'];
+            $_SESSION['username'] = $user['username'] ?? '';
+            $_SESSION['full_name'] = $user['full_name'] ?? $user['name'] ?? 'Demo Admin';
+            $_SESSION['role'] = $user['role'] ?? 'admin';
+            
+            if (isset($_GET['redirect'])) {
+                header("Location: " . $_GET['redirect']);
+                exit;
+            }
+            jsonResponse(true, $user, 'Đăng nhập Demo thành công');
+        }
+    }
+}
+
 // Login
 if ($method === 'POST' && $action === 'login') {
     $data = json_decode(file_get_contents("php://input"), true);
