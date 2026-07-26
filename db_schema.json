@@ -5927,6 +5927,14 @@
                 "extra": ""
             },
             {
+                "field": "phone_count",
+                "type": "int(11)",
+                "null": "YES",
+                "key": "",
+                "default": "0",
+                "extra": ""
+            },
+            {
                 "field": "auto_cleanup_days",
                 "type": "int(11)",
                 "null": "YES",
@@ -8657,6 +8665,138 @@
                 "extra": ""
             }
         ],
+        "web_form_submissions": [
+            {
+                "field": "id",
+                "type": "int(11)",
+                "null": "NO",
+                "key": "PRI",
+                "default": null,
+                "extra": "auto_increment"
+            },
+            {
+                "field": "session_id",
+                "type": "varchar(36)",
+                "null": "NO",
+                "key": "MUL",
+                "default": null,
+                "extra": ""
+            },
+            {
+                "field": "visitor_id",
+                "type": "varchar(36)",
+                "null": "NO",
+                "key": "MUL",
+                "default": null,
+                "extra": ""
+            },
+            {
+                "field": "subscriber_id",
+                "type": "varchar(36)",
+                "null": "NO",
+                "key": "MUL",
+                "default": null,
+                "extra": ""
+            },
+            {
+                "field": "form_url",
+                "type": "varchar(768)",
+                "null": "NO",
+                "key": "",
+                "default": null,
+                "extra": ""
+            },
+            {
+                "field": "form_data",
+                "type": "longtext",
+                "null": "NO",
+                "key": "",
+                "default": null,
+                "extra": ""
+            },
+            {
+                "field": "points_awarded",
+                "type": "int(11)",
+                "null": "YES",
+                "key": "",
+                "default": "10",
+                "extra": ""
+            },
+            {
+                "field": "submitted_at",
+                "type": "timestamp",
+                "null": "NO",
+                "key": "",
+                "default": "current_timestamp()",
+                "extra": ""
+            }
+        ],
+        "web_heatmap_data": [
+            {
+                "field": "id",
+                "type": "int(11)",
+                "null": "NO",
+                "key": "PRI",
+                "default": null,
+                "extra": "auto_increment"
+            },
+            {
+                "field": "page_url",
+                "type": "varchar(768)",
+                "null": "NO",
+                "key": "MUL",
+                "default": null,
+                "extra": ""
+            },
+            {
+                "field": "x_position",
+                "type": "int(11)",
+                "null": "NO",
+                "key": "",
+                "default": null,
+                "extra": ""
+            },
+            {
+                "field": "y_position",
+                "type": "int(11)",
+                "null": "NO",
+                "key": "",
+                "default": null,
+                "extra": ""
+            },
+            {
+                "field": "viewport_width",
+                "type": "int(11)",
+                "null": "NO",
+                "key": "",
+                "default": null,
+                "extra": ""
+            },
+            {
+                "field": "viewport_height",
+                "type": "int(11)",
+                "null": "NO",
+                "key": "",
+                "default": null,
+                "extra": ""
+            },
+            {
+                "field": "element_text",
+                "type": "varchar(255)",
+                "null": "YES",
+                "key": "",
+                "default": null,
+                "extra": ""
+            },
+            {
+                "field": "clicked_at",
+                "type": "timestamp",
+                "null": "NO",
+                "key": "",
+                "default": "current_timestamp()",
+                "extra": ""
+            }
+        ],
         "web_page_views": [
             {
                 "field": "id",
@@ -9007,12 +9147,102 @@
                 "extra": ""
             },
             {
+                "field": "country",
+                "type": "varchar(100)",
+                "null": "YES",
+                "key": "",
+                "default": null,
+                "extra": ""
+            },
+            {
+                "field": "city",
+                "type": "varchar(100)",
+                "null": "YES",
+                "key": "",
+                "default": null,
+                "extra": ""
+            },
+            {
                 "field": "created_at",
                 "type": "timestamp",
                 "null": "NO",
                 "key": "",
                 "default": "current_timestamp()",
                 "extra": ""
+            }
+        ],
+        "web_tracking_sites": [
+            {
+                "field": "id",
+                "type": "varchar(50)",
+                "null": "NO",
+                "key": "PRI",
+                "default": null,
+                "extra": ""
+            },
+            {
+                "field": "workspace_id",
+                "type": "int(11)",
+                "null": "NO",
+                "key": "MUL",
+                "default": null,
+                "extra": ""
+            },
+            {
+                "field": "name",
+                "type": "varchar(255)",
+                "null": "NO",
+                "key": "",
+                "default": null,
+                "extra": ""
+            },
+            {
+                "field": "domain",
+                "type": "varchar(255)",
+                "null": "NO",
+                "key": "",
+                "default": null,
+                "extra": ""
+            },
+            {
+                "field": "tracking_code",
+                "type": "varchar(50)",
+                "null": "NO",
+                "key": "UNI",
+                "default": null,
+                "extra": ""
+            },
+            {
+                "field": "description",
+                "type": "text",
+                "null": "YES",
+                "key": "",
+                "default": null,
+                "extra": ""
+            },
+            {
+                "field": "status",
+                "type": "enum('active','inactive')",
+                "null": "YES",
+                "key": "",
+                "default": "active",
+                "extra": ""
+            },
+            {
+                "field": "created_at",
+                "type": "timestamp",
+                "null": "NO",
+                "key": "",
+                "default": "current_timestamp()",
+                "extra": ""
+            },
+            {
+                "field": "updated_at",
+                "type": "timestamp",
+                "null": "NO",
+                "key": "",
+                "default": "current_timestamp()",
+                "extra": "on update current_timestamp()"
             }
         ],
         "web_visitors": [
@@ -9772,6 +10002,14 @@
                 "null": "NO",
                 "key": "MUL",
                 "default": null,
+                "extra": ""
+            },
+            {
+                "field": "workspace_id",
+                "type": "int(11)",
+                "null": "YES",
+                "key": "MUL",
+                "default": "1",
                 "extra": ""
             },
             {
@@ -10551,4 +10789,3 @@
         ]
     }
 }
-

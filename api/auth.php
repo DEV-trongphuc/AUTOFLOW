@@ -1,6 +1,7 @@
 <?php
 // api/auth.php
 require_once 'db_connect.php';
+/** @var PDO $pdo */
 require_once 'auth_middleware.php';
 
 // [FIX H-06] Guard against double session_start() — db_connect.php already starts session.
