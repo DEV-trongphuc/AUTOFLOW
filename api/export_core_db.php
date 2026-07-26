@@ -36,7 +36,7 @@ $structureOnlyTables = [
 
 try {
     // Open target file stream
-    $fileName = 'domation_demo_clean.sql';
+    $fileName = 'domation_demo_clean.txt';
     $filePath = __DIR__ . '/' . $fileName;
     $fOut = fopen($filePath, 'w');
     if (!$fOut) {
