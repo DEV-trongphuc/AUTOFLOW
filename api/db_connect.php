@@ -114,13 +114,15 @@ function isDatabaseSkipLockedSupported($pdo) {
  * [PERF] APCu Cache Helper with automatic fallback
  */
 function apcu_fetch_or_callback($key, $callback, $ttl = 300) {
-    if (is_callable('apcu_fetch') && is_callable('apcu_store')) {
+    if (function_exists('apcu_fetch') && function_exists('apcu_store')) {
         $success = false;
-        $data = apcu_fetch($key, $success);
+        $apcuFetch = 'apcu_fetch';
+        $apcuStore = 'apcu_store';
+        $data = $apcuFetch($key, $success);
         if ($success) return $data;
 
         $data = $callback();
-        @apcu_store($key, $data, $ttl); 
+        @$apcuStore($key, $data, $ttl); 
         return $data;
     }
     return $callback();
