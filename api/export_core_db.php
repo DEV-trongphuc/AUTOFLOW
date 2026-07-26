@@ -102,7 +102,7 @@ try {
                     if ($table === 'subscribers') {
                         if ($col === 'email' && strpos($val, '@') !== false) {
                             $parts = explode('@', $val);
-                            $val = substr($parts[0], 0, 2) . '***_' . substr($row['id'], 0, 6) . '@' . $parts[1];
+                            $val = substr($parts[0], 0, 2) . '***_' . substr(md5($row['id']), 0, 6) . '@' . $parts[1];
                         }
                         if ($col === 'phone_number' && strlen($val) >= 8) {
                             $val = substr($val, 0, 3) . '***' . substr($val, -3);
@@ -114,7 +114,7 @@ try {
                     elseif ($table === 'web_visitors') {
                         if ($col === 'email' && strpos($val, '@') !== false) {
                             $parts = explode('@', $val);
-                            $val = substr($parts[0], 0, 2) . '***_' . substr($row['visitor_id'] ?? uniqid(), 0, 6) . '@' . $parts[1];
+                            $val = substr($parts[0], 0, 2) . '***_' . substr(md5($row['visitor_id'] ?? $row['id'] ?? uniqid()), 0, 6) . '@' . $parts[1];
                         }
                         if ($col === 'phone' && strlen($val) >= 8) {
                             $val = substr($val, 0, 3) . '***' . substr($val, -3);
