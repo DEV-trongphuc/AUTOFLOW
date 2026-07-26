@@ -84,13 +84,13 @@ function getOverview($pdo, $params)
     // Daily trend
     $stmt = $pdo->prepare("
         SELECT 
-            DATE(viewed_at) as date,
+            DATE(loaded_at) as date,
             COUNT(DISTINCT session_id) as sessions,
             COUNT(DISTINCT visitor_id) as visitors,
             COUNT(*) as pageviews
         FROM web_page_views
-        WHERE DATE(viewed_at) BETWEEN ? AND ?
-        GROUP BY DATE(viewed_at)
+        WHERE DATE(loaded_at) BETWEEN ? AND ?
+        GROUP BY DATE(loaded_at)
         ORDER BY date ASC
     ");
     $stmt->execute([$dateFrom, $dateTo]);
@@ -191,30 +191,31 @@ function getEvents($pdo, $params)
 
     $sql = "
         SELECT 
-            event_type,
-            event_name,
-            page_url,
-            element_text,
-            target_url,
+            e.event_type,
+            e.target_text as event_name,
+            pv.url as page_url,
+            e.target_text as element_text,
+            e.target_selector as target_url,
             COUNT(*) as count,
-            COUNT(DISTINCT visitor_id) as unique_users
-        FROM web_events
-        WHERE DATE(occurred_at) BETWEEN ? AND ?
+            COUNT(DISTINCT e.visitor_id) as unique_users
+        FROM web_events e
+        LEFT JOIN web_page_views pv ON e.session_id = pv.session_id
+        WHERE DATE(e.created_at) BETWEEN ? AND ?
     ";
 
     $bindings = [$dateFrom, $dateTo];
 
     if ($eventType) {
-        $sql .= " AND event_type = ?";
+        $sql .= " AND e.event_type = ?";
         $bindings[] = $eventType;
     }
 
     if ($pageUrl) {
-        $sql .= " AND page_url = ?";
+        $sql .= " AND pv.url = ?";
         $bindings[] = $pageUrl;
     }
 
-    $sql .= " GROUP BY event_type, event_name, page_url, element_text, target_url
+    $sql .= " GROUP BY e.event_type, e.target_text, pv.url, e.target_selector
               ORDER BY count DESC
               LIMIT ?";
 
@@ -307,13 +308,14 @@ function getRealtimeData($pdo)
     // Recent events (last 10)
     $stmt = $pdo->query("
         SELECT 
-            event_type,
-            event_name,
-            page_url,
-            element_text,
-            occurred_at
-        FROM web_events
-        ORDER BY occurred_at DESC
+            e.event_type,
+            e.target_text as event_name,
+            pv.url as page_url,
+            e.target_text as element_text,
+            e.created_at as occurred_at
+        FROM web_events e
+        LEFT JOIN web_page_views pv ON e.session_id = pv.session_id
+        ORDER BY e.created_at DESC
         LIMIT 10
     ");
     $recentEvents = $stmt->fetchAll(PDO::FETCH_ASSOC);

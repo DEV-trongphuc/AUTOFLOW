@@ -54,11 +54,11 @@ function aggregatePageData($pdo, $date, $pageUrl)
     $stmt->execute([$date, $pageUrl]);
     $metrics = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    // Count total events for this page
     $stmt = $pdo->prepare("
         SELECT COUNT(*) as total_events
-        FROM web_events
-        WHERE DATE(occurred_at) = ? AND page_url = ?
+        FROM web_events e
+        LEFT JOIN web_page_views pv ON e.session_id = pv.session_id
+        WHERE DATE(e.created_at) = ? AND pv.url = ?
     ");
     $stmt->execute([$date, $pageUrl]);
     $eventCount = $stmt->fetch(PDO::FETCH_ASSOC);

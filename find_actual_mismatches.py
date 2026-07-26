@@ -83,7 +83,11 @@ def main():
         'hour', 'minute', 'second', 'isnull', 'values', 'ignore', 'as', 'on', 'where', 'and', 'or', 'not', 'in',
         'like', 'is', 'null', 'true', 'false', 'join', 'left', 'right', 'inner', 'outer', 'select', 'insert',
         'update', 'delete', 'from', 'into', 'set', 'order', 'by', 'group', 'limit', 'having', 'offset', 'desc', 'asc',
-        'case', 'when', 'then', 'else', 'end', 'char_length', 'coalesce', 'nullif', 'lpad', 'rpad', 'substring'
+        'case', 'when', 'then', 'else', 'end', 'char_length', 'coalesce', 'nullif', 'lpad', 'rpad', 'substring',
+        'json_merge_patch', 'json_set', 'json_search', 'json_quote', 'json_remove', 'json_object',
+        'greatest', 'least', 'substring_index', 'timestampdiff', 'row_number', 'partition', 'over', 'dual', 'cast',
+        'regexp_replace', 'concat_ws', 'for', 'over', 'lead', 'lag', 'u', 's', 'c', 't', 'm', 'f', 'o', 'd',
+        'duplicate', 'key'
     }
     
     php_files = scan_directory('api')
@@ -113,6 +117,10 @@ def main():
                 
                 # Normalize query
                 sql_clean = re.sub(r'\s+', ' ', trimmed)
+                
+                # Strip SQL comments: e.g. -- [FIX ...] or /* ... */
+                sql_clean = re.sub(r'--.*$', '', sql_clean)
+                sql_clean = re.sub(r'/\*.*?\*/', '', sql_clean)
                 
                 # Strip string literals
                 sql_clean_no_quotes = re.sub(r"'[^']*'", " ", sql_clean)
