@@ -167,7 +167,7 @@ if ($method === 'GET' && $action === 'check') {
     if (isset($_SESSION['user_id'])) {
         try {
             // Lấy dữ liệu mới nhất từ DB để đảm bảo Avatar/Role luôn đúng
-            $stmt = $pdo->prepare("SELECT id, email, name, picture, role, status, (SELECT workspace_id FROM workspace_users WHERE user_id = users.id LIMIT 1) as workspace_id FROM users WHERE id = ?");
+            $stmt = $pdo->prepare("SELECT id, email, name, picture, role, status, (SELECT workspace_id FROM workspace_users WHERE BINARY user_id = BINARY users.id LIMIT 1) as workspace_id FROM users WHERE id = ?");
             $stmt->execute([$_SESSION['user_id']]);
             $user = $stmt->fetch();
 
