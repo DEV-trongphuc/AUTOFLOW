@@ -18,7 +18,8 @@ CREATE TABLE IF NOT EXISTS users (
 INSERT INTO users (email, name, role, status) 
 VALUES 
 ('dom.marketing.vn@gmail.com', 'Admin Dom', 'admin', 'approved'),
-('marketing@ideas.edu.vn', 'Admin Marketing', 'admin', 'approved')
+('marketing@ideas.edu.vn', 'Admin Marketing', 'admin', 'approved'),
+('ledaovuphuong@gmail.com', 'Admin Phuong', 'admin', 'approved')
 ON DUPLICATE KEY UPDATE role='admin', status='approved';
 
 -- Audit Logs Table

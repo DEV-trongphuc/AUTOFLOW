@@ -668,7 +668,7 @@ function getGlobalLeadScoreConfig($pdo, $workspace_id = null) {
 
 // ─── AUTO MIGRATION VERSION CHECK ──────────────────────────────────────────
 $db_needs_migration = false;
-$targetDbVersion = 36;
+$targetDbVersion = 44;
 
 if (!isset($isHighTrafficEndpoint) || !$isHighTrafficEndpoint) {
     try {

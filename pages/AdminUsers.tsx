@@ -11,6 +11,11 @@ import { useIsAdmin } from '../hooks/useAuthUser';
 import { Lock } from 'lucide-react';
 import { api } from '../services/storageAdapter';
 
+const ROOT_ADMIN_EMAILS = [
+    'dom.marketing.vn@gmail.com',
+    'marketing@ideas.edu.vn',
+    'ledaovuphuong@gmail.com'
+];
 
 interface WorkspaceMembership {
     workspace_name: string;
@@ -71,7 +76,7 @@ const AdminUsers: React.FC = () => {
     }, []);
 
     const handleToggleRole = async (email: string, currentRole: string, id: any) => {
-        if (email === 'dom.marketing.vn@gmail.com') return toast.error('Cannot change root admin role');
+        if (ROOT_ADMIN_EMAILS.includes(email)) return toast.error('Cannot change root admin role');
 
         const executeToggle = async () => {
             setConfirmModal(prev => ({ ...prev, isOpen: false }));
@@ -119,7 +124,7 @@ const AdminUsers: React.FC = () => {
     };
 
     const handleToggleStatus = async (email: string, currentStatus: string, id: any) => {
-        if (email === 'dom.marketing.vn@gmail.com') return toast.error('Cannot disable root admin');
+        if (ROOT_ADMIN_EMAILS.includes(email)) return toast.error('Cannot disable root admin');
 
         setIsLoading(true);
         try {
@@ -140,7 +145,7 @@ const AdminUsers: React.FC = () => {
     };
 
     const handleDelete = async (email: string, id: any) => {
-        if (email === 'dom.marketing.vn@gmail.com') return toast.error('Cannot delete root admin');
+        if (ROOT_ADMIN_EMAILS.includes(email)) return toast.error('Cannot delete root admin');
 
         setConfirmModal({
             isOpen: true,

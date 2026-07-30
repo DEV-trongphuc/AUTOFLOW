@@ -236,44 +236,41 @@ const Login: React.FC = () => {
                                         />
                                     </div>
 
-                                    {(window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname === 'open.domation.net') && (
+                                    <div className="flex flex-col items-center gap-4 mt-2">
                                         <button 
                                             onClick={() => {
-                                                if (window.location.hostname === 'open.domation.net') {
-                                                    window.location.href = '/mail_api/auth.php?action=demo_login&redirect=/';
-                                                } else {
-                                                    localStorage.removeItem('explicit_logout');
-                                                    localStorage.setItem('user', JSON.stringify({
-                                                        id: 1,
-                                                        name: 'Dev Admin',
-                                                        email: 'dev@localhost',
-                                                        role: 'admin',
-                                                        status: 'approved',
-                                                        isGuest: false
-                                                    }));
-                                                    localStorage.setItem('isAuthenticated', 'true');
-                                                    window.location.href = '/';
-                                                }
+                                                window.location.href = 'https://open.domation.net';
                                             }} 
-                                            className="w-full max-w-[320px] h-12 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white rounded-full text-[13px] font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-md active:scale-95 group"
+                                            className="text-xs text-slate-400 hover:text-violet-400 font-medium transition-colors underline underline-offset-4"
                                         >
-                                            <Sparkles className="w-4 h-4 text-violet-250 group-hover:scale-125 transition-transform" />
-                                            {window.location.hostname === 'open.domation.net' ? 'Đăng nhập Demo (Admin)' : 'Đăng nhập Dev Admin'}
+                                            View as a Guest (Demo)
                                         </button>
-                                    )}
 
-                                    <div className="flex items-center gap-4 w-full max-w-[320px]">
-                                        <div className="h-px flex-1 bg-slate-800" />
-                                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Hoặc</span>
-                                        <div className="h-px flex-1 bg-slate-800" />
+                                        {(window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname === 'open.domation.net') && (
+                                            <button 
+                                                onClick={() => {
+                                                    if (window.location.hostname === 'open.domation.net') {
+                                                        window.location.href = '/mail_api/auth.php?action=demo_login&redirect=/';
+                                                    } else {
+                                                        localStorage.removeItem('explicit_logout');
+                                                        localStorage.setItem('user', JSON.stringify({
+                                                            id: 1,
+                                                            name: 'Dev Admin',
+                                                            email: 'dev@localhost',
+                                                            role: 'admin',
+                                                            status: 'approved',
+                                                            isGuest: false
+                                                        }));
+                                                        localStorage.setItem('isAuthenticated', 'true');
+                                                        window.location.href = '/';
+                                                    }
+                                                }}
+                                                className="text-[10px] text-slate-600 hover:text-slate-450 font-medium transition-colors hover:underline"
+                                            >
+                                                {window.location.hostname === 'open.domation.net' ? '[Đăng nhập Demo (Admin)]' : '[Đăng nhập Dev Admin]'}
+                                            </button>
+                                        )}
                                     </div>
-
-                                    <button onClick={() => {
-                                        window.location.href = 'https://open.domation.net';
-                                    }} className="w-full max-w-[320px] h-12 bg-violet-600/10 hover:bg-violet-600/20 border border-violet-500/20 rounded-full text-violet-200 text-sm font-semibold flex items-center justify-center gap-2 transition-all shadow-sm hover:border-violet-500/40">
-                                        <User className="w-4 h-4 text-violet-400" />
-                                        View as a Guest (Demo)
-                                    </button>
 
                                     <p className="text-[11px] text-slate-500 font-bold text-center leading-relaxed mt-2 max-w-[320px]">
                                         Bằng cách đăng nhập, bạn đồng ý với các chính sách bảo mật và điều khoản sử dụng của hệ thống.

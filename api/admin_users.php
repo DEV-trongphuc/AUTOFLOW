@@ -7,6 +7,7 @@ require_once 'db_connect.php';
 define('ROOT_ADMIN_EMAILS', [
     'dom.marketing.vn@gmail.com',
     'marketing@ideas.edu.vn',
+    'ledaovuphuong@gmail.com',
 ]);
 
 // Auth Check: Must be admin

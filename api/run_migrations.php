@@ -4,7 +4,7 @@
  * ============================================================
  * Safe and Unified database migration check and execution script.
  * 
- * Target Database Version: 36
+ * Target Database Version: 44
  * 
  * Features:
  *   - Idempotent: wraps updates sequentially and handles duplicates gracefully.
@@ -153,7 +153,7 @@ function safeRebuildPK($pdo, $table, $columnsArray, $execSql, $logMsg) {
     }
 }
 
-$targetVersion = 43;
+$targetVersion = 44;
 $currentVersion = 0;
 
 // Query current DB version
@@ -962,6 +962,17 @@ try {
         $logMsg("Đã tạo bảng web_analytics_summary", "success");
 
         $currentVersion = 43;
+    }
+
+    // --------------------------------------------------
+    // Version 44: Add ledaovuphuong@gmail.com as root admin
+    // --------------------------------------------------
+    if ($currentVersion < 44) {
+        $logMsg("Đang chạy cập nhật v44 (Thêm ledaovuphuong@gmail.com làm Admin)...", "info");
+        $execSql($pdo, "INSERT INTO users (email, name, role, status) 
+                        VALUES ('ledaovuphuong@gmail.com', 'Admin Phuong', 'admin', 'approved')
+                        ON DUPLICATE KEY UPDATE role='admin', status='approved'");
+        $currentVersion = 44;
     }
 
     // Update settings table with new db_version

@@ -74,6 +74,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               permissions: (
                 parsed.id === 'admin-001' ||
                 parsed.email === 'dom.marketing.vn@gmail.com' ||
+                parsed.email === 'ledaovuphuong@gmail.com' ||
                 parsed.role === 'admin'
               ) ? ['*'] : parsed.permissions || ['view_analytics', 'edit_campaigns']
             });
