@@ -121,8 +121,7 @@ const SurveyCover: React.FC<{
                 
                 <div className="w-full relative z-10">
                     {theme.coverBadge && (
-                        <span className="inline-block px-3 py-1 mb-4 rounded-full text-[10px] font-black tracking-widest text-white shadow-lg uppercase border border-white/20 relative" style={{ background: 'linear-gradient(90deg, #f59e0b, #ea580c)' }}>
-                            <span className="absolute inset-0 rounded-full animate-ping opacity-20 bg-amber-500" />
+                        <span className="inline-block px-3 py-1 mb-4 rounded-full text-[10px] font-black tracking-widest text-white shadow-none uppercase border border-white/20 relative" style={{ background: 'linear-gradient(90deg, #f59e0b, #ea580c)' }}>
                             {theme.coverBadge}
                         </span>
                     )}

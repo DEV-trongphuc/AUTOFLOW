@@ -443,8 +443,8 @@ const PublicSurvey: React.FC = () => {
                         className="mt-8 flex items-center justify-center gap-3"
                     >
                         <div className="relative w-8 h-8 shrink-0">
-                            <div className="absolute inset-0 bg-amber-400 blur-lg opacity-30 rounded-full"></div>
-                            <div className="relative w-full h-full flex items-center justify-center overflow-hidden rounded-full border border-white/80 shadow-md shadow-amber-600/20">
+                            <div className="absolute inset-0 bg-[#fbbf24] blur-lg opacity-30 rounded-full"></div>
+                            <div className="relative w-full h-full flex items-center justify-center overflow-hidden rounded-full border border-white/80 shadow-md" style={{ boxShadow: '0 4px 6px -1px rgba(245, 158, 11, 0.25), 0 2px 4px -2px rgba(245, 158, 11, 0.2)' }}>
                                 <img src="/imgs/ICON.png" className="w-full h-full object-contain" alt="Logo" />
                             </div>
                         </div>
@@ -552,8 +552,8 @@ const PublicSurvey: React.FC = () => {
                 {/* Footer */}
                 <div className="flex items-center justify-center gap-3 mt-8 pb-8">
                     <div className="relative w-7 h-7 shrink-0">
-                        <div className="absolute inset-0 bg-amber-400 blur-lg opacity-30 rounded-full"></div>
-                        <div className="relative w-full h-full flex items-center justify-center overflow-hidden rounded-full border border-white/80 shadow-md shadow-amber-600/20">
+                        <div className="absolute inset-0 bg-[#fbbf24] blur-lg opacity-30 rounded-full"></div>
+                        <div className="relative w-full h-full flex items-center justify-center overflow-hidden rounded-full border border-white/80 shadow-md" style={{ boxShadow: '0 4px 6px -1px rgba(245, 158, 11, 0.25), 0 2px 4px -2px rgba(245, 158, 11, 0.2)' }}>
                             <img src="/imgs/ICON.png" className="w-full h-full object-contain" alt="Logo" />
                         </div>
                     </div>
@@ -649,8 +649,7 @@ const SurveyCoverPublic: React.FC<{ survey: Survey }> = ({ survey }) => {
 
                 <div className="w-full relative z-10">
                     {theme.coverBadge && (
-                        <span className="inline-block px-3 py-1 mb-4 rounded-full text-[10px] font-black tracking-widest text-white shadow-lg uppercase border border-white/20 relative" style={{ background: 'linear-gradient(90deg, #f59e0b, #ea580c)' }}>
-                            <span className="absolute inset-0 rounded-full animate-ping opacity-20 bg-amber-500" />
+                        <span className="inline-block px-3 py-1 mb-4 rounded-full text-[10px] font-black tracking-widest text-white shadow-none uppercase border border-white/20 relative" style={{ background: 'linear-gradient(90deg, #f59e0b, #ea580c)' }}>
                             {theme.coverBadge}
                         </span>
                     )}
