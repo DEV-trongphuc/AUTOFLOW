@@ -1,0 +1,687 @@
+Analyzed 229 PHP files for actual mismatches.
+Found 97 potential errors.
+
+[COLUMN MISMATCH] Column 'admin_logs' not found in table 'admin_logs'!
+   File: api\admin_stats.php:77
+   SQL:  SELECT COUNT(*) FROM admin_logs l $where
+
+[COLUMN MISMATCH] Column 'ai_chatbots' not found in table 'ai_chatbots'!
+   File: api\admin_stats.php:465
+   SQL:  SELECT COUNT(*) FROM ai_chatbots b $where
+
+[TABLE MISMATCH] Table 'value' not found in database schema!
+   File: api\ai_chatbot.php:1229
+   SQL:  INSERT INTO system_settings (`workspace_id`, `key`, value, updated_at) VALUES (0, ?, ?, NOW()) ON DUPLICATE KEY UPDATE value = ?, updated_at = NOW()
+
+[TABLE MISMATCH] Table 'value' not found in database schema!
+   File: api\ai_chatbot.php:1951
+   SQL:  INSERT INTO system_settings (`workspace_id`, `key`, value) VALUES (0, ?, ?) ON DUPLICATE KEY UPDATE value = ?, updated_at = NOW()
+
+[TABLE MISMATCH] Table 'bot_name' not found in database schema!
+   File: api\ai_chatbots.php:262
+   SQL:  INSERT INTO ai_chatbot_settings (property_id, bot_name, brand_color, gemini_api_key,
+bot_avatar)
+VALUES (?, ?, ?, ?, ?)
+ON DUPLICATE KEY UPDATE
+bot_name = VALUES(bot_name),
+brand_color = VALUES(brand_color),
+gemini_api_key = VALUES(gemini_api_key),
+bot_avatar = VALUES(bot_avatar)
+
+[TABLE MISMATCH] Table 'is_deleted' not found in database schema!
+   File: api\ai_org_chatbot.php:817
+   SQL:  INSERT INTO global_assets (name, unique_name, url, type, extension, size,
+        source, property_id, conversation_id, admin_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE 
+            is_deleted = 0, 
+            name = VALUES(name), 
+            type = VALUES(type), 
+            extension = VALUES(extension), 
+            size = IF(VALUES(size) > 0, VALUES(size), size), 
+            source = VALUES(source), 
+            property_id = VALUES(property_id), 
+            conversation_id = VALUES(conversation_id), 
+            admin_id = COALESCE(admin_id, VALUES(admin_id))
+
+[TABLE MISMATCH] Table 'is_deleted' not found in database schema!
+   File: api\ai_org_chatbot.php:1089
+   SQL:  INSERT INTO global_assets (name, unique_name, url, type, extension, size, source, property_id, conversation_id, admin_id) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON DUPLICATE KEY UPDATE 
+                    is_deleted = 0, source = VALUES(source), 
+                    size = IF(VALUES(size) > 0, VALUES(size), size),
+                    property_id = VALUES(property_id), 
+                    conversation_id = VALUES(conversation_id), admin_id = COALESCE(admin_id, VALUES(admin_id))
+
+[TABLE MISMATCH] Table 'settings_value' not found in database schema!
+   File: api\ai_scenarios.php:109
+   SQL:  INSERT INTO ai_chatbot_meta_settings (property_id, settings_key, settings_value)
+            VALUES (?, 'scenarios_enabled', ?)
+            ON DUPLICATE KEY UPDATE settings_value = VALUES(settings_value), updated_at = NOW()
+
+[TABLE MISMATCH] Table 'df' not found in database schema!
+   File: api\ai_training.php:362
+   SQL:  INSERT INTO ai_term_stats (term, property_id, df) VALUES $ph ON DUPLICATE KEY UPDATE df = df + VALUES(df)
+
+[TABLE MISMATCH] Table 'df' not found in database schema!
+   File: api\ai_training.php:380
+   SQL:  INSERT INTO ai_term_stats (term, property_id, df) VALUES $ph ON DUPLICATE KEY UPDATE df = df + VALUES(df)
+
+[TABLE MISMATCH] Table 'is_enabled' not found in database schema!
+   File: api\ai_training.php:1117
+   SQL:  INSERT INTO ai_chatbot_settings (property_id, is_enabled, bot_name, company_name,
+    brand_color, bot_avatar, welcome_msg, teaser_msg, persona_prompt, gemini_api_key, quick_actions, chunk_size, chunk_overlap,
+    system_instruction, notification_emails, notification_cc_emails, notification_subject, fast_replies, similarity_threshold, top_k, history_limit, temperature, max_output_tokens,
+    widget_position, excluded_pages, excluded_paths, auto_open_excluded_pages, auto_open_excluded_paths, auto_open, intent_configs, notification_enabled)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ON DUPLICATE KEY UPDATE
+    is_enabled = VALUES(is_enabled),
+    bot_name = VALUES(bot_name),
+    company_name = VALUES(company_name),
+    brand_color = VALUES(brand_color),
+    bot_avatar = VALUES(bot_avatar),
+    welcome_msg = VALUES(welcome_msg),
+    teaser_msg = VALUES(teaser_msg),
+    persona_prompt = VALUES(persona_prompt),
+    gemini_api_key = VALUES(gemini_api_key),
+    quick_actions = VALUES(quick_actions),
+    chunk_size = VALUES(chunk_size),
+    chunk_overlap = VALUES(chunk_overlap),
+    system_instruction = VALUES(system_instruction),
+    notification_emails = VALUES(notification_emails),
+    notification_cc_emails = VALUES(notification_cc_emails),
+    notification_subject = VALUES(notification_subject),
+    fast_replies = VALUES(fast_replies),
+    similarity_threshold = VALUES(similarity_threshold),
+    top_k = VALUES(top_k),
+    history_limit = VALUES(history_limit),
+    temperature = VALUES(temperature),
+    max_output_tokens = VALUES(max_output_tokens),
+    widget_position = VALUES(widget_position),
+    excluded_pages = VALUES(excluded_pages),
+    excluded_paths = VALUES(excluded_paths),
+    auto_open_excluded_pages = VALUES(auto_open_excluded_pages),
+    auto_open_excluded_paths = VALUES(auto_open_excluded_paths),
+    auto_open = VALUES(auto_open),
+    intent_configs = VALUES(intent_configs),
+    notification_enabled = VALUES(notification_enabled)
+
+[TABLE MISMATCH] Table 'df' not found in database schema!
+   File: api\ai_training_core.php:242
+   SQL:  INSERT INTO ai_term_stats (term, property_id, df) VALUES (?, ?, ?)
+                 ON DUPLICATE KEY UPDATE df = df + VALUES(df)
+
+[COLUMN MISMATCH] Column 'vector' not found in table 'ai_training_docs'!
+   File: api\ai_training_core.php:309
+   SQL:  UPDATE ai_training_docs SET error_message = 'Đang tạo vector (Embedding) cho
+
+[COLUMN MISMATCH] Column 'embedding' not found in table 'ai_training_docs'!
+   File: api\ai_training_core.php:309
+   SQL:  UPDATE ai_training_docs SET error_message = 'Đang tạo vector (Embedding) cho
+
+[COLUMN MISMATCH] Column 'vector' not found in table 'ai_training_docs'!
+   File: api\ai_training_core.php:356
+   SQL:  UPDATE ai_training_docs SET error_message = 'Đã nhận vector, đang lưu
+
+[COLUMN MISMATCH] Column 'xong' not found in table 'ai_training_docs'!
+   File: api\ai_training_core.php:398
+   SQL:  UPDATE ai_training_docs SET error_message = 'Đã băm xong
+
+[TABLE MISMATCH] Table 'information_schema' not found in database schema!
+   File: api\audit_system.php:152
+   SQL:  SELECT 
+            TABLE_NAME, 
+            ENGINE, 
+            TABLE_ROWS, 
+            DATA_LENGTH + INDEX_LENGTH as total_size,
+            DATA_LENGTH,
+            INDEX_LENGTH
+        FROM 
+            information_schema.TABLES 
+        WHERE 
+            TABLE_SCHEMA = DATABASE()
+
+[TABLE MISMATCH] Table 'information_schema' not found in database schema!
+   File: api\audit_system.php:168
+   SQL:  SELECT 
+            TABLE_NAME, 
+            INDEX_NAME, 
+            NON_UNIQUE, 
+            SEQ_IN_INDEX, 
+            COLUMN_NAME 
+        FROM 
+            INFORMATION_SCHEMA.STATISTICS 
+        WHERE 
+            TABLE_SCHEMA = DATABASE() 
+        ORDER BY 
+            TABLE_NAME, INDEX_NAME, SEQ_IN_INDEX
+
+[TABLE MISMATCH] Table 'attempts' not found in database schema!
+   File: api\auth.php:64
+   SQL:  INSERT INTO api_rate_limits (ip_address, action, attempts, last_attempt_at)
+                     VALUES (?, ?, 1, NOW())
+                     ON DUPLICATE KEY UPDATE
+                         attempts = attempts + 1,
+                         last_attempt_at = NOW(),
+                         blocked_until = IF(attempts + 1 >= ?, DATE_ADD(NOW(), INTERVAL ? MINUTE), NULL)
+
+[TABLE MISMATCH] Table 'information_schema' not found in database schema!
+   File: api\autoflow_health.php:227
+   SQL:  SELECT table_name, table_rows,
+            ROUND(data_length/1024/1024,2) AS data_mb,
+            ROUND(index_length/1024/1024,2) AS idx_mb
+        FROM information_schema.tables
+        WHERE table_schema = DATABASE()
+          AND table_name IN (
+            'subscribers','campaigns','flows','subscriber_flow_states',
+            'subscriber_activity','mail_delivery_logs','activity_buffer',
+            'zalo_message_queue','voucher_codes','raw_event_buffer',
+            'stats_update_buffer','timestamp_buffer','zalo_delivery_logs'
+          )
+        ORDER BY data_length DESC
+
+[TABLE MISMATCH] Table 'information_schema' not found in database schema!
+   File: api\autoflow_health.php:250
+   SQL:  SELECT TABLE_NAME,
+               COUNT(DISTINCT INDEX_NAME) AS idx_count,
+               SUM(CASE WHEN INDEX_NAME != 'PRIMARY' THEN 1 ELSE 0 END) AS col_entries
+        FROM information_schema.STATISTICS
+        WHERE TABLE_SCHEMA = DATABASE()
+          AND TABLE_NAME IN ('subscriber_flow_states','subscriber_activity','subscribers','mail_delivery_logs')
+        GROUP BY TABLE_NAME
+        ORDER BY idx_count DESC
+
+[TABLE MISMATCH] Table 'information_schema' not found in database schema!
+   File: api\autoflow_health.php:269
+   SQL:  SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name='$bt'
+
+[TABLE MISMATCH] Table 'information_schema' not found in database schema!
+   File: api\autoflow_health.php:275
+   SQL:  SELECT COLUMN_TYPE FROM information_schema.COLUMNS
+            WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='stats_update_buffer' AND COLUMN_NAME='target_table'
+
+[COLUMN MISMATCH] Column 'subscriber_activity' not found in table 'subscriber_activity'!
+   File: api\campaigns.php:765
+   SQL:  SELECT COUNT(*) FROM subscriber_activity sa WHERE $whereSql
+
+[TABLE MISMATCH] Table 'vector' not found in database schema!
+   File: api\chat_rag.php:196
+   SQL:  INSERT INTO ai_vector_cache (hash, vector, vector_binary, created_at) VALUES (?, ?, ?, NOW()) ON DUPLICATE KEY UPDATE vector=VALUES(vector), vector_binary=VALUES(vector_binary), created_at=NOW()
+
+[TABLE MISMATCH] Table 'vector' not found in database schema!
+   File: api\chat_rag.php:296
+   SQL:  INSERT INTO ai_vector_cache (hash, vector, vector_binary, created_at) VALUES (?, ?, ?, NOW()) ON DUPLICATE KEY UPDATE vector=VALUES(vector), vector_binary=VALUES(vector_binary), created_at=NOW()
+
+[TABLE MISMATCH] Table 'results' not found in database schema!
+   File: api\chat_rag.php:994
+   SQL:  INSERT INTO ai_rag_search_cache (query_hash, property_id, results, created_at) VALUES (?, ?, ?, NOW()) ON DUPLICATE KEY UPDATE results=VALUES(results), created_at=NOW()
+
+[TABLE MISMATCH] Table 'information_schema' not found in database schema!
+   File: api\check_partitions.php:4
+   SQL:  SELECT PARTITION_NAME, PARTITION_DESCRIPTION FROM information_schema.PARTITIONS WHERE TABLE_NAME = 'raw_event_buffer' AND TABLE_SCHEMA = '$db'
+
+[COLUMN MISMATCH] Column 'n' not found in table 'api_tokens'!
+   File: api\create_api_tokens_table.php:40
+   SQL:  INSERT INTO api_tokens (name, token, scope, is_active) VALUES ('My Token', '\$hash', 'upload', 1);\n
+
+[TABLE MISMATCH] Table 'information_schema' not found in database schema!
+   File: api\cron_auto_cleanup.php:231
+   SQL:  SELECT TABLE_NAME, ROUND((DATA_FREE / 1024 / 1024), 2) AS free_mb
+        FROM information_schema.TABLES
+        WHERE TABLE_SCHEMA = DATABASE()
+        AND DATA_FREE > 10485760
+        ORDER BY DATA_FREE DESC
+        LIMIT 5
+
+[TABLE MISMATCH] Table 'information_schema' not found in database schema!
+   File: api\cron_cleanup.php:55
+   SQL:  SELECT PARTITION_EXPRESSION FROM information_schema.partitions WHERE table_schema = DATABASE() AND table_name = ? AND PARTITION_EXPRESSION IS NOT NULL LIMIT 1
+
+[TABLE MISMATCH] Table 'information_schema' not found in database schema!
+   File: api\cron_cleanup.php:72
+   SQL:  SELECT PARTITION_NAME FROM information_schema.partitions WHERE table_schema = DATABASE() AND table_name = ? AND partition_name IS NOT NULL AND partition_name != 'p_future' AND partition_description != 'MAXVALUE' AND CAST(partition_description AS UNSIGNED) < ?
+
+[TABLE MISMATCH] Table 'information_schema' not found in database schema!
+   File: api\db_auto_optimize.php:229
+   SQL:  SELECT round(((data_length + index_length) / 1024 / 1024), 3) AS size_mb 
+                FROM information_schema.TABLES 
+                WHERE table_schema = ? AND table_name = ?
+
+[TABLE MISMATCH] Table 'information_schema' not found in database schema!
+   File: api\db_diagnostics.php:126
+   SQL:  SELECT table_name AS 'table', 
+                   table_rows AS 'rows',
+                   round(((data_length + index_length) / 1024 / 1024), 2) AS 'size_mb' 
+            FROM information_schema.TABLES 
+            WHERE table_schema = :db_name
+
+[TABLE MISMATCH] Table 'tmp_sl' not found in database schema!
+   File: api\fix_duplicates.php:64
+   SQL:  INSERT IGNORE INTO subscriber_lists SELECT * FROM tmp_sl;
+
+[COLUMN MISMATCH] Column 'flow_id' not found in table 'flow_event_queue'!
+   File: api\flows.php:58
+   SQL:  DELETE FROM flow_event_queue WHERE flow_id = ?
+
+[COLUMN MISMATCH] Column 'subscriber_activity' not found in table 'subscriber_activity'!
+   File: api\flows.php:247
+   SQL:  SELECT COUNT(DISTINCT sa.subscriber_id) FROM subscriber_activity sa WHERE sa.workspace_id = ? AND $whereSql
+
+[COLUMN MISMATCH] Column 'subscriber_activity' not found in table 'subscriber_activity'!
+   File: api\flows.php:324
+   SQL:  SELECT COUNT(*) FROM subscriber_activity sa WHERE sa.workspace_id = ? AND $whereSql
+
+[COLUMN MISMATCH] Column 'subscriber_activity' not found in table 'subscriber_activity'!
+   File: api\flows.php:388
+   SQL:  SELECT COUNT(DISTINCT sa.subscriber_id) FROM subscriber_activity sa WHERE sa.workspace_id = ? AND $whereSql
+
+[COLUMN MISMATCH] Column 'subscriber_activity' not found in table 'subscriber_activity'!
+   File: api\flows.php:531
+   SQL:  SELECT COUNT(DISTINCT sa.subscriber_id) 
+                             FROM subscriber_activity sa
+                             WHERE sa.workspace_id = ? AND sa.flow_id = ? AND
+
+[COLUMN MISMATCH] Column 'email' not found in table 'subscriber_activity'!
+   File: api\flows.php:565
+   SQL:  SELECT s.id, s.email, s.phone_number, s.first_name, s.last_name, 
+                           u.entered_at,
+                           'processed' as status,
+                           ? as step_id,
+                           (SELECT details FROM subscriber_activity WHERE workspace_id = ? AND flow_id = ? AND subscriber_id = s.id AND
+
+[COLUMN MISMATCH] Column 'phone_number' not found in table 'subscriber_activity'!
+   File: api\flows.php:565
+   SQL:  SELECT s.id, s.email, s.phone_number, s.first_name, s.last_name, 
+                           u.entered_at,
+                           'processed' as status,
+                           ? as step_id,
+                           (SELECT details FROM subscriber_activity WHERE workspace_id = ? AND flow_id = ? AND subscriber_id = s.id AND
+
+[COLUMN MISMATCH] Column 'first_name' not found in table 'subscriber_activity'!
+   File: api\flows.php:565
+   SQL:  SELECT s.id, s.email, s.phone_number, s.first_name, s.last_name, 
+                           u.entered_at,
+                           'processed' as status,
+                           ? as step_id,
+                           (SELECT details FROM subscriber_activity WHERE workspace_id = ? AND flow_id = ? AND subscriber_id = s.id AND
+
+[COLUMN MISMATCH] Column 'last_name' not found in table 'subscriber_activity'!
+   File: api\flows.php:565
+   SQL:  SELECT s.id, s.email, s.phone_number, s.first_name, s.last_name, 
+                           u.entered_at,
+                           'processed' as status,
+                           ? as step_id,
+                           (SELECT details FROM subscriber_activity WHERE workspace_id = ? AND flow_id = ? AND subscriber_id = s.id AND
+
+[COLUMN MISMATCH] Column 'entered_at' not found in table 'subscriber_activity'!
+   File: api\flows.php:565
+   SQL:  SELECT s.id, s.email, s.phone_number, s.first_name, s.last_name, 
+                           u.entered_at,
+                           'processed' as status,
+                           ? as step_id,
+                           (SELECT details FROM subscriber_activity WHERE workspace_id = ? AND flow_id = ? AND subscriber_id = s.id AND
+
+[COLUMN MISMATCH] Column 'subscriber_activity' not found in table 'subscriber_activity'!
+   File: api\flows.php:855
+   SQL:  SELECT COUNT(*) FROM subscriber_activity sa WHERE $whereSql
+
+[COLUMN MISMATCH] Column 'subscriber_activity' not found in table 'subscriber_activity'!
+   File: api\flows.php:896
+   SQL:  SELECT sa.$col as name, COUNT(*) as value 
+                        FROM subscriber_activity sa 
+                        WHERE sa.flow_id = ? AND sa.type = 'click_link' AND sa.$col IS NOT NULL AND sa.$col != '' $locFilter
+
+[TABLE MISMATCH] Table 'step_id' not found in database schema!
+   File: api\flows.php:1437
+   SQL:  INSERT INTO subscriber_flow_states 
+                    (flow_id, subscriber_id, workspace_id, step_id, step_type, status, created_at, updated_at, last_step_at, scheduled_at)
+                    VALUES (?, ?, ?, ?, ?, 'waiting', ?, ?, ?, ?)
+                    ON DUPLICATE KEY UPDATE
+                        step_id = VALUES(step_id),
+                        step_type = VALUES(step_type),
+                        status = 'waiting',
+                        updated_at = VALUES(updated_at),
+                        last_step_at = VALUES(last_step_at),
+                        scheduled_at = VALUES(scheduled_at)
+
+[TABLE MISMATCH] Table 'id' not found in database schema!
+   File: api\forms.php:264
+   SQL:  INSERT INTO subscribers ($upsertFields) VALUES ($phList)
+                     ON DUPLICATE KEY UPDATE
+                       id = LAST_INSERT_ID(id),
+                       $upsertSet,
+                       status = IF(status IN ('active','lead','customer'), status, 'lead')
+
+[COLUMN MISMATCH] Column 'global_assets' not found in table 'global_assets'!
+   File: api\get_global_assets.php:100
+   SQL:  SELECT COUNT(*) FROM global_assets ga $whereSql
+
+[COLUMN MISMATCH] Column 'global_assets' not found in table 'global_assets'!
+   File: api\get_global_assets.php:118
+   SQL:  SELECT ga.*, $visitorFields
+                FROM global_assets ga
+                $joinVisitor
+                $whereSql 
+                ORDER BY (ga.property_id IS NOT NULL) DESC, ga.created_at DESC 
+                LIMIT $limit OFFSET $offset
+
+[COLUMN MISMATCH] Column 'lists' not found in table 'lists'!
+   File: api\lists.php:99
+   SQL:  SELECT l.id, l.name, l.source, l.type, l.subscriber_count as count, l.phone_count, DATE_FORMAT(l.created_at, '%d/%m/%Y') as created FROM lists l WHERE l.id = ? AND l.workspace_id = ?
+
+[COLUMN MISMATCH] Column 'lists' not found in table 'lists'!
+   File: api\lists.php:105
+   SQL:  SELECT l.id, l.name, l.source, l.type, l.subscriber_count as count, l.phone_count, DATE_FORMAT(l.created_at, '%d/%m/%Y') as created
+                        FROM lists l WHERE l.workspace_id = ? ORDER BY l.created_at DESC
+
+[COLUMN MISMATCH] Column 'lists' not found in table 'lists'!
+   File: api\lists.php:127
+   SQL:  SELECT COUNT(*) FROM lists l
+
+[COLUMN MISMATCH] Column 'lists' not found in table 'lists'!
+   File: api\lists.php:131
+   SQL:  SELECT l.id, l.name, l.source, l.type, l.subscriber_count as count, l.phone_count, DATE_FORMAT(l.created_at, '%d/%m/%Y') as created
+                    FROM lists l
+
+[TABLE MISMATCH] Table 'meta_config_id' not found in database schema!
+   File: api\meta_automation.php:141
+   SQL:  INSERT INTO meta_automation_scenarios (
+                    id, meta_config_id, type, trigger_text, match_type, title, content, 
+                    message_type, image_url, attachment_id, buttons, status, ai_chatbot_id,
+                    schedule_type, start_time, end_time, active_days, priority_override, 
+                    holiday_start_at, holiday_end_at, updated_at
+                ) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+                ON DUPLICATE KEY UPDATE 
+                    meta_config_id=VALUES(meta_config_id),
+                    type=VALUES(type), trigger_text=VALUES(trigger_text), match_type=VALUES(match_type),
+                    title=VALUES(title), content=VALUES(content), message_type=VALUES(message_type), 
+                    image_url=VALUES(image_url), attachment_id=VALUES(attachment_id), buttons=VALUES(buttons), status=VALUES(status), 
+                    ai_chatbot_id=VALUES(ai_chatbot_id), schedule_type=VALUES(schedule_type), 
+                    start_time=VALUES(start_time), end_time=VALUES(end_time), active_days=VALUES(active_days),
+                    priority_override=VALUES(priority_override), 
+                    holiday_start_at=VALUES(holiday_start_at), holiday_end_at=VALUES(holiday_end_at), updated_at=NOW()
+
+[TABLE MISMATCH] Table 'value' not found in database schema!
+   File: api\migrate_system_logic.php:110
+   SQL:  INSERT INTO system_settings (`workspace_id`, `key`, `value`) VALUES (0, 'schema_version', ?) 
+                               ON DUPLICATE KEY UPDATE `value` = VALUES(`value`)
+
+[TABLE MISMATCH] Table 'attempts' not found in database schema!
+   File: api\otp.php:206
+   SQL:  INSERT INTO api_rate_limits (ip_address, action, attempts, last_attempt_at)
+                 VALUES (?, ?, 1, NOW())
+                 ON DUPLICATE KEY UPDATE
+                     attempts = attempts + 1,
+                     last_attempt_at = NOW(),
+                     blocked_until = IF(attempts + 1 >= ?, DATE_ADD(NOW(), INTERVAL ? MINUTE), NULL)
+
+[TABLE MISMATCH] Table 'value' not found in database schema!
+   File: api\run_migrations.php:968
+   SQL:  INSERT INTO system_settings (`workspace_id`, `key`, `value`) VALUES (0, 'db_version', ?) 
+                              ON DUPLICATE KEY UPDATE `value` = VALUES(`value`)
+
+[TABLE MISMATCH] Table 'value' not found in database schema!
+   File: api\run_migrations.php:973
+   SQL:  INSERT INTO system_settings (`workspace_id`, `key`, `value`) VALUES (0, 'schema_version', '29.8') 
+                              ON DUPLICATE KEY UPDATE `value` = '29.8'
+
+[TABLE MISMATCH] Table 'information_schema' not found in database schema!
+   File: api\run_migration_trigger_status.php:37
+   SQL:  SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+         WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME = ?
+
+[TABLE MISMATCH] Table 'information_schema' not found in database schema!
+   File: api\run_migration_trigger_status.php:47
+   SQL:  SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS
+         WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND INDEX_NAME = ?
+
+[TABLE MISMATCH] Table 'information_schema' not found in database schema!
+   File: api\run_migration_trigger_status.php:137
+   SQL:  SELECT 'custom_events' AS tbl, COLUMN_NAME, COLUMN_TYPE, COLUMN_DEFAULT
+    FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = '$db' AND TABLE_NAME = 'custom_events' AND COLUMN_NAME IN ('workspace_id','status')
+    UNION ALL
+    SELECT 'purchase_events', COLUMN_NAME, COLUMN_TYPE, COLUMN_DEFAULT
+    FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = '$db' AND TABLE_NAME = 'purchase_events' AND COLUMN_NAME = 'status'
+    UNION ALL
+    SELECT 'forms', COLUMN_NAME, COLUMN_TYPE, COLUMN_DEFAULT
+    FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = '$db' AND TABLE_NAME = 'forms' AND COLUMN_NAME = 'status'
+    UNION ALL
+    SELECT 'tags', COLUMN_NAME, COLUMN_TYPE, COLUMN_DEFAULT
+    FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = '$db' AND TABLE_NAME = 'tags' AND COLUMN_NAME = 'status'
+
+[TABLE MISMATCH] Table 'queued_at' not found in database schema!
+   File: api\segments.php:126
+   SQL:  INSERT INTO segment_count_update_queue (workspace_id, segment_id) VALUES (?, ?) ON DUPLICATE KEY UPDATE queued_at = NOW()
+
+[TABLE MISMATCH] Table 'queued_at' not found in database schema!
+   File: api\segments.php:311
+   SQL:  INSERT INTO segment_count_update_queue (workspace_id, segment_id) VALUES (?, ?) ON DUPLICATE KEY UPDATE queued_at = NOW()
+
+[TABLE MISMATCH] Table 'queued_at' not found in database schema!
+   File: api\segments.php:347
+   SQL:  INSERT INTO segment_count_update_queue (workspace_id, segment_id) VALUES (?, ?) ON DUPLICATE KEY UPDATE queued_at = NOW()
+
+[TABLE MISMATCH] Table 'value' not found in database schema!
+   File: api\ses_quota.php:119
+   SQL:  INSERT INTO system_settings (`workspace_id`,`key`,`value`) VALUES (0,'ses_quota_cache',?),(0,'ses_quota_cache_at',NOW())
+            ON DUPLICATE KEY UPDATE `value`=VALUES(`value`)
+
+[TABLE MISMATCH] Table 'value' not found in database schema!
+   File: api\ses_quota.php:121
+   SQL:  INSERT INTO system_settings (`workspace_id`,`key`,`value`) VALUES (0,'ses_quota_cache_at',NOW())
+            ON DUPLICATE KEY UPDATE `value`=VALUES(`value`)
+
+[TABLE MISMATCH] Table 'value' not found in database schema!
+   File: api\ses_quota.php:178
+   SQL:  INSERT INTO system_settings (key,value) VALUES ('aws_access_key','AKIA...'),('aws_secret_key','[IAM_SECRET_40_CHARS]') ON DUPLICATE KEY UPDATE value=VALUES(value);
+
+[TABLE MISMATCH] Table 'value' not found in database schema!
+   File: api\settings.php:39
+   SQL:  INSERT INTO system_settings (`workspace_id`, `key`, `value`) 
+                    VALUES (?, ?, ?) 
+                    ON DUPLICATE KEY UPDATE `value` = VALUES(`value`), `updated_at` = NOW()
+
+[COLUMN MISMATCH] Column 'choice' not found in table 'survey_answer_details'!
+   File: api\surveys.php:383
+   SQL:  SELECT j.choice as label, COUNT(*) as cnt
+                            FROM survey_answer_details d,
+                            JSON_TABLE(d.answer_json, '$[*]' COLUMNS (choice VARCHAR(255) PATH '$')) j
+                            WHERE d.question_id = ? AND d.answer_json IS NOT NULL
+                            GROUP BY j.choice
+                            ORDER BY cnt DESC
+
+[COLUMN MISMATCH] Column 'columns' not found in table 'survey_answer_details'!
+   File: api\surveys.php:383
+   SQL:  SELECT j.choice as label, COUNT(*) as cnt
+                            FROM survey_answer_details d,
+                            JSON_TABLE(d.answer_json, '$[*]' COLUMNS (choice VARCHAR(255) PATH '$')) j
+                            WHERE d.question_id = ? AND d.answer_json IS NOT NULL
+                            GROUP BY j.choice
+                            ORDER BY cnt DESC
+
+[COLUMN MISMATCH] Column 'choice' not found in table 'survey_answer_details'!
+   File: api\surveys.php:383
+   SQL:  SELECT j.choice as label, COUNT(*) as cnt
+                            FROM survey_answer_details d,
+                            JSON_TABLE(d.answer_json, '$[*]' COLUMNS (choice VARCHAR(255) PATH '$')) j
+                            WHERE d.question_id = ? AND d.answer_json IS NOT NULL
+                            GROUP BY j.choice
+                            ORDER BY cnt DESC
+
+[COLUMN MISMATCH] Column 'varchar' not found in table 'survey_answer_details'!
+   File: api\surveys.php:383
+   SQL:  SELECT j.choice as label, COUNT(*) as cnt
+                            FROM survey_answer_details d,
+                            JSON_TABLE(d.answer_json, '$[*]' COLUMNS (choice VARCHAR(255) PATH '$')) j
+                            WHERE d.question_id = ? AND d.answer_json IS NOT NULL
+                            GROUP BY j.choice
+                            ORDER BY cnt DESC
+
+[COLUMN MISMATCH] Column 'choice' not found in table 'survey_answer_details'!
+   File: api\surveys.php:383
+   SQL:  SELECT j.choice as label, COUNT(*) as cnt
+                            FROM survey_answer_details d,
+                            JSON_TABLE(d.answer_json, '$[*]' COLUMNS (choice VARCHAR(255) PATH '$')) j
+                            WHERE d.question_id = ? AND d.answer_json IS NOT NULL
+                            GROUP BY j.choice
+                            ORDER BY cnt DESC
+
+[TABLE MISMATCH] Table 'tracking_logs' not found in database schema!
+   File: api\system_connections.php:54
+   SQL:  SELECT count(*) FROM tracking_logs
+
+[COLUMN MISMATCH] Column 'subscriber_tags' not found in table 'subscriber_tags'!
+   File: api\tags.php:173
+   SQL:  SELECT st.subscriber_id FROM subscriber_tags st WHERE st.tag_id = ? AND st.workspace_id = ?
+
+[COLUMN MISMATCH] Column 'subscriber_tags' not found in table 'subscriber_tags'!
+   File: api\tags.php:253
+   SQL:  SELECT st.subscriber_id FROM subscriber_tags st WHERE st.tag_id = ? AND st.workspace_id = ?
+
+[TABLE MISMATCH] Table 'settings' not found in database schema!
+   File: api\test_db_backend.php:262
+   SQL:  SELECT 1 FROM `settings` LIMIT 1
+
+[TABLE MISMATCH] Table 'name' not found in database schema!
+   File: api\test_db_backend.php:344
+   SQL:  INSERT INTO workspaces (id, name) VALUES (?, ?) ON DUPLICATE KEY UPDATE name=VALUES(name)
+
+[TABLE MISMATCH] Table 'skip' not found in database schema!
+   File: api\test_db_backend.php:378
+   SQL:  SELECT * FROM subscribers LIMIT 1 FOR UPDATE SKIP LOCKED
+
+[TABLE MISMATCH] Table 'value' not found in database schema!
+   File: api\test_db_backend.php:459
+   SQL:  INSERT INTO $settingsTable (workspace_id, `key`, `value`) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE `value`=VALUES(`value`)
+
+[TABLE MISMATCH] Table 'first_name' not found in database schema!
+   File: api\test_db_backend.php:479
+   SQL:  INSERT INTO subscribers (id, email, first_name, last_name, phone_number, status, joined_at) VALUES (?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE first_name=VALUES(first_name)
+
+[TABLE MISMATCH] Table 'name' not found in database schema!
+   File: api\test_db_backend.php:501
+   SQL:  INSERT INTO flows (id, name, steps, status) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE name=VALUES(name)
+
+[TABLE MISMATCH] Table 'step_id' not found in database schema!
+   File: api\test_db_backend.php:507
+   SQL:  INSERT INTO subscriber_flow_states (workspace_id, subscriber_id, flow_id, step_id, status, scheduled_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE step_id=VALUES(step_id)
+
+[TABLE MISMATCH] Table 'status' not found in database schema!
+   File: api\voucher_claim.php:146
+   SQL:  INSERT INTO subscribers ($cols) VALUES ($ph) ON DUPLICATE KEY UPDATE status = 'active'
+
+[TABLE MISMATCH] Table 'status' not found in database schema!
+   File: api\voucher_helper.php:98
+   SQL:  INSERT INTO voucher_claims (id, voucher_id, subscriber_id, email, name, phone, status, source_channel, source_id, assigned_code_id) 
+                VALUES (?, ?, ?, ?, ?, ?, 'approved', ?, ?, ?)
+                ON DUPLICATE KEY UPDATE status = 'approved', source_channel = VALUES(source_channel), source_id = VALUES(source_id)
+
+[COLUMN MISMATCH] Column 'zalo_subscriber_activity' not found in table 'zalo_subscriber_activity'!
+   File: api\webhook.php:559
+   SQL:  SELECT a.id 
+                                        FROM zalo_subscriber_activity a
+                                        WHERE a.subscriber_id = ? 
+                                        AND a.type = 'staff_reply'
+                                        AND a.created_at >= DATE_SUB(NOW(), INTERVAL 2 MINUTE)
+                                        LIMIT 1
+
+[TABLE MISMATCH] Table 'page_views' not found in database schema!
+   File: api\web_tracking_processor.php:262
+   SQL:  INSERT INTO web_daily_stats (date, property_id, url_hash, device_type, page_views, visitors, sessions, bounces,
+total_duration)
+VALUES (?, ?, 'GLOBAL', ?, ?, ?, ?, ?, ?)
+ON DUPLICATE KEY UPDATE
+page_views = VALUES(page_views),
+visitors = VALUES(visitors),
+sessions = VALUES(sessions),
+bounces = VALUES(bounces),
+total_duration = VALUES(total_duration)
+
+[TABLE MISMATCH] Table 'page_views' not found in database schema!
+   File: api\web_tracking_processor.php:306
+   SQL:  INSERT INTO web_daily_stats (date, property_id, url_hash, device_type, page_views, visitors, sessions, total_duration,
+total_scroll, scroll_samples, bounces)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+ON DUPLICATE KEY UPDATE
+page_views = VALUES(page_views),
+visitors = VALUES(visitors),
+sessions = VALUES(sessions),
+total_duration = VALUES(total_duration),
+total_scroll = VALUES(total_scroll),
+scroll_samples = VALUES(scroll_samples),
+bounces = VALUES(bounces)
+
+[TABLE MISMATCH] Table 'sessions' not found in database schema!
+   File: api\web_tracking_processor.php:351
+   SQL:  INSERT INTO web_daily_stats (date, property_id, url_hash, device_type, sessions, visitors, bounces)
+VALUES (?, ?, ?, ?, ?, ?, ?)
+ON DUPLICATE KEY UPDATE
+sessions = VALUES(sessions),
+visitors = VALUES(visitors),
+bounces = VALUES(bounces)
+
+[TABLE MISMATCH] Table 'information_schema' not found in database schema!
+   File: api\worker_maintenance.php:16
+   SQL:  SELECT PARTITION_NAME FROM information_schema.PARTITIONS WHERE TABLE_NAME = 'raw_event_buffer' AND TABLE_SCHEMA = DATABASE()
+
+[TABLE MISMATCH] Table 'web_analytics_summary' not found in database schema!
+   File: api\worker_web_analytics.php:67
+   SQL:  INSERT INTO web_analytics_summary (
+            date, page_url, total_views, unique_visitors, avg_duration, 
+            avg_scroll_depth, bounce_count, total_events
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE
+            total_views = VALUES(total_views),
+            unique_visitors = VALUES(unique_visitors),
+            avg_duration = VALUES(avg_duration),
+            avg_scroll_depth = VALUES(avg_scroll_depth),
+            bounce_count = VALUES(bounce_count),
+            total_events = VALUES(total_events)
+
+[TABLE MISMATCH] Table 'total_views' not found in database schema!
+   File: api\worker_web_analytics.php:67
+   SQL:  INSERT INTO web_analytics_summary (
+            date, page_url, total_views, unique_visitors, avg_duration, 
+            avg_scroll_depth, bounce_count, total_events
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE
+            total_views = VALUES(total_views),
+            unique_visitors = VALUES(unique_visitors),
+            avg_duration = VALUES(avg_duration),
+            avg_scroll_depth = VALUES(avg_scroll_depth),
+            bounce_count = VALUES(bounce_count),
+            total_events = VALUES(total_events)
+
+[COLUMN MISMATCH] Column 'roles' not found in table 'roles'!
+   File: api\workspaces.php:224
+   SQL:  SELECT r.name FROM roles r WHERE r.id = ?
+
+[TABLE MISMATCH] Table 'type' not found in database schema!
+   File: api\zalo_automation.php:111
+   SQL:  INSERT INTO zalo_automation_scenarios (
+                    id, oa_config_id, type, trigger_text, match_type, title, content, 
+                    message_type, image_url, attachment_id, buttons, status, ai_chatbot_id,
+                    schedule_type, start_time, end_time, active_days,
+                    priority_override, holiday_start_at, holiday_end_at
+                ) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ON DUPLICATE KEY UPDATE 
+                    type=VALUES(type), trigger_text=VALUES(trigger_text), match_type=VALUES(match_type),
+                    title=VALUES(title), content=VALUES(content), message_type=VALUES(message_type), 
+                    image_url=VALUES(image_url), attachment_id=VALUES(attachment_id), 
+                    buttons=VALUES(buttons), status=VALUES(status), ai_chatbot_id=VALUES(ai_chatbot_id),
+                    schedule_type=VALUES(schedule_type), start_time=VALUES(start_time),
+                    end_time=VALUES(end_time), active_days=VALUES(active_days),
+                    priority_override=VALUES(priority_override), holiday_start_at=VALUES(holiday_start_at),
+                    holiday_end_at=VALUES(holiday_end_at)
+
+[COLUMN MISMATCH] Column 'subscriber_flow_states' not found in table 'subscriber_flow_states'!
+   File: api\zalo_tracking.php:96
+   SQL:  SELECT sfs.id, sfs.step_type
+                    FROM subscriber_flow_states sfs
+                    WHERE sfs.subscriber_id = ? AND sfs.flow_id = ? AND sfs.status = 'waiting'

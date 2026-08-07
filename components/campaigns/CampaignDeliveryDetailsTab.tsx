@@ -480,7 +480,7 @@ const CampaignDeliveryDetailsTab: React.FC<Props> = ({ campaign, allLists, allTa
             </div>
 
             <Card noPadding className="border-slate-100 shadow-sm min-h-[400px] overflow-visible">
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto max-h-[650px] overflow-y-auto custom-scrollbar">
                     <table className="w-full text-left">
                         <thead className="bg-slate-50/80 border-b border-slate-100 sticky top-0 z-20 backdrop-blur-sm">
                             {selectedIds.length > 0 ? (

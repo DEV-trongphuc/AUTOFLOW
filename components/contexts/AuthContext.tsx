@@ -45,25 +45,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const loadAuth = async () => {
       try {
-        // [FIX] Use api service (sends auth cookie + correct base URL) instead of raw fetch
-        const wsData = await api.get<any>('workspaces?action=list');
-        if (wsData.success && wsData.data?.length > 0) {
-          setWorkspaces(wsData.data);
-          // Restore last active workspace from localStorage if available
-          const savedWsId = localStorage.getItem('current_workspace_id');
-          const savedWs = savedWsId
-            ? wsData.data.find((w: Workspace) => w.id === parseInt(savedWsId))
-            : null;
-          setCurrentWorkspace(savedWs || wsData.data[0]);
-
-          // Check if any workspace indicates database migration is needed
-          const needsMigration = wsData.data.some((ws: any) => ws.db_needs_migration);
-          setDbNeedsMigration(needsMigration);
-        }
-
-        // Load logged-in user from localStorage (set by Login.tsx on auth success)
         const storedUser = localStorage.getItem('user');
-        if (storedUser) {
+        const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+
+        if (isAuthenticated && storedUser) {
+          // [FIX] Use api service (sends auth cookie + correct base URL) instead of raw fetch
+          const wsData = await api.get<any>('workspaces?action=list');
+          if (wsData.success && wsData.data?.length > 0) {
+            setWorkspaces(wsData.data);
+            // Restore last active workspace from localStorage if available
+            const savedWsId = localStorage.getItem('current_workspace_id');
+            const savedWs = savedWsId
+              ? wsData.data.find((w: Workspace) => w.id === parseInt(savedWsId))
+              : null;
+            setCurrentWorkspace(savedWs || wsData.data[0]);
+
+            // Check if any workspace indicates database migration is needed
+            const needsMigration = wsData.data.some((ws: any) => ws.db_needs_migration);
+            setDbNeedsMigration(needsMigration);
+          }
+
           try {
             const parsed = JSON.parse(storedUser);
             setUser({

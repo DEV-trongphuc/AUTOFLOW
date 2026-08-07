@@ -1,0 +1,141 @@
+=== TABLE MISMATCHES ===
+Table: value (Found in 10 places)
+  - api\ai_chatbot.php:1951
+  - api\test_db_backend.php:459
+  - api\ses_quota.php:121
+  - api\ses_quota.php:119
+  - api\run_migrations.php:968
+Table: bot_name (Found in 1 places)
+  - api\ai_chatbots.php:262
+Table: is_deleted (Found in 2 places)
+  - api\ai_org_chatbot.php:1089
+  - api\ai_org_chatbot.php:817
+Table: settings_value (Found in 1 places)
+  - api\ai_scenarios.php:109
+Table: df (Found in 3 places)
+  - api\ai_training.php:380
+  - api\ai_training_core.php:242
+  - api\ai_training.php:362
+Table: is_enabled (Found in 1 places)
+  - api\ai_training.php:1117
+Table: information_schema (Found in 16 places)
+  - api\check_partitions.php:4
+  - api\db_diagnostics.php:126
+  - api\run_migration_trigger_status.php:47
+  - api\autoflow_health.php:269
+  - api\autoflow_health.php:227
+Table: attempts (Found in 2 places)
+  - api\otp.php:206
+  - api\auth.php:64
+Table: vector (Found in 2 places)
+  - api\chat_rag.php:196
+  - api\chat_rag.php:296
+Table: results (Found in 1 places)
+  - api\chat_rag.php:994
+Table: tmp_sl (Found in 1 places)
+  - api\fix_duplicates.php:64
+Table: step_id (Found in 2 places)
+  - api\flows.php:1437
+  - api\test_db_backend.php:507
+Table: id (Found in 1 places)
+  - api\forms.php:264
+Table: meta_config_id (Found in 1 places)
+  - api\meta_automation.php:141
+Table: queued_at (Found in 3 places)
+  - api\segments.php:126
+  - api\segments.php:347
+  - api\segments.php:311
+Table: tracking_logs (Found in 1 places)
+  - api\system_connections.php:54
+Table: settings (Found in 1 places)
+  - api\test_db_backend.php:262
+Table: name (Found in 2 places)
+  - api\test_db_backend.php:344
+  - api\test_db_backend.php:501
+Table: skip (Found in 1 places)
+  - api\test_db_backend.php:378
+Table: first_name (Found in 1 places)
+  - api\test_db_backend.php:479
+Table: status (Found in 2 places)
+  - api\voucher_helper.php:98
+  - api\voucher_claim.php:146
+Table: page_views (Found in 2 places)
+  - api\web_tracking_processor.php:262
+  - api\web_tracking_processor.php:306
+Table: sessions (Found in 1 places)
+  - api\web_tracking_processor.php:351
+Table: web_analytics_summary (Found in 1 places)
+  - api\worker_web_analytics.php:67
+Table: total_views (Found in 1 places)
+  - api\worker_web_analytics.php:67
+Table: type (Found in 1 places)
+  - api\zalo_automation.php:111
+
+=== COLUMN MISMATCHES ===
+Table: admin_logs
+  Column: admin_logs (Found in 1 places)
+    - api\admin_stats.php:77
+Table: ai_chatbots
+  Column: ai_chatbots (Found in 1 places)
+    - api\admin_stats.php:465
+Table: ai_training_docs
+  Column: vector (Found in 2 places)
+    - api\ai_training_core.php:309
+    - api\ai_training_core.php:356
+  Column: embedding (Found in 1 places)
+    - api\ai_training_core.php:309
+  Column: xong (Found in 1 places)
+    - api\ai_training_core.php:398
+Table: subscriber_activity
+  Column: subscriber_activity (Found in 7 places)
+    - api\campaigns.php:765
+    - api\flows.php:247
+    - api\flows.php:896
+  Column: email (Found in 1 places)
+    - api\flows.php:565
+  Column: phone_number (Found in 1 places)
+    - api\flows.php:565
+  Column: first_name (Found in 1 places)
+    - api\flows.php:565
+  Column: last_name (Found in 1 places)
+    - api\flows.php:565
+  Column: entered_at (Found in 1 places)
+    - api\flows.php:565
+Table: api_tokens
+  Column: n (Found in 1 places)
+    - api\create_api_tokens_table.php:40
+Table: flow_event_queue
+  Column: flow_id (Found in 1 places)
+    - api\flows.php:58
+Table: global_assets
+  Column: global_assets (Found in 2 places)
+    - api\get_global_assets.php:118
+    - api\get_global_assets.php:100
+Table: lists
+  Column: lists (Found in 4 places)
+    - api\lists.php:105
+    - api\lists.php:127
+    - api\lists.php:99
+Table: survey_answer_details
+  Column: choice (Found in 3 places)
+    - api\surveys.php:383
+  Column: columns (Found in 1 places)
+    - api\surveys.php:383
+  Column: varchar (Found in 1 places)
+    - api\surveys.php:383
+Table: subscriber_tags
+  Column: subscriber_tags (Found in 2 places)
+    - api\tags.php:253
+    - api\tags.php:173
+Table: zalo_subscriber_activity
+  Column: zalo_subscriber_activity (Found in 1 places)
+    - api\webhook.php:559
+Table: roles
+  Column: roles (Found in 1 places)
+    - api\workspaces.php:224
+Table: zalo_automation_scenarios
+  Column: priority (Found in 1 places)
+    - api\zalo_inbound_processor.php:107
+Table: subscriber_flow_states
+  Column: subscriber_flow_states (Found in 1 places)
+    - api\zalo_tracking.php:96

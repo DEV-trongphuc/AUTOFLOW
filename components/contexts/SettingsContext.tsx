@@ -23,6 +23,13 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
     const [isLoadingSettings, setIsLoadingSettings] = useState(true);
 
     const loadSettings = useCallback(async () => {
+        const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+        if (!isAuthenticated) {
+            setSenderEmails([FALLBACK_EMAIL]);
+            setIsLoadingSettings(false);
+            return;
+        }
+
         try {
             const res = await api.get<any>('settings');
             if (res.success && res.data) {

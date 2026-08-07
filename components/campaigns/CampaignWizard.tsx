@@ -908,11 +908,32 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
 
     return createPortal(
         <>
+            <style>{`
+              @media (min-width: 1024px) {
+                .campaign-wizard-drawer {
+                  max-width: calc(100vw - var(--sidebar-width, 260px)) !important;
+                }
+              }
+            `}</style>
             <div className="fixed inset-0 z-[150] flex justify-end">
                 <div
-                    className={`absolute inset-0 bg-slate-950/70 transition-opacity duration-500 ${animateWizardIn ? 'opacity-100' : 'opacity-0'}`}
+                    className={`absolute inset-0 bg-slate-950/50 backdrop-blur-xs transition-opacity duration-500 ${animateWizardIn ? 'opacity-100' : 'opacity-0'}`}
                     onClick={handleIntentClose}
-                />
+                >
+                    {/* Floating Back Button on Overlay (centered in the sidebar area on desktop) */}
+                    <div 
+                        className="absolute top-6 left-6 md:left-[calc(var(--sidebar-width,260px)/2)] md:-translate-x-1/2 flex flex-col items-center gap-1.5 cursor-pointer group select-none transition-all duration-300"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            handleIntentClose();
+                        }}
+                    >
+                        <div className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center backdrop-blur-md border border-white/15 transition-all duration-300 group-hover:scale-110 shadow-lg group-hover:border-white/30 group-active:scale-95">
+                            <ChevronLeft className="w-5 h-5 transition-transform group-hover:-translate-x-0.5" />
+                        </div>
+                        <span className="text-[10px] font-bold text-white/60 uppercase tracking-widest group-hover:text-white transition-colors">Quay lại</span>
+                    </div>
+                </div>
                 <div className={`campaign-wizard-drawer relative w-full bg-[#fdfdfd] shadow-2xl h-full flex flex-col border-l border-slate-100 transform transition-all duration-500 cubic-bezier(0.16, 1, 0.3, 1) ${animateWizardIn ? 'translate-x-0 opacity-100' : 'translate-x-full lg:translate-x-[100px] opacity-0'}`}>
                     <div className="px-4 lg:px-8 py-4 lg:py-5 bg-white flex justify-between items-center shrink-0 border-b border-slate-100">
                         <div className="flex items-center gap-3 lg:gap-4 flex-1 min-w-0 mr-4">
@@ -1838,15 +1859,8 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                                 Bỏ qua & Thoát
                             </button>
                         </div>
+                    </div>
                 </div>
-                <style>{`
-                  @media (min-width: 1024px) {
-                    .campaign-wizard-drawer {
-                      max-width: calc(100vw - var(--sidebar-width, 260px)) !important;
-                    }
-                  }
-                `}</style>
-            </div>
             )}
         </>,
         document.body
