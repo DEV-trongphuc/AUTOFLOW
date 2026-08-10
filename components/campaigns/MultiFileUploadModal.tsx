@@ -31,7 +31,9 @@ export const MultiFileUploadModal: React.FC<MultiFileUploadModalProps> = ({ isOp
     const processFiles = async (selectedFiles: File[]) => {
         setIsChecking(true);
         const parsedFiles = selectedFiles.map(file => {
-            const match = EXTRACT_REGEX.exec(file.name);
+            const lastDotIndex = file.name.lastIndexOf('.');
+            const nameWithoutExt = lastDotIndex !== -1 ? file.name.substring(0, lastDotIndex) : file.name;
+            const match = EXTRACT_REGEX.exec(nameWithoutExt);
             if (match && match[1]) {
                 return { file, email: match[1], status: 'pending' as const };
             }
