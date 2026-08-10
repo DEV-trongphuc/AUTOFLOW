@@ -794,8 +794,8 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                 const update = result || { status: CampaignStatus.SENDING };
                 setFormData(prev => ({ ...prev, ...update }));
 
-                // Close modal immediately as requested
-                handleIntentClose();
+                // Close modal immediately as requested (Skip auto-save draft since it is successfully published)
+                onClose();
             }
         } finally {
             publishLockRef.current = false;
