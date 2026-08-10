@@ -1866,12 +1866,16 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                                         <button
                                             disabled={isSubmitting}
                                             onClick={() => {
-                                                setShowFlowSelectModal(true);
+                                                if (canSend) {
+                                                    handlePublishClick();
+                                                } else {
+                                                    // Request approval logic
+                                                }
                                             }}
-                                            className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black text-sm transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-200 hover:-translate-y-0.5"
+                                            className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-sm transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-200 hover:-translate-y-0.5"
                                         >
-                                            <GitMerge className="w-5 h-5" />
-                                            KẾT NỐI DOMATION
+                                            {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : (canSend ? <Send className="w-5 h-5" /> : <UserCheck className="w-5 h-5" />)}
+                                            {isSubmitting ? 'Đang gửi...' : (canSend ? 'Bỏ qua & Gửi ngay' : 'Bỏ qua & Yêu Cầu Duyệt')}
                                         </button>
 
                                         <div className="grid grid-cols-2 gap-3 mt-2">
@@ -1897,16 +1901,12 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                                             <button
                                                 disabled={isSubmitting}
                                                 onClick={() => {
-                                                    if (canSend) {
-                                                        handlePublishClick();
-                                                    } else {
-                                                        // Request approval logic
-                                                    }
+                                                    setShowFlowSelectModal(true);
                                                 }}
-                                                className="py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs uppercase shadow-md shadow-emerald-200 transition-all flex items-center justify-center gap-2 hover:-translate-y-0.5"
+                                                className="py-3.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200/50 rounded-xl font-bold text-xs uppercase transition-all flex items-center justify-center gap-2"
                                             >
-                                                {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : (canSend ? <Send className="w-4 h-4" /> : <UserCheck className="w-4 h-4" />)}
-                                                {isSubmitting ? 'Đang gửi...' : (canSend ? 'Bỏ qua & Gửi ngay' : 'Bỏ qua & Yêu Cầu Duyệt')}
+                                                <GitMerge className="w-4 h-4" />
+                                                Kết nối Flow
                                             </button>
                                         </div>
                                     </div>
