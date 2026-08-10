@@ -960,6 +960,16 @@ if ($method === 'POST' && $route === 'send_test') {
             $allAttachments = json_decode($attachmentsRaw ?? '[]', true);
             $filteredAttachments = Mailer::filterAttachments($allAttachments, $targetEmail);
 
+            // If it is a test email and no matched attachments were found, but there are match_email attachments,
+            // let's include the first match_email attachment as a sample preview for the admin to inspect.
+            if (empty($filteredAttachments) && !empty($allAttachments)) {
+                $matchEmailAtts = array_filter($allAttachments, fn($a) => ($a['logic'] ?? 'all') === 'match_email');
+                if (!empty($matchEmailAtts)) {
+                    $sample = reset($matchEmailAtts);
+                    $filteredAttachments[] = $sample;
+                }
+            }
+
             $finalSubject = replaceMergeTags($subject, $subscriber);
             $finalHtml = replaceMergeTags($htmlContent, $subscriber);
             $stmtSettings = $pdo->prepare("SELECT `value` FROM system_settings WHERE `key` = 'smtp_user' AND workspace_id IN (0, ?) ORDER BY workspace_id DESC LIMIT 1");
