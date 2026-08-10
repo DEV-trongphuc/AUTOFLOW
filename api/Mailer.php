@@ -420,8 +420,21 @@ class Mailer {
         return $filtered;
     }
 
-    private function resolveAbsolutePath($path)
+    private function resolveAbsolutePath($att)
     {
+        if (is_array($att)) {
+            $path = $att['path'] ?? '';
+            $url = $att['url'] ?? '';
+        } else {
+            $path = $att;
+            $url = '';
+        }
+
+        if (empty($path) && !empty($url)) {
+            $filename = basename($url);
+            $path = '../uploadss/' . $filename;
+        }
+
         if (!$path)
             return false;
         if (isset(self::$pathCache[$path]))
@@ -461,7 +474,7 @@ class Mailer {
         if (!empty($attachments)) {
             $brevoAttachments = [];
             foreach ($attachments as $att) {
-                $fullPath = $this->resolveAbsolutePath($att['path']);
+                $fullPath = $this->resolveAbsolutePath($att);
                 if ($fullPath) {
                     $brevoAttachments[] = [
                         'content' => base64_encode(file_get_contents($fullPath)),
@@ -552,7 +565,7 @@ class Mailer {
                 $mail->Body = $body;
                 if (!empty($attachments)) {
                     foreach ($attachments as $att) {
-                        $fullPath = $this->resolveAbsolutePath($att['path']);
+                        $fullPath = $this->resolveAbsolutePath($att);
                         if ($fullPath)
                             $mail->addAttachment($fullPath, $att['name']);
                     }
