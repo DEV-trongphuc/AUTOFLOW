@@ -4,7 +4,7 @@ import {
   Send, Users, FileEdit, BarChart3,
   Settings, Mail, GitMerge, Tag, Webhook, Link, QrCode,
   ExternalLink, Zap, ChevronRight, ChevronLeft, Globe, Shield,
-  LayoutDashboard, Key, Bot, Facebook, Gift, FileText, Cpu
+  LayoutDashboard, Key, Bot, Facebook, Gift, FileText, Cpu, Plus
 } from 'lucide-react';
 import { api } from '../../services/storageAdapter';
 
@@ -195,7 +195,13 @@ export const ANALYTICS_NAV: NavItemConfig[] = [
 
 const Sidebar: React.FC<SidebarProps> = ({ onClose, isCollapsed, onToggleCollapse }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [activeFlowCount, setActiveFlowCount] = React.useState<number | null>(null);
+
+  const handleCreateCampaign = () => {
+    navigate('/campaigns', { state: { openWizard: true } });
+    if (onClose) onClose();
+  };
 
   useEffect(() => {
     updateRecentModules(location.pathname);
@@ -271,16 +277,18 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose, isCollapsed, onToggleCollaps
       <div className={`py-4 ${isCollapsed ? 'px-2' : 'px-4'} flex justify-center border-b border-white/10 shrink-0`}>
         {isCollapsed ? (
           <button
+            onClick={handleCreateCampaign}
             className="w-11 h-11 rounded-full flex items-center justify-center text-white bg-gradient-to-r from-purple-500 to-violet-600 shadow-[0_4px_12px_rgba(168,85,247,0.4)] hover:scale-105 transition-all cursor-pointer"
-            title="AI Automation"
+            title="Tạo chiến dịch mới"
           >
-            <Cpu className="w-5 h-5" />
+            <Plus className="w-5 h-5" />
           </button>
         ) : (
           <button
+            onClick={handleCreateCampaign}
             className="w-full h-11 rounded-[12px] flex items-center justify-center gap-2 text-white text-[13px] font-bold bg-gradient-to-r from-purple-500 to-violet-600 shadow-[0_4px_12px_rgba(168,85,247,0.4)] hover:-translate-y-0.5 hover:shadow-[0_6px_16px_rgba(168,85,247,0.5)] transition-all cursor-pointer"
           >
-            <Cpu className="w-4 h-4" /> AI Automation
+            <Plus className="w-4 h-4" /> Tạo chiến dịch mới
           </button>
         )}
       </div>

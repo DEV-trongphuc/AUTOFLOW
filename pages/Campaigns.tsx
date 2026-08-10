@@ -305,6 +305,11 @@ const Campaigns: React.FC = () => {
                 setSelectedDetailCampaign(targetCamp);
                 window.history.replaceState({}, document.title);
             }
+        } else if (navState?.openWizard) {
+            setSelectedDetailCampaign(null);
+            setWizardInitialData(undefined);
+            setIsWizardOpen(true);
+            window.history.replaceState({}, document.title);
         }
     }, [location.state, campaigns]);
 
