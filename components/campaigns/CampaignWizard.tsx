@@ -532,6 +532,26 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.senderEmail || '')) {
                         newErrors.senderEmail = 'Email không hợp lệ';
                     }
+
+                    if (formData.config?.cc_enabled) {
+                        const ccEmailsStr = formData.config?.cc_emails || '';
+                        if (!ccEmailsStr.trim()) {
+                            newErrors.ccEmails = 'Vui lòng nhập email CC';
+                        } else {
+                            const emails = ccEmailsStr.split(/[,;\s]+/).map((e: string) => e.trim()).filter(Boolean);
+                            if (emails.length === 0) {
+                                newErrors.ccEmails = 'Vui lòng nhập ít nhất một email CC';
+                            } else if (emails.length > 3) {
+                                newErrors.ccEmails = 'Chỉ được nhập tối đa 3 email CC';
+                            } else {
+                                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                                const invalidEmails = emails.filter((e: string) => !emailRegex.test(e));
+                                if (invalidEmails.length > 0) {
+                                    newErrors.ccEmails = `Email CC không hợp lệ: ${invalidEmails.join(', ')}`;
+                                }
+                            }
+                        }
+                    }
                 }
                 errorMsg = Object.values(newErrors)[0] || '';
                 break;
@@ -917,12 +937,12 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
             `}</style>
             <div className="fixed inset-0 z-[150] flex justify-end">
                 <div
-                    className={`absolute inset-0 bg-slate-950/50 backdrop-blur-xs transition-opacity duration-500 ${animateWizardIn ? 'opacity-100' : 'opacity-0'}`}
+                    className={`absolute inset-0 bg-slate-950/75 backdrop-blur-sm transition-opacity duration-500 ${animateWizardIn ? 'opacity-100' : 'opacity-0'}`}
                     onClick={handleIntentClose}
                 >
                     {/* Floating Back Button on Overlay (centered in the sidebar area on desktop) */}
                     <div 
-                        className="absolute top-6 left-6 md:left-[calc(var(--sidebar-width,260px)/2)] md:-translate-x-1/2 flex flex-col items-center gap-1.5 cursor-pointer group select-none transition-all duration-300"
+                        className="absolute top-1/2 -translate-y-1/2 left-6 md:left-[calc(var(--sidebar-width,260px)/2)] md:-translate-x-1/2 flex flex-col items-center gap-1.5 cursor-pointer group select-none transition-all duration-300"
                         onClick={(e) => {
                             e.stopPropagation();
                             handleIntentClose();
@@ -1027,23 +1047,72 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                                     </div>
 
                                     {(!formData.type || formData.type === 'email') && (
-                                        <div className="space-y-4 animate-in fade-in duration-500">
-                                            <label className="text-[11px] font-bold uppercase text-slate-500 ml-1 tracking-widest">Người gửi (Sender) <span className="text-rose-500">*</span></label>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                                {senderEmails.map((email, index) => (
-                                                    <button key={email} onClick={() => setFormData({ ...formData, senderEmail: email })} className={`p-4 rounded-xl border transition-all flex items-center justify-between group ${formData.senderEmail === email ? 'border-indigo-500 bg-indigo-50 shadow-md ring-1 ring-indigo-200' : 'border-slate-100 bg-white hover:border-slate-200'}`}>
-                                                        <div className="flex items-center gap-3 overflow-hidden">
-                                                            <ShieldCheck className={`w-4 h-4 ${formData.senderEmail === email ? 'text-indigo-600' : 'text-slate-400'}`} />
-                                                            <span className={`text-xs font-bold truncate flex items-center ${formData.senderEmail === email ? 'text-indigo-900' : 'text-slate-600'}`}>
-                                                                {email}
-                                                                {index === 0 && <span className="ml-2 text-[9px] text-blue-600 font-bold uppercase tracking-widest bg-blue-100/80 border border-blue-200/50 px-2 py-0.5 rounded-full shrink-0 mt-0.5">Mặc định</span>}
-                                                            </span>
-                                                        </div>
-                                                        {formData.senderEmail === email && <div className="w-5 h-5 bg-indigo-500 rounded-full flex items-center justify-center text-white"><Check className="w-3 h-3" /></div>}
-                                                    </button>
-                                                ))}
+                                        <>
+                                            <div className="space-y-4 animate-in fade-in duration-500">
+                                                <label className="text-[11px] font-bold uppercase text-slate-500 ml-1 tracking-widest">Người gửi (Sender) <span className="text-rose-500">*</span></label>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                    {senderEmails.map((email, index) => (
+                                                        <button key={email} onClick={() => setFormData({ ...formData, senderEmail: email })} className={`p-4 rounded-xl border transition-all flex items-center justify-between group ${formData.senderEmail === email ? 'border-indigo-500 bg-indigo-50 shadow-md ring-1 ring-indigo-200' : 'border-slate-100 bg-white hover:border-slate-200'}`}>
+                                                            <div className="flex items-center gap-3 overflow-hidden">
+                                                                <ShieldCheck className={`w-4 h-4 ${formData.senderEmail === email ? 'text-indigo-600' : 'text-slate-400'}`} />
+                                                                <span className={`text-xs font-bold truncate flex items-center ${formData.senderEmail === email ? 'text-indigo-900' : 'text-slate-600'}`}>
+                                                                    {email}
+                                                                    {index === 0 && <span className="ml-2 text-[9px] text-blue-600 font-bold uppercase tracking-widest bg-blue-100/80 border border-blue-200/50 px-2 py-0.5 rounded-full shrink-0 mt-0.5">Mặc định</span>}
+                                                                </span>
+                                                            </div>
+                                                            {formData.senderEmail === email && <div className="w-5 h-5 bg-indigo-500 rounded-full flex items-center justify-center text-white"><Check className="w-3 h-3" /></div>}
+                                                        </button>
+                                                    ))}
+                                                </div>
                                             </div>
-                                        </div>
+
+                                            {/* CC Configuration */}
+                                            <div className="pt-6 border-t border-slate-100 space-y-4 animate-in fade-in duration-500">
+                                                <div className="flex items-center justify-between">
+                                                    <div className="space-y-0.5">
+                                                        <label className="text-xs font-bold text-slate-700">Gửi kèm CC (Carbon Copy)</label>
+                                                        <p className="text-[10px] text-slate-400 font-medium">Gửi bản sao tự động đến các email giám sát khi chạy chiến dịch.</p>
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setFormData(prev => ({
+                                                            ...prev,
+                                                            config: {
+                                                                ...prev.config,
+                                                                cc_enabled: !(prev.config?.cc_enabled)
+                                                            }
+                                                        }))}
+                                                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 focus:outline-none ${formData.config?.cc_enabled ? 'bg-indigo-600' : 'bg-slate-200'}`}
+                                                    >
+                                                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-300 ${formData.config?.cc_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                                                    </button>
+                                                </div>
+
+                                                {formData.config?.cc_enabled && (
+                                                    <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
+                                                        <label className="text-[10px] font-bold uppercase text-slate-400">Danh sách email CC (Tối đa 3 email)</label>
+                                                        <input
+                                                            type="text"
+                                                            placeholder="vi_du1@gmail.com, vi_du2@gmail.com"
+                                                            value={formData.config?.cc_emails || ''}
+                                                            onChange={e => setFormData(prev => ({
+                                                                ...prev,
+                                                                config: {
+                                                                    ...prev.config,
+                                                                    cc_emails: e.target.value
+                                                                }
+                                                            }))}
+                                                            className={`w-full px-4 py-3 bg-slate-50 border ${errors.ccEmails ? 'border-rose-500 focus:border-rose-500' : 'border-slate-200 focus:border-indigo-500'} rounded-2xl text-xs focus:outline-none transition-all placeholder:text-slate-300`}
+                                                        />
+                                                        {errors.ccEmails ? (
+                                                            <p className="text-[10px] font-semibold text-rose-500 px-1">{errors.ccEmails}</p>
+                                                        ) : (
+                                                            <p className="text-[10px] text-slate-400 font-medium px-1">Các email cách nhau bằng dấu phẩy (,)</p>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </>
                                     )}
                                 </div>
                             </TabTransition>

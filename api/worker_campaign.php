@@ -259,9 +259,16 @@ if (!function_exists('runWorkerCampaign')) {
                     }
                 }
 
+                $campaignConfig = json_decode($campaign['config'] ?? '{}', true);
                 $isABTest = ($campaign['type'] ?? '') === 'ab_testing';
-                $abConfig = $isABTest ? (json_decode($campaign['config'] ?? '{}', true)['ab_test'] ?? []) : [];
+                $abConfig = $isABTest ? ($campaignConfig['ab_test'] ?? []) : [];
                 $hasVariantB = !empty($abConfig['variant_b']);
+
+                $ccEmails = [];
+                if (!empty($campaignConfig['cc_enabled']) && !empty($campaignConfig['cc_emails'])) {
+                    $ccEmails = array_filter(array_map('trim', preg_split('/[,;\s\n\r]+/', $campaignConfig['cc_emails'])), fn($e) => filter_var($e, FILTER_VALIDATE_EMAIL));
+                    $ccEmails = array_slice($ccEmails, 0, 3);
+                }
 
                 $htmlContent = resolveEmailContent($pdo, $campaign['template_id'], $campaign['custom_html'] ?? '', $campaign['content_body']);
                 $htmlContentB = $hasVariantB ? resolveEmailContent($pdo, $abConfig['variant_b']['template_id'] ?? $campaign['template_id'], $abConfig['variant_b']['custom_html'] ?? '', $abConfig['variant_b']['content_body'] ?? '') : null;
@@ -637,7 +644,7 @@ if (!function_exists('runWorkerCampaign')) {
                                     // 14/s remains well within Amazon SES 14/s sending quota.
                                     sesAcquireRateSlot(70000); // 70ms interval = ~14/s shared total
 
-                                    $res = $mailer->send($sub['email'], $personalSubject, $personalHtml, $sub['id'], $cid, null, null, $attachments, null, null, $cName, false, $skipQA, $variationLabel, null, $workspace_id);
+                                    $res = $mailer->send($sub['email'], $personalSubject, $personalHtml, $sub['id'], $cid, null, null, $attachments, null, null, $cName, false, $skipQA, $variationLabel, null, $workspace_id, $ccEmails);
                                 }
                             }
 

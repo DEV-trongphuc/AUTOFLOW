@@ -129,7 +129,7 @@ class Mailer {
         return $success;
     }
 
-    public function send($toEmail, $subject, $htmlContent, $subscriberId = null, $campaignId = null, $flowId = null, $flowName = null, $attachments = [], $templateHash = null, $stepId = null, $stepLabel = null, $isQACopy = false, $skipQA = false, $variant = null, $reminderId = null, $workspaceId = null)
+    public function send($toEmail, $subject, $htmlContent, $subscriberId = null, $campaignId = null, $flowId = null, $flowName = null, $attachments = [], $templateHash = null, $stepId = null, $stepLabel = null, $isQACopy = false, $skipQA = false, $variant = null, $reminderId = null, $workspaceId = null, $ccEmails = [])
     {
         // [SAFETY GUARD] Final check for virtual emails to prevent quota waste
         if (isVirtualEmail($toEmail)) {
@@ -254,8 +254,7 @@ class Mailer {
             );
         }
 
-        $error = "";
-        $success = $this->dispatchRaw($toEmail, $subject, $htmlContent, $attachments, $error, [], $this->workspaceId);
+        $success = $this->dispatchRaw($toEmail, $subject, $htmlContent, $attachments, $error, $ccEmails, $this->workspaceId);
 
         // Batch logging instead of synchronous DB hit
         if (!$isQACopy) {
