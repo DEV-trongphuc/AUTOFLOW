@@ -67,7 +67,7 @@ class Mailer {
      * Dispatch an email without any tracking/footer overhead.
      * Used for QA copies and avoid recursion overhead.
      */
-    public function dispatchRaw($toEmail, $subject, $htmlContent, $attachments = [], &$error = "", $ccEmails = [], $workspaceId = null)
+    public function dispatchRaw($toEmail, $subject, $htmlContent, $attachments = [], &$error = "", $ccEmails = [], $workspaceId = null, $bccEmails = [])
     {
         // [MULTI-TENANT] Dynamic workspace switching
         if ($workspaceId !== null && (int)$workspaceId !== $this->workspaceId) {
@@ -105,14 +105,17 @@ class Mailer {
             // [OPTIMIZATION] Prefer SMTP Keep-Alive for Brevo Relay to reach 14+ emails/sec
             // Only use Brevo API if it's NOT a relay host or if specifically desired. 
             if ((strpos($host, 'brevo') !== false || strpos($host, 'sendinblue') !== false) && strpos($host, 'smtp') === false) {
-                $success = $this->sendViaBrevoAPI($toEmail, $subject, $htmlContent, $fromEmail, $fromName, $attachments, $error, $ccEmails);
+                $success = $this->sendViaBrevoAPI($toEmail, $subject, $htmlContent, $fromEmail, $fromName, $attachments, $error, $ccEmails, $bccEmails);
             } else {
-                $success = $this->sendViaPHPMailer($toEmail, $subject, $htmlContent, $fromEmail, $fromName, $attachments, $error, $ccEmails);
+                $success = $this->sendViaPHPMailer($toEmail, $subject, $htmlContent, $fromEmail, $fromName, $attachments, $error, $ccEmails, $bccEmails);
             }
         } else {
             $headers = array('MIME-Version: 1.0', 'Content-type: text/html; charset=UTF-8', 'From: ' . $fromName . ' <' . $fromEmail . '>', 'Reply-To: ' . $fromEmail);
             if (!empty($ccEmails)) {
                 $headers[] = 'Cc: ' . implode(', ', $ccEmails);
+            }
+            if (!empty($bccEmails)) {
+                $headers[] = 'Bcc: ' . implode(', ', $bccEmails);
             }
             $success = @mail($toEmail, $subject, $htmlContent, implode("\r\n", $headers), "-f" . $fromEmail);
         }
@@ -129,7 +132,7 @@ class Mailer {
         return $success;
     }
 
-    public function send($toEmail, $subject, $htmlContent, $subscriberId = null, $campaignId = null, $flowId = null, $flowName = null, $attachments = [], $templateHash = null, $stepId = null, $stepLabel = null, $isQACopy = false, $skipQA = false, $variant = null, $reminderId = null, $workspaceId = null, $ccEmails = [])
+    public function send($toEmail, $subject, $htmlContent, $subscriberId = null, $campaignId = null, $flowId = null, $flowName = null, $attachments = [], $templateHash = null, $stepId = null, $stepLabel = null, $isQACopy = false, $skipQA = false, $variant = null, $reminderId = null, $workspaceId = null, $ccEmails = [], $bccEmails = [])
     {
         // [SAFETY GUARD] Final check for virtual emails to prevent quota waste
         if (isVirtualEmail($toEmail)) {
@@ -254,7 +257,7 @@ class Mailer {
             );
         }
 
-        $success = $this->dispatchRaw($toEmail, $subject, $htmlContent, $attachments, $error, $ccEmails, $this->workspaceId);
+        $success = $this->dispatchRaw($toEmail, $subject, $htmlContent, $attachments, $error, $ccEmails, $this->workspaceId, $bccEmails);
 
         // Batch logging instead of synchronous DB hit
         if (!$isQACopy) {
@@ -391,7 +394,7 @@ class Mailer {
             $name = $att['name'] ?? '';
             $path = $att['path'] ?? '';
             if ($logic === 'all') {
-                $filtered[] = ['path' => $path, 'name' => $name];
+                $filtered[] = $att;
             } else if ($logic === 'match_email' && !empty($recipientEmail)) {
                     // [FIX #3] Support two naming conventions for match_email attachments:
                     // 1. Original: filename contains "_email@domain.com" (e.g. "invoice_john@example.com.pdf")
@@ -413,7 +416,7 @@ class Mailer {
                     }
 
                     if ($directMatch || $slugMatch || $regexMatch) {
-                        $filtered[] = ['path' => $path, 'name' => $name];
+                        $filtered[] = $att;
                     }
             }
         }
@@ -460,7 +463,7 @@ class Mailer {
         return $resolved;
     }
 
-    private function sendViaBrevoAPI($to, $subject, $body, $fromEmail, $fromName, $attachments, &$error, $ccEmails = [])
+    private function sendViaBrevoAPI($to, $subject, $body, $fromEmail, $fromName, $attachments, &$error, $ccEmails = [], $bccEmails = [])
     {
         $apiKey = trim($this->smtpSettings['smtp_pass'] ?? '');
         $url = 'https://api.brevo.com/v3/smtp/email';
@@ -469,6 +472,11 @@ class Mailer {
         // Add CC recipients
         if (!empty($ccEmails)) {
             $data['cc'] = array_map(fn($e) => ['email' => $e], array_values($ccEmails));
+        }
+
+        // Add BCC recipients
+        if (!empty($bccEmails)) {
+            $data['bcc'] = array_map(fn($e) => ['email' => $e], array_values($bccEmails));
         }
 
         if (!empty($attachments)) {
@@ -515,7 +523,7 @@ class Mailer {
         return false;
     }
 
-    private function sendViaPHPMailer($to, $subject, $body, $fromEmail, $fromName, $attachments, &$error, $ccEmails = [])
+    private function sendViaPHPMailer($to, $subject, $body, $fromEmail, $fromName, $attachments, &$error, $ccEmails = [], $bccEmails = [])
     {
         if ($this->phpMailerInstance === null) {
             $phpMailerPath = __DIR__ . '/PHPMailer/src/PHPMailer.php';
@@ -546,7 +554,7 @@ class Mailer {
             $this->phpMailerInstance->Timeout = 30;
         }
 
-        $attemptSend = function () use ($to, $subject, $body, $fromEmail, $fromName, $attachments, $ccEmails, &$error) {
+        $attemptSend = function () use ($to, $subject, $body, $fromEmail, $fromName, $attachments, $ccEmails, $bccEmails, &$error) {
             try {
                 $mail = $this->phpMailerInstance;
                 $mail->clearAddresses();
@@ -558,6 +566,12 @@ class Mailer {
                 foreach ($ccEmails as $ccEmail) {
                     if (filter_var($ccEmail, FILTER_VALIDATE_EMAIL)) {
                         $mail->addCC($ccEmail);
+                    }
+                }
+                // Add BCC addresses
+                foreach ($bccEmails as $bccEmail) {
+                    if (filter_var($bccEmail, FILTER_VALIDATE_EMAIL)) {
+                        $mail->addBCC($bccEmail);
                     }
                 }
                 $mail->isHTML(true);

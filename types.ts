@@ -390,6 +390,8 @@ export interface Campaign {
     mapped_params?: Record<string, string>;
     cc_enabled?: boolean;
     cc_emails?: string;
+    bcc_enabled?: boolean;
+    bcc_emails?: string;
   };
   reminderCount?: number; // [UI-R1] Count of configured reminders — returned by API list query
   step_count?: number;    // [P41] From flow list; used in smart hint

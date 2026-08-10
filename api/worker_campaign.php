@@ -270,6 +270,12 @@ if (!function_exists('runWorkerCampaign')) {
                     $ccEmails = array_slice($ccEmails, 0, 3);
                 }
 
+                $bccEmails = [];
+                if (!empty($campaignConfig['bcc_enabled']) && !empty($campaignConfig['bcc_emails'])) {
+                    $bccEmails = array_filter(array_map('trim', preg_split('/[,;\s\n\r]+/', $campaignConfig['bcc_emails'])), fn($e) => filter_var($e, FILTER_VALIDATE_EMAIL));
+                    $bccEmails = array_slice($bccEmails, 0, 3);
+                }
+
                 $htmlContent = resolveEmailContent($pdo, $campaign['template_id'], $campaign['custom_html'] ?? '', $campaign['content_body']);
                 $htmlContentB = $hasVariantB ? resolveEmailContent($pdo, $abConfig['variant_b']['template_id'] ?? $campaign['template_id'], $abConfig['variant_b']['custom_html'] ?? '', $abConfig['variant_b']['content_body'] ?? '') : null;
 
@@ -548,7 +554,7 @@ if (!function_exists('runWorkerCampaign')) {
                             }
 
                             $context = [
-                                'unsubscribe_url' => $baseUrl . "/webhook.php?type=unsubscribe&sid=$subId&cid=$cid",
+                                'unsubscribe_url' => $apiUrl . "/webhook.php?type=unsubscribe&sid=$subId&cid=$cid",
                                 'campaign_name' => $cName,
                                 'vouchers_batch' => $vouchersBatch
                             ];
@@ -644,7 +650,7 @@ if (!function_exists('runWorkerCampaign')) {
                                     // 14/s remains well within Amazon SES 14/s sending quota.
                                     sesAcquireRateSlot(70000); // 70ms interval = ~14/s shared total
 
-                                    $res = $mailer->send($sub['email'], $personalSubject, $personalHtml, $sub['id'], $cid, null, null, $attachments, null, null, $cName, false, $skipQA, $variationLabel, null, $workspace_id, $ccEmails);
+                                    $res = $mailer->send($sub['email'], $personalSubject, $personalHtml, $sub['id'], $cid, null, null, $attachments, null, null, $cName, false, $skipQA, $variationLabel, null, $workspace_id, $ccEmails, $bccEmails);
                                 }
                             }
 

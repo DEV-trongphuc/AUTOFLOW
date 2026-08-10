@@ -552,6 +552,26 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                             }
                         }
                     }
+
+                    if (formData.config?.bcc_enabled) {
+                        const bccEmailsStr = formData.config?.bcc_emails || '';
+                        if (!bccEmailsStr.trim()) {
+                            newErrors.bccEmails = 'Vui lòng nhập email BCC';
+                        } else {
+                            const emails = bccEmailsStr.split(/[,;\s]+/).map((e: string) => e.trim()).filter(Boolean);
+                            if (emails.length === 0) {
+                                newErrors.bccEmails = 'Vui lòng nhập ít nhất một email BCC';
+                            } else if (emails.length > 3) {
+                                newErrors.bccEmails = 'Chỉ được nhập tối đa 3 email BCC';
+                            } else {
+                                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                                const invalidEmails = emails.filter((e: string) => !emailRegex.test(e));
+                                if (invalidEmails.length > 0) {
+                                    newErrors.bccEmails = `Email BCC không hợp lệ: ${invalidEmails.join(', ')}`;
+                                }
+                            }
+                        }
+                    }
                 }
                 errorMsg = Object.values(newErrors)[0] || '';
                 break;
@@ -1106,6 +1126,53 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                                                         />
                                                         {errors.ccEmails ? (
                                                             <p className="text-[10px] font-semibold text-rose-500 px-1">{errors.ccEmails}</p>
+                                                        ) : (
+                                                            <p className="text-[10px] text-slate-400 font-medium px-1">Các email cách nhau bằng dấu phẩy (,)</p>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* BCC Configuration */}
+                                            <div className="pt-6 border-t border-slate-100 space-y-4 animate-in fade-in duration-500">
+                                                <div className="flex items-center justify-between">
+                                                    <div className="space-y-0.5">
+                                                        <label className="text-xs font-bold text-slate-700">Gửi kèm BCC (Blind Carbon Copy)</label>
+                                                        <p className="text-[10px] text-slate-400 font-medium">Gửi bản sao ẩn danh tự động đến các email giám sát khi chạy chiến dịch.</p>
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setFormData(prev => ({
+                                                            ...prev,
+                                                            config: {
+                                                                ...prev.config,
+                                                                bcc_enabled: !(prev.config?.bcc_enabled)
+                                                            }
+                                                        }))}
+                                                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 focus:outline-none ${formData.config?.bcc_enabled ? 'bg-indigo-600' : 'bg-slate-200'}`}
+                                                    >
+                                                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-300 ${formData.config?.bcc_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                                                    </button>
+                                                </div>
+
+                                                {formData.config?.bcc_enabled && (
+                                                    <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
+                                                        <label className="text-[10px] font-bold uppercase text-slate-400">Danh sách email BCC (Tối đa 3 email)</label>
+                                                        <input
+                                                            type="text"
+                                                            placeholder="vi_du1@gmail.com, vi_du2@gmail.com"
+                                                            value={formData.config?.bcc_emails || ''}
+                                                            onChange={e => setFormData(prev => ({
+                                                                ...prev,
+                                                                config: {
+                                                                    ...prev.config,
+                                                                    bcc_emails: e.target.value
+                                                                }
+                                                            }))}
+                                                            className={`w-full px-4 py-3 bg-slate-50 border ${errors.bccEmails ? 'border-rose-500 focus:border-rose-500' : 'border-slate-200 focus:border-indigo-500'} rounded-2xl text-xs focus:outline-none transition-all placeholder:text-slate-300`}
+                                                        />
+                                                        {errors.bccEmails ? (
+                                                            <p className="text-[10px] font-semibold text-rose-500 px-1">{errors.bccEmails}</p>
                                                         ) : (
                                                             <p className="text-[10px] text-slate-400 font-medium px-1">Các email cách nhau bằng dấu phẩy (,)</p>
                                                         )}
