@@ -66,7 +66,7 @@ const Modal: React.FC<ModalProps> = ({
       {isOpen && (
         <div 
           className={`fixed inset-0 flex items-center justify-center overflow-y-auto overflow-x-hidden ${size === 'full' ? 'w-full h-full' : 'p-4 py-8 sm:p-6 sm:py-12'}`}
-          style={{ zIndex: zIndex ?? 150 }}
+          style={{ zIndex: zIndex ?? 20000 }}
         >
           <motion.div
             initial={{ opacity: 0 }}

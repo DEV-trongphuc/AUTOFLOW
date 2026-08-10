@@ -645,7 +645,7 @@ const EmailEditor: React.FC<EmailEditorProps> = ({ template, groups, onSave, onC
 
             const result = await api.post<any>('send_test_email', {
                 email,
-                subject: `[Test] ${name}`,
+                subject: name,
                 content: finalHtml
             });
 

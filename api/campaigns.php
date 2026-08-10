@@ -1,4 +1,5 @@
 <?php
+/** @var PDO $pdo */
 require_once 'bootstrap.php';
 // Initializing system once via bootstrap pattern
 initializeSystem($pdo);
@@ -923,7 +924,7 @@ if ($method === 'POST' && $route === 'send_test') {
             require_once 'Mailer.php';
             $subscriber = [
                 'first_name' => 'Nhà quảng cáo',
-                'last_name' => 'Test',
+                'last_name' => '',
                 'email' =>
                     $targetEmail
             ];
@@ -936,13 +937,13 @@ if ($method === 'POST' && $route === 'send_test') {
                 $stmtRem->execute([$reminderId]);
                 $reminder = $stmtRem->fetch();
                 if ($reminder) {
-                    $subject = "[TEST] " . $reminder['subject'];
+                    $subject = $reminder['subject'];
                     $htmlContent = resolveEmailContent($pdo, $reminder['template_id'], '', '');
                     $attachmentsRaw = $campaign['attachments']; // Fallback
                 }
             } else {
                 if ($campaign) {
-                    $subject = "[TEST] " . $campaign['subject'];
+                    $subject = $campaign['subject'];
                     $htmlContent = resolveEmailContent(
                         $pdo,
                         $campaign['template_id'],
