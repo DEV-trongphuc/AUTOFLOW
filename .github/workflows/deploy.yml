@@ -35,6 +35,7 @@ jobs:
         mkdir -p deploy_temp
         cp -r dist/* deploy_temp/
         cp -r api deploy_temp/mail_api
+        if [ -d s ]; then cp -r s deploy_temp/; fi
         if [ -f .htaccess ]; then cp .htaccess deploy_temp/; fi
 
     # 5. Synchronize output directory to cPanel using FTP/SFTP
