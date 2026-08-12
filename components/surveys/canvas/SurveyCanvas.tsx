@@ -150,8 +150,8 @@ const SurveyCover: React.FC<{
                                     </div>
                                 ) : (
                                     <div key={i} className="flex items-center gap-3 bg-white/5 w-fit pr-4 py-1.5 rounded-full border border-white/10 backdrop-blur-sm">
-                                        <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0 ml-1">
-                                            <Check className="w-3.5 h-3.5 text-emerald-400 stroke-[3]" />
+                                        <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center shrink-0 ml-1">
+                                            <Check className="w-3.5 h-3.5 text-white stroke-[3]" />
                                         </div>
                                         <span className="text-sm font-semibold drop-shadow-md" style={{ color: textColor }}>{feat}</span>
                                     </div>

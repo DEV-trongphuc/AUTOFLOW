@@ -19,6 +19,7 @@ const PublicSurvey: React.FC = () => {
     const [currentPage, setCurrentPage] = useState(0);
     const [pageHistory, setPageHistory] = useState<number[]>([]);
     const [answers, setAnswers] = useState<Record<string, SurveyAnswer>>({});
+    const [validationErrors, setValidationErrors] = useState<Record<string, boolean>>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitted, setSubmitted] = useState(false);
     const [thankYouData, setThankYouData] = useState<any>(null);
@@ -152,6 +153,12 @@ const PublicSurvey: React.FC = () => {
             ...prev,
             [blockId]: { question_id: questionId, block_id: blockId, type: type as any, label: '', ...prev[blockId], ...val }
         }));
+        setValidationErrors(prev => {
+            if (!prev[blockId]) return prev;
+            const copy = { ...prev };
+            delete copy[blockId];
+            return copy;
+        });
     };
 
     const evaluateLogic = (condition: any, ans: SurveyAnswer | undefined) => {
@@ -189,7 +196,44 @@ const PublicSurvey: React.FC = () => {
         handleSubmit(undefined);
     };
 
+    const validateCurrentPage = (): boolean => {
+        const newErrors: Record<string, boolean> = {};
+        let isValid = true;
+        let firstFailedBlockId = '';
+
+        for (const block of currentBlocks) {
+            const isLayoutBlock = ['section_header', 'divider', 'image_block', 'button_block', 'link_block', 'banner_block', 'page_break'].includes(block.type);
+            if (!isLayoutBlock && block.required) {
+                const ans = answers[block.id];
+                if (isAnswerEmpty(ans)) {
+                    newErrors[block.id] = true;
+                    isValid = false;
+                    if (!firstFailedBlockId) {
+                        firstFailedBlockId = block.id;
+                    }
+                }
+            }
+        }
+
+        setValidationErrors(newErrors);
+
+        if (!isValid) {
+            toast.error('Vui lòng điền đầy đủ các thông tin bắt buộc.');
+            if (firstFailedBlockId) {
+                const el = document.getElementById(`block-${firstFailedBlockId}`);
+                if (el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+        }
+
+        return isValid;
+    };
+
     const handleNext = () => {
+        if (!validateCurrentPage()) {
+            return;
+        }
         // Evaluate Branching Logic
         for (const block of currentBlocks) {
             if (block.logic && block.logic.length > 0) {
@@ -248,6 +292,9 @@ const PublicSurvey: React.FC = () => {
         if (!survey) return;
         if (isPreview) {
             toast.error('Đây là màn hình Preview (Xem trước). Bạn không thể điền/nộp trên màn hình này.', { duration: 3000 });
+            return;
+        }
+        if (!validateCurrentPage()) {
             return;
         }
         setIsSubmitting(true);
@@ -510,6 +557,7 @@ const PublicSurvey: React.FC = () => {
                             theme={theme}
                             answer={answers[block.id]}
                             onAnswer={(val) => setAnswer(block.id, block.id, block.type, val)}
+                            hasError={!!validationErrors[block.id]}
                         />
                     ))}
                 </div>
@@ -535,7 +583,7 @@ const PublicSurvey: React.FC = () => {
                             {isSubmitting ? (
                                 <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
                             ) : <Send className="w-4 h-4" />}
-                            {isSubmitting ? 'Đang gửi...' : 'Nộp bài'}
+                            {isSubmitting ? 'Đang gửi...' : 'Nộp'}
                         </button>
                     )}
                     {/* Back */}
@@ -678,8 +726,8 @@ const SurveyCoverPublic: React.FC<{ survey: Survey }> = ({ survey }) => {
                                     </div>
                                 ) : (
                                     <div key={i} className="flex items-center gap-3 bg-white/5 w-fit pr-4 py-1.5 rounded-full border border-white/10 backdrop-blur-sm">
-                                        <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0 ml-1">
-                                            <Check className="w-3.5 h-3.5 text-emerald-400 stroke-[3]" />
+                                        <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center shrink-0 ml-1">
+                                            <Check className="w-3.5 h-3.5 text-white stroke-[3]" />
                                         </div>
                                         <span className="text-sm font-semibold drop-shadow-md" style={{ color: textColor }}>{feat}</span>
                                     </div>
@@ -718,7 +766,8 @@ const BlockRenderer: React.FC<{
     theme: any;
     answer?: SurveyAnswer;
     onAnswer: (val: Partial<SurveyAnswer>) => void;
-}> = ({ block, index, theme, answer, onAnswer }) => {
+    hasError?: boolean;
+}> = ({ block, index, theme, answer, onAnswer, hasError }) => {
     const [otherText, setOtherText] = useState('');
     const [otherSelected, setOtherSelected] = useState(false);
     const accent = block.style?.accentColor ?? theme.primaryColor;
@@ -730,10 +779,11 @@ const BlockRenderer: React.FC<{
         : (theme.cardShadow && theme.cardShadow !== 'none' ? theme.cardShadow : undefined);
 
     const cardStyle: React.CSSProperties = {
-        background: bgColor,
+        background: hasError ? 'rgba(239, 68, 68, 0.05)' : bgColor,
         borderRadius: theme.borderRadius,
         textAlign,
-        boxShadow,
+        boxShadow: hasError ? '0 0 8px rgba(239, 68, 68, 0.2)' : boxShadow,
+        borderColor: hasError ? '#ef4444' : undefined,
     };
 
     // ─ Layout-only blocks ─
@@ -799,7 +849,11 @@ const BlockRenderer: React.FC<{
 
     // ─ Question blocks ─
     return (
-        <div className="p-5 shadow-sm border border-slate-100" style={cardStyle}>
+        <div 
+            id={`block-${block.id}`}
+            className={`p-5 shadow-sm border transition-all ${hasError ? 'border-red-500' : 'border-slate-100'}`}
+            style={cardStyle}
+        >
             <label className="block font-semibold mb-3 text-sm" style={{ color: textColor, textAlign }}>
                 {block.label}
                 {block.required && <span style={{ color: accent }} className="ml-1">*</span>}
@@ -1146,6 +1200,9 @@ const BlockRenderer: React.FC<{
                     </label>
                     <p className="mt-4 text-[10px] text-amber-600 bg-amber-50 px-2 py-1 rounded-md border border-amber-200 font-medium">Chức năng upload đang bảo trì, tạm thời bỏ qua.</p>
                 </div>
+            )}
+            {hasError && (
+                <p className="text-xs text-red-500 mt-2 font-medium">Vui lòng điền câu hỏi bắt buộc này.</p>
             )}
         </div>
     );
