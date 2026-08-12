@@ -19,7 +19,7 @@ const PublicSurvey: React.FC = () => {
     const [currentPage, setCurrentPage] = useState(0);
     const [pageHistory, setPageHistory] = useState<number[]>([]);
     const [answers, setAnswers] = useState<Record<string, SurveyAnswer>>({});
-    const [validationErrors, setValidationErrors] = useState<Record<string, boolean>>({});
+    const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitted, setSubmitted] = useState(false);
     const [thankYouData, setThankYouData] = useState<any>(null);
@@ -197,19 +197,43 @@ const PublicSurvey: React.FC = () => {
     };
 
     const validateCurrentPage = (): boolean => {
-        const newErrors: Record<string, boolean> = {};
+        const newErrors: Record<string, string> = {};
         let isValid = true;
         let firstFailedBlockId = '';
 
         for (const block of currentBlocks) {
             const isLayoutBlock = ['section_header', 'divider', 'image_block', 'button_block', 'link_block', 'banner_block', 'page_break'].includes(block.type);
-            if (!isLayoutBlock && block.required) {
+            if (!isLayoutBlock) {
                 const ans = answers[block.id];
-                if (isAnswerEmpty(ans)) {
-                    newErrors[block.id] = true;
+                
+                // 1. Required question validation
+                if (block.required && isAnswerEmpty(ans)) {
+                    newErrors[block.id] = 'Vui lòng điền câu hỏi bắt buộc này.';
                     isValid = false;
                     if (!firstFailedBlockId) {
                         firstFailedBlockId = block.id;
+                    }
+                }
+                // 2. Email format validation
+                else if (block.type === 'email' && ans && ans.answer_text && ans.answer_text.trim() !== '') {
+                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    if (!emailRegex.test(ans.answer_text.trim())) {
+                        newErrors[block.id] = 'Định dạng email không hợp lệ (ví dụ: name@example.com).';
+                        isValid = false;
+                        if (!firstFailedBlockId) {
+                            firstFailedBlockId = block.id;
+                        }
+                    }
+                }
+                // 3. Phone format validation
+                else if (block.type === 'phone' && ans && ans.answer_text && ans.answer_text.trim() !== '') {
+                    const phoneRegex = /^[0-9+\s\-()]{8,15}$/;
+                    if (!phoneRegex.test(ans.answer_text.trim())) {
+                        newErrors[block.id] = 'Định dạng số điện thoại không hợp lệ.';
+                        isValid = false;
+                        if (!firstFailedBlockId) {
+                            firstFailedBlockId = block.id;
+                        }
                     }
                 }
             }
@@ -218,7 +242,7 @@ const PublicSurvey: React.FC = () => {
         setValidationErrors(newErrors);
 
         if (!isValid) {
-            toast.error('Vui lòng điền đầy đủ các thông tin bắt buộc.');
+            toast.error('Vui lòng điền đầy đủ và đúng định dạng các thông tin bắt buộc.');
             if (firstFailedBlockId) {
                 const el = document.getElementById(`block-${firstFailedBlockId}`);
                 if (el) {
@@ -557,7 +581,7 @@ const PublicSurvey: React.FC = () => {
                             theme={theme}
                             answer={answers[block.id]}
                             onAnswer={(val) => setAnswer(block.id, block.id, block.type, val)}
-                            hasError={!!validationErrors[block.id]}
+                            errorMsg={validationErrors[block.id]}
                         />
                     ))}
                 </div>
@@ -766,8 +790,9 @@ const BlockRenderer: React.FC<{
     theme: any;
     answer?: SurveyAnswer;
     onAnswer: (val: Partial<SurveyAnswer>) => void;
-    hasError?: boolean;
-}> = ({ block, index, theme, answer, onAnswer, hasError }) => {
+    errorMsg?: string;
+}> = ({ block, index, theme, answer, onAnswer, errorMsg }) => {
+    const hasError = !!errorMsg;
     const [otherText, setOtherText] = useState('');
     const [otherSelected, setOtherSelected] = useState(false);
     const accent = block.style?.accentColor ?? theme.primaryColor;
@@ -1202,7 +1227,7 @@ const BlockRenderer: React.FC<{
                 </div>
             )}
             {hasError && (
-                <p className="text-xs text-red-500 mt-2 font-medium">Vui lòng điền câu hỏi bắt buộc này.</p>
+                <p className="text-xs text-red-500 mt-2 font-medium">{errorMsg}</p>
             )}
         </div>
     );

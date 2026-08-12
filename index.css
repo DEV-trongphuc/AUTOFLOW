@@ -1367,12 +1367,12 @@
 
 /* Global Text Selection - Blue with White Text */
 ::selection {
-    background-color: rgba(var(--brand-rgb), 0.95);
+    background-color: #3b82f6; /* Tailwind blue-500 */
     color: #ffffff !important;
 }
 
 ::-moz-selection {
-    background-color: rgba(var(--brand-rgb), 0.95);
+    background-color: #3b82f6; /* Tailwind blue-500 */
     color: #ffffff !important;
 }
 
@@ -1563,12 +1563,12 @@ html {
 
 /* Global Text Selection - Blue with White Text */
 ::selection {
-    background-color: rgba(var(--brand-rgb), 0.95);
+    background-color: #3b82f6; /* Tailwind blue-500 */
     color: #ffffff !important;
 }
 
 ::-moz-selection {
-    background-color: rgba(var(--brand-rgb), 0.95);
+    background-color: #3b82f6; /* Tailwind blue-500 */
     color: #ffffff !important;
 }
 
@@ -1644,7 +1644,7 @@ html {
 
 /* 2. Mu bi den van b?n hi?n d?i (Selection Color) */
 ::selection {
-    background-color: #683df2; /* Tailwind blue-500 */
+    background-color: #3b82f6; /* Tailwind blue-500 */
     color: #ffffff;
 }
 
