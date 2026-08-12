@@ -863,6 +863,68 @@ const SurveyProperties: React.FC<Props> = ({ survey, selectedBlock, selectedBloc
     const update = (changes: Partial<SurveyBlock>) => onUpdateBlock(block.id, changes);
     const isLayout = ['section_header', 'image_block', 'divider', 'page_break', 'button_block', 'link_block', 'banner_block'].includes(block.type);
 
+    const handleTypeChange = (newType: import('../../../types/survey').QuestionType) => {
+        if (newType === block.type) return;
+        
+        const changes: Partial<SurveyBlock> = { type: newType };
+        
+        // 1. Choice types default options
+        if (['single_choice', 'multi_choice', 'dropdown', 'ranking'].includes(newType) && (!block.options || block.options.length === 0)) {
+            changes.options = [
+                { id: crypto.randomUUID(), label: 'Lựa chọn 1', value: '1' },
+                { id: crypto.randomUUID(), label: 'Lựa chọn 2', value: '2' },
+                { id: crypto.randomUUID(), label: 'Lựa chọn 3', value: '3' },
+            ];
+        }
+        
+        // 2. Yes/No default options
+        if (newType === 'yes_no' && (!block.options || block.options.length === 0)) {
+            changes.options = [
+                { id: crypto.randomUUID(), label: 'Có', value: 'yes' },
+                { id: crypto.randomUUID(), label: 'Không', value: 'no' },
+            ];
+        }
+        
+        // 3. Matrix single/multi default options
+        if (['matrix_single', 'matrix_multi'].includes(newType) && (!block.matrixRows || block.matrixRows.length === 0)) {
+            changes.matrixRows = [
+                { id: crypto.randomUUID(), label: 'Tiêu chí 1' },
+                { id: crypto.randomUUID(), label: 'Tiêu chí 2' },
+            ];
+            changes.matrixCols = [
+                { id: crypto.randomUUID(), label: 'Kém' },
+                { id: crypto.randomUUID(), label: 'Bình thường' },
+                { id: crypto.randomUUID(), label: 'Tốt' },
+                { id: crypto.randomUUID(), label: 'Xuất sắc' },
+            ];
+        }
+
+        // 4. Layout default settings
+        if (newType === 'image_block') {
+            changes.imageWidth = '100%';
+            changes.imageAlign = 'center';
+        }
+        if (newType === 'button_block') {
+            changes.buttonText = 'Nhấn vào đây';
+            changes.buttonUrl = '';
+            changes.buttonStyle = 'filled';
+            changes.buttonAlign = 'center';
+            changes.buttonColor = '#f59e0b';
+        }
+        if (newType === 'link_block') {
+            changes.linkText = 'Xem thêm';
+            changes.linkUrl = '';
+            changes.linkAlign = 'left';
+        }
+        if (newType === 'banner_block') {
+            changes.bannerHeight = 200;
+            changes.bannerOverlay = 'rgba(0,0,0,0.35)';
+            changes.bannerTextColor = '#ffffff';
+        }
+        
+        update(changes);
+    };
+
     return (
         <div className="w-80 bg-white border-l border-slate-100 flex flex-col overflow-hidden">
             <div className="px-4 py-3 border-b border-slate-100">
@@ -871,6 +933,58 @@ const SurveyProperties: React.FC<Props> = ({ survey, selectedBlock, selectedBloc
                 </h3>
             </div>
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
+
+                {/* Loại câu hỏi */}
+                {!isLayout && (
+                    <div>
+                        <Label>Loại câu hỏi</Label>
+                        <FieldSelect value={block.type} onChange={e => handleTypeChange(e.target.value as any)}>
+                            <optgroup label="Cơ bản">
+                                <option value="short_text">Văn bản ngắn</option>
+                                <option value="long_text">Văn bản dài</option>
+                                <option value="email">Email</option>
+                                <option value="phone">Số điện thoại</option>
+                                <option value="number">Số</option>
+                                <option value="date">Ngày tháng</option>
+                            </optgroup>
+                            <optgroup label="Lựa chọn">
+                                <option value="single_choice">Chọn 1 đáp án (Radio)</option>
+                                <option value="multi_choice">Chọn nhiều (Checkbox)</option>
+                                <option value="dropdown">Dropdown</option>
+                                <option value="yes_no">Có / Không</option>
+                            </optgroup>
+                            <optgroup label="Đánh giá">
+                                <option value="star_rating">Đánh giá sao</option>
+                                <option value="nps">NPS Score</option>
+                                <option value="likert">Thang Likert</option>
+                                <option value="slider">Thanh kéo</option>
+                                <option value="emoji_rating">Emoji cảm xúc</option>
+                            </optgroup>
+                            <optgroup label="Nâng cao">
+                                <option value="ranking">Xếp hạng</option>
+                                <option value="matrix_single">Ma trận (Chọn một)</option>
+                                <option value="matrix_multi">Ma trận (Chọn nhiều)</option>
+                                <option value="file_upload">Tải tệp lên</option>
+                            </optgroup>
+                        </FieldSelect>
+                    </div>
+                )}
+
+                {/* Loại bố cục */}
+                {isLayout && (
+                    <div>
+                        <Label>Loại bố cục</Label>
+                        <FieldSelect value={block.type} onChange={e => handleTypeChange(e.target.value as any)}>
+                            <option value="section_header">Tiêu đề phần</option>
+                            <option value="image_block">Hình ảnh</option>
+                            <option value="button_block">Nút bấm</option>
+                            <option value="link_block">Đường dẫn</option>
+                            <option value="banner_block">Banner</option>
+                            <option value="divider">Đường kẻ</option>
+                            <option value="page_break">Ngắt trang</option>
+                        </FieldSelect>
+                    </div>
+                )}
 
                 {/* Label */}
                 {!['divider', 'page_break', 'button_block', 'link_block'].includes(block.type) && (
