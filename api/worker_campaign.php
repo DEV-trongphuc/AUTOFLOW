@@ -809,17 +809,16 @@ if (!function_exists('runWorkerCampaign')) {
                             // Redundant time-based update removed to reduce DB overhead during sending.
                         }
 
-                        // Batch Operations
+                        // Batch Operations: First guarantee DB connection is alive
+                        if (function_exists('ensure_pdo_alive')) {
+                            ensure_pdo_alive($pdo);
+                        }
                         $pdo->beginTransaction(); // Re-open transaction to save results safely
 
                         // Bulk Update Hard Bounces
                         if (!empty($bouncedIds)) {
                             $idPlaceholdersBounce = implode(',', array_fill(0, count($bouncedIds), '?'));
                             $pdo->prepare("UPDATE subscribers SET status = 'bounced' WHERE id IN ($idPlaceholdersBounce)")->execute($bouncedIds);
-                        }
-
-                        if (function_exists('ensure_pdo_alive')) {
-                            ensure_pdo_alive($pdo);
                         }
 
                         // Cleanup temporary 'processing_campaign' locks for this specific batch
@@ -963,6 +962,9 @@ if (!function_exists('runWorkerCampaign')) {
                 }
 
                 // Final Status Check
+                if (function_exists('ensure_pdo_alive')) {
+                    ensure_pdo_alive($pdo);
+                }
                 $pdo->beginTransaction(); // New transaction for final status
 
                 // Final Status Check - Double check if actually finished
@@ -1025,12 +1027,18 @@ if (!function_exists('runWorkerCampaign')) {
                     triggerAsyncWorker('/worker_campaign.php?campaign_id=' . $cid . '&retry_count=' . $nextRetry);
                     writeWorkerLog("Campaign $cid: Spawned async follow-up worker (retry #$nextRetry).");
                 }
-            } catch (Exception $e) {
-                if ($pdo->inTransaction())
-                    $pdo->rollBack();
+            } catch (Throwable $e) {
+                if (function_exists('ensure_pdo_alive')) {
+                    ensure_pdo_alive($pdo);
+                }
+                if ($pdo && $pdo->inTransaction()) {
+                    try { $pdo->rollBack(); } catch (Throwable $rbEx) {}
+                }
                 $logs[] = "[ERROR] Campaign {$cid} failed: " . $e->getMessage();
                 writeWorkerLog("[FATAL ERROR] Campaign $cid failed: " . $e->getMessage());
-                $pdo->prepare("UPDATE campaigns SET status = 'paused' WHERE id = ?")->execute([$cid]);
+                try {
+                    $pdo->prepare("UPDATE campaigns SET status = 'paused' WHERE id = ?")->execute([$cid]);
+                } catch (Throwable $upEx) {}
             }
         } else {
             $logs[] = "[Campaign] No campaigns ready to process.";

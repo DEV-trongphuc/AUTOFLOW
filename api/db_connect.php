@@ -135,30 +135,42 @@ function apcu_fetch_or_callback($key, $callback, $ttl = 300) {
 function ensure_pdo_alive(&$pdo)
 {
     try {
-        if ($pdo) {
+        if ($pdo instanceof PDO) {
             $pdo->query("SELECT 1");
+            return;
         } else {
             throw new Exception("PDO not initialized");
         }
     } catch (Throwable $e) {
-        // Re-establish connection using the same $dsn as the initial connection.
-        // [FIX] Previously hardcoded "charset=utf8mb4" — if $charset var is ever changed
-        // at the top of this file, the reconnect would silently use a different encoding,
-        // causing garbled UTF-8 data (tiếng Việt có dấu) for any subsequent writes.
-        global $dsn, $user, $pass, $options;
+        global $dsn, $user, $pass, $options, $host, $db, $charset;
+        
+        $currHost = $host ?: (getenv('DB_HOST') !== false ? getenv('DB_HOST') : 'localhost');
+        $isDemo = (isset($_SERVER['HTTP_HOST']) && $_SERVER['HTTP_HOST'] === 'open.domation.net');
+        $currDb = $db ?: ($isDemo ? 'vhvxoigh_auto_demo' : (getenv('DB_NAME') !== false ? getenv('DB_NAME') : 'vhvxoigh_mail_auto'));
+        $currUser = $user ?: (getenv('DB_USER') !== false ? getenv('DB_USER') : 'vhvxoigh_mail_auto');
+        $currPass = $pass ?: (getenv('DB_PASSWORD') !== false ? getenv('DB_PASSWORD') : 'Ideas@812');
+        $currCharset = $charset ?: 'utf8mb4';
+        $currDsn = $dsn ?: "mysql:host=$currHost;dbname=$currDb;charset=$currCharset";
+        $currOptions = !empty($options) ? $options : [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            PDO::ATTR_EMULATE_PREPARES => false,
+            PDO::MYSQL_ATTR_USE_BUFFERED_QUERY => true,
+            PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci; SET time_zone = '+07:00';"
+        ];
+
         $attempts = 0;
         while ($attempts < 3) {
             try {
-                $pdo = new PDO($dsn, $user, $pass, $options);
+                $pdo = new PDO($currDsn, $currUser, $currPass, $currOptions);
+                $GLOBALS['pdo'] = $pdo;
                 return; // Reconnected successfully
             } catch (PDOException $ex) {
                 $attempts++;
                 error_log("RECONNECT FAILED (Attempt $attempts): " . $ex->getMessage());
-                sleep(2); // Wait 2s before retry
+                sleep(1);
             }
         }
-        // If all 3 attempts fail, kill the process to allow Supervisor/Cron to restart cleanly
-        // and prevent the worker from spamming the error log with 1000s of "PDO is null" errors.
         error_log("FATAL: MySQL server has gone away. Killing worker process.");
         exit(1); 
     }
