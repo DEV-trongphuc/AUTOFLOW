@@ -542,6 +542,42 @@ const Campaigns: React.FC = () => {
         }
     }, [allFlows]);
 
+    const handlePauseCampaign = React.useCallback(async (id: string) => {
+        try {
+            setCampaigns(prev => prev.map(c => c.id === id ? { ...c, status: CampaignStatus.PAUSED } : c));
+            const res = await api.post<any>('campaigns?route=pause', { campaign_id: id });
+            if (res.success) {
+                toast.success('Đã tạm dừng chiến dịch thành công!');
+                logAction('campaigns', 'pause', id, 'Campaign paused');
+            } else {
+                toast.error(res.message || 'Không thể tạm dừng chiến dịch');
+                fetchCampaigns();
+            }
+        } catch (err) {
+            console.error('handlePauseCampaign error:', err);
+            toast.error('Lỗi khi tạm dừng chiến dịch');
+            fetchCampaigns();
+        }
+    }, [pagination.page, debouncedSearch]);
+
+    const handleResumeCampaign = React.useCallback(async (id: string) => {
+        try {
+            setCampaigns(prev => prev.map(c => c.id === id ? { ...c, status: CampaignStatus.SENDING } : c));
+            const res = await api.post<any>('campaigns?route=resume', { campaign_id: id });
+            if (res.success) {
+                toast.success('Đã kích hoạt tiếp tục gửi chiến dịch!');
+                logAction('campaigns', 'resume', id, 'Campaign resumed');
+            } else {
+                toast.error(res.message || 'Không thể tiếp tục chiến dịch');
+                fetchCampaigns();
+            }
+        } catch (err) {
+            console.error('handleResumeCampaign error:', err);
+            toast.error('Lỗi khi tiếp tục chiến dịch');
+            fetchCampaigns();
+        }
+    }, [pagination.page, debouncedSearch]);
+
 
     const handlePlayClick = React.useCallback((campaign: Campaign) => {
         // Find if there's a flow triggered by this campaign
@@ -864,6 +900,8 @@ const Campaigns: React.FC = () => {
                             }, [])}
                             onDelete={handleDeleteCampaign}
                             onPlayFlow={handlePlayClick}
+                            onPause={handlePauseCampaign}
+                            onResume={handleResumeCampaign}
                         />
                     </TabTransition>
 

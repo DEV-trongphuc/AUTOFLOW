@@ -287,6 +287,27 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
         }
     };
 
+    const [pauseLoading, setPauseLoading] = useState(false);
+    const handlePauseCampaign = async () => {
+        if (!localCampaign?.id) return;
+        setPauseLoading(true);
+        try {
+            const res = await api.post<any>('campaigns?route=pause', { campaign_id: localCampaign.id });
+            if (res.success) {
+                setLocalCampaign(prev => prev ? { ...prev, status: CampaignStatus.PAUSED } : null);
+                toast.success('Đã tạm dừng chiến dịch thành công!');
+                fetchAudienceStats();
+            } else {
+                toast.error(res.message || "Không thể tạm dừng chiến dịch.");
+            }
+        } catch (err) {
+            console.error(err);
+            toast.error("Đã xảy ra lỗi khi tạm dừng chiến dịch.");
+        } finally {
+            setPauseLoading(false);
+        }
+    };
+
     const handleTriggerRefresh = async () => {
         if (!campaign) return;
         setRefreshLoading(true);
@@ -627,12 +648,21 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                                     <span className="text-rose-500 uppercase tracking-wider">Thất bại: <span className="font-black">{(localCampaign.stats?.failed || 0).toLocaleString()}</span></span>
                                                 )}
                                             </div>
-                                            <div className="flex items-center gap-3">
+                                            <div className="flex items-center gap-2">
                                                 <span className="text-slate-400 uppercase tracking-widest">Mục tiêu: {localCampaign.totalTargetAudience?.toLocaleString() || '...'}</span>
+                                                <button
+                                                    onClick={handlePauseCampaign}
+                                                    disabled={pauseLoading}
+                                                    className="ml-2 px-3 py-1 bg-rose-50 border border-rose-200 text-rose-600 text-[10px] font-black uppercase rounded-lg hover:bg-rose-600 hover:text-white transition-all flex items-center gap-1.5 shadow-sm"
+                                                    title="Tạm dừng gửi chiến dịch ngay lập tức"
+                                                >
+                                                    {pauseLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <PauseCircle className="w-3.5 h-3.5" />}
+                                                    Tạm dừng gửi
+                                                </button>
                                                 <button
                                                     onClick={handleTriggerRefresh}
                                                     disabled={refreshLoading}
-                                                    className="ml-2 px-3 py-1 bg-slate-900 text-white text-[10px] font-black uppercase rounded-lg hover:bg-black transition-all flex items-center gap-1.5 shadow-sm"
+                                                    className="px-3 py-1 bg-slate-900 text-white text-[10px] font-black uppercase rounded-lg hover:bg-black transition-all flex items-center gap-1.5 shadow-sm"
                                                     title="Nếu tiến độ bị kẹt, nhấn để kích hoạt lại tiến trình gửi"
                                                 >
                                                     {refreshLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Zap className="w-3 h-3 text-orange-400" />}

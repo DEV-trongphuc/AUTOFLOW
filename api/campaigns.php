@@ -83,6 +83,78 @@ function formatCampaign($row)
     return $row;
 }
 
+// --- NEW ROUTE: Pause / Stop Campaign ---
+if ($method === 'POST' && ($route === 'pause' || $route === 'stop')) {
+    try {
+        $data = json_decode(file_get_contents("php://input"), true) ?: [];
+        $campaignId = $data['campaign_id'] ?? $data['id'] ?? $_GET['id'] ?? null;
+
+        if (!$campaignId) {
+            jsonResponse(false, null, 'Campaign ID is required.');
+            exit;
+        }
+
+        verifyCampaignOwnership($pdo, $campaignId, $workspace_id);
+
+        $pdo->beginTransaction();
+        $pdo->prepare("UPDATE campaigns SET status = 'paused', updated_at = NOW() WHERE id = ? AND workspace_id = ?")
+            ->execute([$campaignId, $workspace_id]);
+
+        // Release any temporary in-flight processing locks
+        $pdo->prepare("DELETE FROM subscriber_activity WHERE campaign_id = ? AND type = 'processing_campaign'")
+            ->execute([$campaignId]);
+
+        // Sync count_sent from actual successful activities
+        $pdo->prepare("UPDATE campaigns SET count_sent = (SELECT COUNT(DISTINCT subscriber_id) FROM subscriber_activity WHERE campaign_id = ? AND type IN ('receive_email', 'zalo_sent', 'meta_sent', 'zns_sent')) WHERE id = ? AND workspace_id = ?")
+            ->execute([$campaignId, $campaignId, $workspace_id]);
+
+        $pdo->commit();
+
+        logSystemActivity($pdo, 'campaigns', 'pause', $campaignId, "Campaign $campaignId paused");
+        jsonResponse(true, ['id' => $campaignId, 'status' => 'paused'], 'Chiến dịch đã được tạm dừng thành công.');
+        exit;
+    } catch (Exception $e) {
+        if ($pdo->inTransaction()) $pdo->rollBack();
+        jsonResponse(false, null, 'Lỗi khi tạm dừng chiến dịch: ' . $e->getMessage());
+        exit;
+    }
+}
+
+// --- NEW ROUTE: Resume Campaign ---
+if ($method === 'POST' && ($route === 'resume' || $route === 'play')) {
+    try {
+        $data = json_decode(file_get_contents("php://input"), true) ?: [];
+        $campaignId = $data['campaign_id'] ?? $data['id'] ?? $_GET['id'] ?? null;
+
+        if (!$campaignId) {
+            jsonResponse(false, null, 'Campaign ID is required.');
+            exit;
+        }
+
+        verifyCampaignOwnership($pdo, $campaignId, $workspace_id);
+
+        $pdo->beginTransaction();
+        $pdo->prepare("UPDATE campaigns SET status = 'sending', updated_at = NOW() WHERE id = ? AND workspace_id = ?")
+            ->execute([$campaignId, $workspace_id]);
+
+        // Release any stale in-flight processing locks
+        $pdo->prepare("DELETE FROM subscriber_activity WHERE campaign_id = ? AND type = 'processing_campaign'")
+            ->execute([$campaignId]);
+
+        $pdo->commit();
+
+        dispatchCampaignWorker($pdo, $campaignId);
+
+        logSystemActivity($pdo, 'campaigns', 'resume', $campaignId, "Campaign $campaignId resumed");
+        jsonResponse(true, ['id' => $campaignId, 'status' => 'sending'], 'Chiến dịch đã được kích hoạt tiếp tục gửi.');
+        exit;
+    } catch (Exception $e) {
+        if ($pdo->inTransaction()) $pdo->rollBack();
+        jsonResponse(false, null, 'Lỗi khi tiếp tục chiến dịch: ' . $e->getMessage());
+        exit;
+    }
+}
+
 // --- NEW ROUTE: Resend Failed Emails ---
 if ($method === 'POST' && $route === 'resend_failed_emails') {
     try {

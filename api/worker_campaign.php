@@ -396,6 +396,19 @@ if (!function_exists('runWorkerCampaign')) {
                 while ($hasMore && $batchCount < $MAX_BATCHES) {
                     $batchCount++;
 
+                    if (function_exists('ensure_pdo_alive')) {
+                        ensure_pdo_alive($pdo);
+                    }
+
+                    // Check if campaign was paused or cancelled by user
+                    $stmtStatusLive = $pdo->prepare("SELECT status FROM campaigns WHERE id = ?");
+                    $stmtStatusLive->execute([$cid]);
+                    $liveCampStatus = $stmtStatusLive->fetchColumn();
+                    if ($liveCampStatus !== 'sending') {
+                        writeWorkerLog("Campaign $cid: Status is no longer 'sending' (currently '$liveCampStatus'). Stopping worker loop immediately.");
+                        break;
+                    }
+
                     // [TIME GUARD] Stop if we've been running for more than $timeLimit seconds
                     // limit is 600s, but we want to leave room for final updates and cleanup.
                     if (microtime(true) - $startTimeRun > $timeLimit) {
@@ -562,6 +575,21 @@ if (!function_exists('runWorkerCampaign')) {
                             $personalSubject = replaceMergeTags($currentSubject, $sub, $context);
 
                             $recipientIndexInBatch++;
+
+                            // Every 5 recipients: check if campaign was paused/stopped mid-batch
+                            if ($recipientIndexInBatch % 5 === 0) {
+                                if (function_exists('ensure_pdo_alive')) {
+                                    ensure_pdo_alive($pdo);
+                                }
+                                $stmtLiveSt = $pdo->prepare("SELECT status FROM campaigns WHERE id = ?");
+                                $stmtLiveSt->execute([$cid]);
+                                $curLiveStatus = $stmtLiveSt->fetchColumn();
+                                if ($curLiveStatus !== 'sending') {
+                                    writeWorkerLog("Campaign $cid: Stopped mid-batch (status: '$curLiveStatus'). Aborting recipient loop.");
+                                    $hasMore = false;
+                                    break;
+                                }
+                            }
 
                             // [TURBO] Send QA only for the first subscriber of the campaign run to avoid exponential slowdown
                             $skipQA = ($totalProcessed > 0 || $recipientIndexInBatch > 1);
@@ -788,6 +816,10 @@ if (!function_exists('runWorkerCampaign')) {
                         if (!empty($bouncedIds)) {
                             $idPlaceholdersBounce = implode(',', array_fill(0, count($bouncedIds), '?'));
                             $pdo->prepare("UPDATE subscribers SET status = 'bounced' WHERE id IN ($idPlaceholdersBounce)")->execute($bouncedIds);
+                        }
+
+                        if (function_exists('ensure_pdo_alive')) {
+                            ensure_pdo_alive($pdo);
                         }
 
                         // Cleanup temporary 'processing_campaign' locks for this specific batch

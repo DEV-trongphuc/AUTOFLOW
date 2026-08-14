@@ -18,6 +18,8 @@ interface CampaignListProps {
     onEdit: (campaign: Campaign) => void;
     onDelete: (id: string) => void;
     onPlayFlow: (campaign: Campaign) => void;
+    onPause?: (id: string) => void;
+    onResume?: (id: string) => void;
 }
 
 interface CampaignRowProps {
@@ -26,11 +28,13 @@ interface CampaignRowProps {
     onEdit: (campaign: Campaign) => void;
     onDelete: (id: string) => void;
     onPlayFlow: (campaign: Campaign) => void;
+    onPause?: (id: string) => void;
+    onResume?: (id: string) => void;
     navigate: any;
     'data-index'?: number;
 }
 
-const CampaignTableRow = React.memo(React.forwardRef<HTMLTableRowElement, CampaignRowProps>(({ c, onSelect, onEdit, onDelete, onPlayFlow, navigate, 'data-index': dataIndex }, ref) => {
+const CampaignTableRow = React.memo(React.forwardRef<HTMLTableRowElement, CampaignRowProps>(({ c, onSelect, onEdit, onDelete, onPlayFlow, onPause, onResume, navigate, 'data-index': dataIndex }, ref) => {
     const isSent = c.status === CampaignStatus.SENT;
     const isWaiting = c.status === CampaignStatus.WAITING_FLOW;
     const isSending = c.status === CampaignStatus.SENDING;
@@ -246,6 +250,24 @@ const CampaignTableRow = React.memo(React.forwardRef<HTMLTableRowElement, Campai
 
             <td className="px-8 py-5 text-right" onClick={(e) => e.stopPropagation()}>
                 <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all translate-x-2 group-hover:translate-x-0 duration-300">
+                    {isSending && onPause && (
+                        <button
+                            onClick={(e) => { e.stopPropagation(); onPause(c.id); }}
+                            className="p-2 text-rose-600 hover:text-white bg-rose-50 hover:bg-rose-600 rounded-xl transition-all shadow-sm flex items-center justify-center border border-rose-100"
+                            title="Tạm dừng / Dừng gửi chiến dịch ngay"
+                        >
+                            <PauseCircle className="w-4 h-4" />
+                        </button>
+                    )}
+                    {isPaused && onResume && (
+                        <button
+                            onClick={(e) => { e.stopPropagation(); onResume(c.id); }}
+                            className="p-2 text-emerald-600 hover:text-white bg-emerald-50 hover:bg-emerald-600 rounded-xl transition-all shadow-sm flex items-center justify-center border border-emerald-100"
+                            title="Tiếp tục gửi chiến dịch"
+                        >
+                            <Play className="w-4 h-4 fill-current" />
+                        </button>
+                    )}
                     {isWaiting && (
                         <button
                             onClick={(e) => { e.stopPropagation(); onPlayFlow(c); }}
@@ -279,7 +301,7 @@ const CampaignTableRow = React.memo(React.forwardRef<HTMLTableRowElement, Campai
         </tr>
     );
 }));
-const CampaignMobileCard = React.memo<CampaignRowProps>(({ c, onSelect, onEdit, onDelete, onPlayFlow, navigate }) => {
+const CampaignMobileCard = React.memo<CampaignRowProps>(({ c, onSelect, onEdit, onDelete, onPlayFlow, onPause, onResume, navigate }) => {
     const isSent = c.status === CampaignStatus.SENT;
     const isWaiting = c.status === CampaignStatus.WAITING_FLOW;
     const isSending = c.status === CampaignStatus.SENDING;
@@ -336,7 +358,25 @@ const CampaignMobileCard = React.memo<CampaignRowProps>(({ c, onSelect, onEdit, 
                         </div>
                     </div>
                 </div>
-                <div className="flex gap-1" onClick={e => e.stopPropagation()}>
+                <div className="flex items-center gap-1.5" onClick={e => e.stopPropagation()}>
+                    {isSending && onPause && (
+                        <button 
+                            onClick={() => onPause(c.id)} 
+                            className="p-1 px-2 text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-lg transition-colors flex items-center gap-1 text-[9px] font-black uppercase"
+                            title="Tạm dừng"
+                        >
+                            <PauseCircle className="w-3.5 h-3.5" /> Dừng
+                        </button>
+                    )}
+                    {isPaused && onResume && (
+                        <button 
+                            onClick={() => onResume(c.id)} 
+                            className="p-1 px-2 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-colors flex items-center gap-1 text-[9px] font-black uppercase"
+                            title="Tiếp tục"
+                        >
+                            <Play className="w-3.5 h-3.5 fill-current" /> Tiếp tục
+                        </button>
+                    )}
                     <button onClick={() => onDelete(c.id)} className="p-1 text-slate-400 hover:text-rose-500 transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
                 </div>
             </div>
@@ -461,13 +501,15 @@ const CampaignMobileSkeleton = () => (
     </div>
 );
 
-const CampaignList: React.FC<CampaignListProps> = ({ campaigns, loading, onSelect, onEdit, onDelete, onPlayFlow }) => {
+const CampaignList: React.FC<CampaignListProps> = ({ campaigns, loading, onSelect, onEdit, onDelete, onPlayFlow, onPause, onResume }) => {
     const navigate = useNavigate();
 
     const handleSelect = React.useCallback((c: Campaign) => onSelect(c), [onSelect]);
     const handleEdit = React.useCallback((c: Campaign) => onEdit(c), [onEdit]);
     const handleDelete = React.useCallback((id: string) => onDelete(id), [onDelete]);
     const handlePlayFlow = React.useCallback((c: Campaign) => onPlayFlow(c), [onPlayFlow]);
+    const handlePause = React.useCallback((id: string) => onPause?.(id), [onPause]);
+    const handleResume = React.useCallback((id: string) => onResume?.(id), [onResume]);
 
     const parentRef = React.useRef<HTMLDivElement>(null);
     const rowVirtualizer = useVirtualizer({
@@ -577,6 +619,8 @@ const CampaignList: React.FC<CampaignListProps> = ({ campaigns, loading, onSelec
                                             onEdit={handleEdit}
                                             onDelete={handleDelete}
                                             onPlayFlow={handlePlayFlow}
+                                            onPause={handlePause}
+                                            onResume={handleResume}
                                             navigate={navigate}
                                             ref={rowVirtualizer.measureElement}
                                             data-index={virtualRow.index}
@@ -603,6 +647,8 @@ const CampaignList: React.FC<CampaignListProps> = ({ campaigns, loading, onSelec
                             onEdit={handleEdit}
                             onDelete={handleDelete}
                             onPlayFlow={handlePlayFlow}
+                            onPause={handlePause}
+                            onResume={handleResume}
                             navigate={navigate}
                         />
                     ))

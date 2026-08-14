@@ -298,6 +298,9 @@ class Mailer {
         if (empty($this->logBuffer))
             return;
         try {
+            if (function_exists('ensure_pdo_alive')) {
+                ensure_pdo_alive($this->pdo);
+            }
             $sql = "INSERT INTO mail_delivery_logs (recipient, subject, status, error_message, sent_at, campaign_id, flow_id, reminder_id, subscriber_id, workspace_id) VALUES ";
             $vals = [];
             $binds = [];
@@ -309,6 +312,29 @@ class Mailer {
             $this->pdo->prepare($sql)->execute($vals);
             $this->logBuffer = [];
         } catch (Exception $e) {
+            // Reconnect and retry once if MySQL server has gone away
+            try {
+                if (function_exists('ensure_pdo_alive')) {
+                    $this->pdo = null;
+                    ensure_pdo_alive($this->pdo);
+                    if ($this->pdo) {
+                        $sql = "INSERT INTO mail_delivery_logs (recipient, subject, status, error_message, sent_at, campaign_id, flow_id, reminder_id, subscriber_id, workspace_id) VALUES ";
+                        $vals = [];
+                        $binds = [];
+                        foreach ($this->logBuffer as $log) {
+                            $binds[] = "(?, ?, ?, ?, NOW(), ?, ?, ?, ?, ?)";
+                            $vals = array_merge($vals, $log);
+                        }
+                        $sql .= implode(',', $binds);
+                        $this->pdo->prepare($sql)->execute($vals);
+                        $this->logBuffer = [];
+                        return;
+                    }
+                }
+            } catch (Exception $retryEx) {
+                // Log error
+                file_put_contents(__DIR__ . '/log_error.log', date('Y-m-d H:i:s') . " [LOG RETRY ERROR] " . $retryEx->getMessage() . "\n", FILE_APPEND);
+            }
             // Log error silently to avoid breaking the sending process
             file_put_contents(__DIR__ . '/log_error.log', date('Y-m-d H:i:s') . " [LOG ERROR] " . $e->getMessage() . "\n", FILE_APPEND);
         }
