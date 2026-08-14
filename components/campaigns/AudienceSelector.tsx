@@ -390,15 +390,14 @@ const AudienceSelector: React.FC<AudienceSelectorProps> = ({
 
         let dupCount = 0;
         const validRows: any[] = [];
+        const seenEmailsInCsv = new Set<string>();
 
         dataRows.forEach((row: any) => {
-            // FIX: existingEmails is a Set, .has() is correct.
-            // The issue might have been if row.email was not a string or malformed.
-            // But that's handled by filter(r => r && r.email && r.email.includes('@')).
-            // Fix: Use the existingEmails prop directly
-            if (existingEmails.has(row.email)) {
+            const email = (row.email || '').toLowerCase().trim();
+            if (email && seenEmailsInCsv.has(email)) {
                 dupCount++;
             } else {
+                if (email) seenEmailsInCsv.add(email);
                 validRows.push(row);
             }
         });

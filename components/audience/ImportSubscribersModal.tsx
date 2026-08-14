@@ -40,7 +40,7 @@ const ImportSubscribersModal: React.FC<ImportSubscribersModalProps> = ({
     const [targetListId, setTargetListId] = useState<string>('');
     const [newListName, setNewListName] = useState('');
 
-    const [stats, setStats] = useState({ valid: 0, duplicates: 0, total: 0, missingPhone: 0, virtualCandidates: 0 });
+    const [stats, setStats] = useState({ valid: 0, duplicates: 0, total: 0, missingPhone: 0, virtualCandidates: 0, updateCount: 0, newCount: 0 });
     const [createVirtualEmail, setCreateVirtualEmail] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [importWarnings, setImportWarnings] = useState<string[]>([]);
@@ -51,7 +51,7 @@ const ImportSubscribersModal: React.FC<ImportSubscribersModalProps> = ({
             setRawData('');
             setParsedRows([]);
             setFileName('');
-            setStats({ valid: 0, duplicates: 0, total: 0, missingPhone: 0, virtualCandidates: 0 });
+            setStats({ valid: 0, duplicates: 0, total: 0, missingPhone: 0, virtualCandidates: 0, updateCount: 0, newCount: 0 });
             setCreateVirtualEmail(false);
             setNewListName('');
             setImportMode('new');
@@ -111,8 +111,13 @@ const ImportSubscribersModal: React.FC<ImportSubscribersModalProps> = ({
 
     const VALID_HEADERS = {
         email: ['email', 'mail', 'hòm thư', 'hom thu', 'địa chỉ email', 'dia chi email', 'e-mail'],
-        firstName: ['firstname', 'tên', 'first name', 'given name', 'ten', 'họ tên', 'ho ten', 'họ và tên', 'ho va ten', 'full name', 'fullname', 'tên khách hàng', 'ten khach hang'],
-        lastName: ['lastname', 'họ', 'last name', 'family name', 'ho'],
+        firstName: [
+            'firstname', 'tên', 'first name', 'given name', 'ten', 'họ tên', 'ho ten',
+            'họ và tên', 'ho va ten', 'full name', 'fullname', 'tên khách hàng', 'ten khach hang',
+            'name', 'tên khách', 'ten khach', 'họ và tên khách hàng', 'ho va ten khach hang',
+            'người liên hệ', 'nguoi lien he', 'customer name', 'customer_name', 'user name', 'username'
+        ],
+        lastName: ['lastname', 'họ', 'last name', 'family name', 'ho', 'họ đệm', 'ho dem', 'surname', 'last_name'],
         phoneNumber: ['phone', 'số điện thoại', 'sđt', 'telephone', 'mobile', 'dien thoai', 'so dien thoai', 'SDT', 'sdt', 'di động', 'di dong'],
         jobTitle: ['job', 'chức vụ', 'vị trí', 'title', 'cong viec', 'chuc vu', 'vi tri', 'chức danh', 'chuc danh'],
         companyName: ['company', 'công ty', 'tổ chức', 'organization', 'cong ty', 'to chuc', 'đơn vị', 'don vi'],
@@ -243,6 +248,8 @@ const ImportSubscribersModal: React.FC<ImportSubscribersModalProps> = ({
         }).filter(r => r && ((r.email && r.email.includes('@')) || r.phoneNumber));
 
         let dupCount = 0;
+        let updateCount = 0;
+        let newCount = 0;
         const validRows: any[] = [];
         const seenEmailsInCsv = new Set<string>();
         const seenPhonesInCsv = new Set<string>();
@@ -254,14 +261,22 @@ const ImportSubscribersModal: React.FC<ImportSubscribersModalProps> = ({
             let normPhone = phone;
             if (phone.startsWith('84') && phone.length > 9) normPhone = '0' + phone.substring(2);
 
-            const isEmailDup = email && (existingEmails.has(row.email) || existingEmails.has(email) || seenEmailsInCsv.has(email));
-            const isPhoneDup = normPhone && (existingPhones.has(phone) || existingPhones.has(normPhone) || seenPhonesInCsv.has(normPhone));
+            const isDuplicateInCsv = (email && seenEmailsInCsv.has(email)) || (normPhone && seenPhonesInCsv.has(normPhone));
             
-            if (isEmailDup || isPhoneDup) {
+            if (isDuplicateInCsv) {
                 dupCount++;
             } else {
                 if (email) seenEmailsInCsv.add(email);
                 if (normPhone) seenPhonesInCsv.add(normPhone);
+
+                const isExisting = (email && (existingEmails.has(row.email) || existingEmails.has(email))) ||
+                                   (normPhone && (existingPhones.has(phone) || existingPhones.has(normPhone)));
+                if (isExisting) {
+                    updateCount++;
+                } else {
+                    newCount++;
+                }
+
                 validRows.push(row);
             }
         });
@@ -278,6 +293,8 @@ const ImportSubscribersModal: React.FC<ImportSubscribersModalProps> = ({
         setStats({
             total: dataRows.length,
             valid: validRows.length,
+            newCount: newCount,
+            updateCount: updateCount,
             duplicates: dupCount,
             missingPhone: validRows.filter(r => !r.phoneNumber).length,
             virtualCandidates: validRows.filter(r => !r.email || !r.email.includes('@')).length
@@ -419,18 +436,22 @@ const ImportSubscribersModal: React.FC<ImportSubscribersModalProps> = ({
 
             {step === 2 && (
                 <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
-                    <div className="grid grid-cols-3 gap-4">
-                        <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100 text-center">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div className="p-3.5 bg-emerald-50 rounded-2xl border border-emerald-100 text-center">
                             <p className="text-2xl font-black text-emerald-600">{stats.valid.toLocaleString()}</p>
-                            <p className="text-[10px] font-bold text-emerald-800 uppercase tracking-widest">Hợp lệ (Thêm mới)</p>
+                            <p className="text-[10px] font-bold text-emerald-800 uppercase tracking-widest">Hợp lệ (Nhập vào)</p>
                         </div>
-                        <div className="p-4 bg-rose-50 rounded-2xl border border-rose-100 text-center">
+                        <div className="p-3.5 bg-blue-50 rounded-2xl border border-blue-100 text-center">
+                            <p className="text-2xl font-black text-blue-600">{stats.updateCount.toLocaleString()}</p>
+                            <p className="text-[10px] font-bold text-blue-800 uppercase tracking-widest">Cập nhật / Thay tên</p>
+                        </div>
+                        <div className="p-3.5 bg-rose-50 rounded-2xl border border-rose-100 text-center">
                             <p className="text-2xl font-black text-rose-500">{stats.duplicates.toLocaleString()}</p>
-                            <p className="text-[10px] font-bold text-rose-700 uppercase tracking-widest">Trùng lặp (Bỏ qua)</p>
+                            <p className="text-[10px] font-bold text-rose-700 uppercase tracking-widest">Trùng file (Bỏ qua)</p>
                         </div>
-                        <div className="p-4 bg-orange-50 rounded-2xl border border-orange-100 text-center">
+                        <div className="p-3.5 bg-orange-50 rounded-2xl border border-orange-100 text-center">
                             <p className="text-2xl font-black text-orange-500">{stats.missingPhone || 0}</p>
-                            <p className="text-[10px] font-bold text-orange-700 uppercase tracking-widest">Thiếu SĐT (ZNS sẽ Bỏ qua)</p>
+                            <p className="text-[10px] font-bold text-orange-700 uppercase tracking-widest">Thiếu SĐT (Bỏ qua ZNS)</p>
                         </div>
                     </div>
 

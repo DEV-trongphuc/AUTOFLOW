@@ -622,8 +622,12 @@ try {
                     $sqlSub = "INSERT INTO subscribers (workspace_id, id, email, first_name, last_name, status, source, salesperson, joined_at, notes, phone_number, job_title, company_name, country, city, gender, date_of_birth, anniversary_date, custom_attributes) 
                                VALUES " . implode(',', $subValues) . "
                                ON DUPLICATE KEY UPDATE 
-                               first_name = IF(COALESCE(first_name, '') = '', VALUES(first_name), first_name),
-                               last_name = IF(COALESCE(last_name, '') = '', VALUES(last_name), last_name),
+                               first_name = IF(VALUES(first_name) IS NOT NULL AND VALUES(first_name) != '', VALUES(first_name), first_name),
+                               last_name = CASE 
+                                   WHEN VALUES(last_name) IS NOT NULL AND VALUES(last_name) != '' THEN VALUES(last_name)
+                                   WHEN VALUES(first_name) IS NOT NULL AND VALUES(first_name) != '' AND VALUES(first_name) LIKE '% %' THEN ''
+                                   ELSE last_name 
+                               END,
                                email = IF(email LIKE '%@facebook.com' AND VALUES(email) NOT LIKE '%@facebook.com', VALUES(email), email),
                                status = VALUES(status),
                                salesperson = IF(VALUES(salesperson) != '', VALUES(salesperson), salesperson), 

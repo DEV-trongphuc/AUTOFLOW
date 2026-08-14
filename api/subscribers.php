@@ -462,8 +462,12 @@ if ($method === 'POST' && $route === 'subscribers_bulk') {
 phone_number, job_title, company_name, country, city, gender, date_of_birth, anniversary_date)
 VALUES " . implode(',', $subValues) . "
 ON DUPLICATE KEY UPDATE
-first_name = IF(COALESCE(first_name, '') = '', VALUES(first_name), first_name),
-last_name = IF(COALESCE(last_name, '') = '', VALUES(last_name), last_name),
+first_name = IF(VALUES(first_name) IS NOT NULL AND VALUES(first_name) != '', VALUES(first_name), first_name),
+last_name = CASE 
+    WHEN VALUES(last_name) IS NOT NULL AND VALUES(last_name) != '' THEN VALUES(last_name)
+    WHEN VALUES(first_name) IS NOT NULL AND VALUES(first_name) != '' AND VALUES(first_name) LIKE '% %' THEN ''
+    ELSE last_name 
+END,
 status = VALUES(status), salesperson = VALUES(salesperson),
 phone_number = VALUES(phone_number), job_title = VALUES(job_title), company_name = VALUES(company_name),
 country = VALUES(country), city = VALUES(city), gender = VALUES(gender), date_of_birth = VALUES(date_of_birth),
