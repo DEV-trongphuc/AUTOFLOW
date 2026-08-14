@@ -1334,6 +1334,11 @@ switch ($method) {
                             $stmtSync->execute([$path]);
                             $realSent = (int)$stmtSync->fetchColumn();
 
+                            $stmtSyncAct = $pdo->prepare("SELECT COUNT(DISTINCT subscriber_id) FROM subscriber_activity WHERE campaign_id = ? AND type IN ('receive_email', 'zns_sent')");
+                            $stmtSyncAct->execute([$path]);
+                            $actSent = (int)$stmtSyncAct->fetchColumn();
+                            $realSent = max($realSent, $actSent);
+
                             $stmtSyncFail = $pdo->prepare("SELECT COUNT(*) FROM mail_delivery_logs WHERE campaign_id = ? AND status = 'failed'");
                             $stmtSyncFail->execute([$path]);
                             $realFailed = (int)$stmtSyncFail->fetchColumn();
@@ -1359,17 +1364,19 @@ switch ($method) {
                         $needsWrite = false;
                         if (!empty($aStats['click_link'])) {
                             $cl = $aStats['click_link'];
-                            if ((int)$camp['count_unique_clicked'] !== (int)$cl['unique_count'] || (int)$camp['count_clicked'] !== (int)$cl['total']) {
+                            $uniqueClicks = min((int)$camp['count_sent'], (int)$cl['unique_count']);
+                            if ((int)$camp['count_unique_clicked'] !== $uniqueClicks || (int)$camp['count_clicked'] !== (int)$cl['total']) {
                                 $camp['count_clicked'] = (int)$cl['total'];
-                                $camp['count_unique_clicked'] = (int)$cl['unique_count'];
+                                $camp['count_unique_clicked'] = $uniqueClicks;
                                 $needsWrite = true;
                             }
                         }
                         if (!empty($aStats['open_email'])) {
                             $op = $aStats['open_email'];
-                            if ((int)$camp['count_unique_opened'] !== (int)$op['unique_count'] || (int)$camp['count_opened'] !== (int)$op['total']) {
+                            $uniqueOpens = min((int)$camp['count_sent'], (int)$op['unique_count']);
+                            if ((int)$camp['count_unique_opened'] !== $uniqueOpens || (int)$camp['count_opened'] !== (int)$op['total']) {
                                 $camp['count_opened'] = (int)$op['total'];
-                                $camp['count_unique_opened'] = (int)$op['unique_count'];
+                                $camp['count_unique_opened'] = $uniqueOpens;
                                 $needsWrite = true;
                             }
                         }
