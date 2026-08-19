@@ -1,4 +1,3 @@
-
 (function (window, document, endpoint, propertyId) {
     'use strict';
 
@@ -110,7 +109,7 @@
     function track(type, data) {
         eventQueue.push({ type: type, data: data || {}, timestamp: Date.now() });
         saveQueue();
-        if (type === 'identify' || type === 'pageview' || eventQueue.length >= 5) flush();
+        if (type === 'pageview' || eventQueue.length >= 5) flush();
     }
 
     function saveQueue() { setStorage('_mf_queue', JSON.stringify(eventQueue)); }
@@ -171,35 +170,31 @@
     });
     window.addEventListener('pagehide', function () { flush(true); });
 
-    // --- AUTO TRACKING ---
+    // --- AUTO TRACKING (PAGEVIEWS) ---
     function trackPageView() {
         totalActiveTime = 0;
         lastVisibleResume = Date.now();
         maxScroll = 0;
         var currentUrl = window.location.href;
         var retryCount = 0;
-        var maxRetries = 10; // Try for 5 seconds (500ms * 10)
+        var maxRetries = 10;
 
         function getAndTrack() {
             var pageTitle = document.title;
             var h1 = document.querySelector('h1');
             var h1Text = h1 && h1.innerText ? h1.innerText.trim() : '';
 
-            // Flexible Title Logic: 
-            // If document.title is empty or looks like a URL/Link, try to use H1 text
             var isUrl = /^(https?:\/\/|www\.)/i.test(pageTitle);
             if ((isUrl || !pageTitle) && h1Text) {
                 pageTitle = h1Text;
             }
 
-            // If still empty and we have retries left, wait and try again
             if (!pageTitle && retryCount < maxRetries) {
                 retryCount++;
                 setTimeout(getAndTrack, 500);
                 return;
             }
 
-            // If completely empty after retries, use a placeholder or part of URL
             if (!pageTitle) {
                 var path = window.location.pathname;
                 pageTitle = path === '/' ? 'Home' : path.split('/').pop().replace(/[-_]/g, ' ') || 'Untitled';
@@ -222,7 +217,6 @@
     // SPA Route Change Detection
     var lastUrl = window.location.href;
 
-    // Listen for popstate (back/forward)
     window.addEventListener('popstate', function () {
         if (window.location.href !== lastUrl) {
             lastUrl = window.location.href;
@@ -230,7 +224,6 @@
         }
     });
 
-    // Override pushState and replaceState to catch client-side routing
     var originalPushState = history.pushState;
     history.pushState = function () {
         originalPushState.apply(this, arguments);
@@ -249,20 +242,16 @@
         }
     };
 
-    // --- CLICK TRACKING ---
+    // --- CLICK TRACKING (JOURNEY & HEATMAP) ---
     function findMeaningfulText(el, level) {
         if (!el || level > 3) return '';
 
-        // 0. Explicit tracking label (highest priority — set by marketer)
-        // Allows: <button data-track-name="Register Now">...</button>
         var trackName = el.getAttribute('data-track-name') || el.getAttribute('data-track') || '';
         if (trackName.trim()) return trackName.trim();
 
-        // 1. Attributes
-        var attr = el.getAttribute('aria-label') || el.title || el.placeholder || el.alt || (el.tagName === 'INPUT' ? el.value : '') || '';
+        var attr = el.getAttribute('aria-label') || el.title || el.placeholder || el.alt || (el.tagName === 'INPUT' && (el.type === 'submit' || el.type === 'button' || el.type === 'reset') ? el.value : '') || '';
         if (attr.trim()) return attr.trim();
 
-        // 2. Direct Text Nodes
         for (var i = 0; i < el.childNodes.length; i++) {
             var node = el.childNodes[i];
             if (node.nodeType === 3 && node.textContent.trim()) {
@@ -271,13 +260,11 @@
             }
         }
 
-        // 3. SVG Titles
         if (el.tagName.toLowerCase() === 'svg') {
             var title = el.querySelector('title');
             if (title && title.textContent) return title.textContent.trim();
         }
 
-        // 4. Children
         for (var j = 0; j < el.children.length; j++) {
             var childText = findMeaningfulText(el.children[j], level + 1);
             if (childText) return childText;
@@ -291,17 +278,10 @@
         var upLevel = 0;
         var maxUp = 5;
 
-        // Strategy: 
-        // 1. Check current element and its children (via findMeaningfulText)
-        // 2. If nothing found, check immediate siblings (common for labels next to icons)
-        // 3. If still nothing, move up to parent and repeat
-
         while (el && upLevel < maxUp && el.tagName !== 'BODY' && el.tagName !== 'HTML') {
-            // Check self and children
             var text = findMeaningfulText(el, 0);
             if (text && text.length > 1 && text.length < 200) return text.trim();
 
-            // Check immediate siblings (only for original target or 1st level parent)
             if (upLevel <= 1) {
                 var prev = el.previousElementSibling;
                 if (prev) {
@@ -321,19 +301,22 @@
         return '';
     }
 
-    // Improved Click Listener
+    function getSelector(el) {
+        if (!el) return '';
+        if (el.id) return '#' + el.id;
+        if (el.className && typeof el.className === 'string' && el.className.trim()) return '.' + el.className.trim().split(/\s+/).join('.');
+        return el.tagName ? el.tagName.toLowerCase() : '';
+    }
+
     document.addEventListener('click', function (e) {
-        // Ignore clicks that are part of text selection (user is copying text)
         var selection = window.getSelection();
         if (selection && selection.toString().length > 0) {
-            return; // User is selecting text, not clicking
+            return;
         }
 
         var target = e.target;
-        // Prioritize interactive elements, but also track containers with class 'trackable' or pointers
-        var element = target.closest('a, button, input[type="submit"], [role="button"], [onclick], .trackable');
+        var element = target.closest('a, button, input[type="submit"], input[type="button"], [role="button"], [onclick], .trackable');
 
-        // Fallback: If no interactive element found but target has pointer cursor, treat as click
         if (!element && target && target.tagName !== 'BODY') {
             try {
                 var style = window.getComputedStyle(target);
@@ -349,20 +332,10 @@
             path: window.location.pathname
         };
 
-        // Strategy: 
-        // Try to discover the most meaningful text by looking at children and parents
         var trackedText = discoverClickText(element || target);
-
-        // Clean text
         var trackedTag = element ? element.tagName.toLowerCase() : target.tagName.toLowerCase();
         if (trackedText.length > 100) trackedText = trackedText.substring(0, 100) + '...';
         if (!trackedText) trackedText = 'Unknown Click';
-
-        function getSelector(el) {
-            if (el.id) return '#' + el.id;
-            if (el.className && typeof el.className === 'string' && el.className.trim()) return '.' + el.className.trim().split(/\s+/).join('.');
-            return el.tagName.toLowerCase();
-        }
 
         if (element) {
             track('click', {
@@ -374,22 +347,16 @@
                 selector: getSelector(element),
                 ...meta
             });
-            // If it's a link, flush immediately to avoid missing data during fast navigation
             if (element.tagName === 'A') flush(true);
         } else {
-            // For canvas clicks, try to gather surrounding context
             var contextTexts = [];
-
-            // Try to get better text if we have "Unknown Click"
             if (!trackedText || trackedText === 'Unknown Click') {
-                // 1. First try direct textContent from target
                 var directText = (target.textContent || '').trim();
                 if (directText && directText.length > 0 && directText.length < 200) {
                     trackedText = directText.substring(0, 100);
                 }
             }
 
-            // Collect context from siblings for additional info
             var parent = target.parentElement;
             if (parent) {
                 var siblings = Array.from(parent.children);
@@ -403,7 +370,6 @@
                 });
             }
 
-            // Limit context to top 3 items, max 150 chars total
             var context = contextTexts.slice(0, 3).join(' | ').substring(0, 150);
 
             track('canvas_click', {
@@ -415,37 +381,9 @@
                 selector: getSelector(target)
             });
         }
-
     }, true);
 
-    // --- SELECTION & COPY TRACKING ---
-    document.addEventListener('copy', function () {
-        var selection = window.getSelection().toString().trim();
-        if (selection && selection.length > 0) {
-            track('copy', {
-                text: selection.substring(0, 500),
-                path: window.location.pathname
-            });
-            flush(true); // Important to catch before they might leave
-        }
-    });
-
-    var selectionTimer = null;
-    document.addEventListener('mouseup', function () {
-        // Use mouseup because selectionchange fires too frequently during typing/dragging
-        clearTimeout(selectionTimer);
-        selectionTimer = setTimeout(function () {
-            var selection = window.getSelection().toString().trim();
-            if (selection.length > 3) {
-                track('select', {
-                    text: selection.substring(0, 300),
-                    path: window.location.pathname
-                });
-            }
-        }, 1500);
-    });
-
-    // --- OTHER LISTENERS ---
+    // --- SCROLL TRACKING (ENGAGEMENT MILESTONES) ---
     var trackedMilestones = { 25: false, 50: false, 75: false, 90: false, 100: false };
     var scrollTimer = null;
     document.addEventListener('scroll', function () {
@@ -471,188 +409,9 @@
         }, 500);
     });
 
-    // --- AGGRESSIVE INPUT TRACKING ---
-    // Track email/phone as soon as user types valid data
-    // Priority: 1 (Interaction/Form), 0 (Passive Scan)
-    // [FIX] Restore identifiedData from sessionStorage to survive SPA route changes.
-    // Without this, passive DOM/storage scanners re-fire on every navigation, risking
-    // linking anonymous visitors to emails found in admin/other pages.
-    var _storedIdData = null;
-    try { _storedIdData = JSON.parse(sessionStorage.getItem('_mf_identified') || 'null'); } catch(e) {}
-    var identifiedData = _storedIdData || { email: null, phone: null, priority: -1 };
-    var identifyTimer = null;
-
-    function validateEmail(email) {
-        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-    }
-
-    function validatePhone(phone) {
-        // Vietnamese phone: 10-11 digits, starts with 0
-        var cleaned = (phone || '').replace(/[\s\-\(\)]/g, '');
-        return /^0\d{9,10}$/.test(cleaned);
-    }
-
-    function attemptIdentify(email, phone, priority) {
-        priority = priority || 0;
-        var hasNew = false;
-        var data = {};
-
-        // If current data is from high priority, ignore low priority updates
-        if (priority < identifiedData.priority) return;
-
-        // Update stored values if new valid data OR higher priority
-        if (email && validateEmail(email) && (email !== identifiedData.email || priority > identifiedData.priority)) {
-            identifiedData.email = email;
-            hasNew = true;
-        }
-
-        if (phone && validatePhone(phone) && (phone !== identifiedData.phone || priority > identifiedData.priority)) {
-            identifiedData.phone = phone;
-            hasNew = true;
-        }
-
-        if (hasNew) {
-            identifiedData.priority = priority;
-            if (identifiedData.email) data.email = identifiedData.email;
-            if (identifiedData.phone) data.phone = identifiedData.phone;
-
-            if (Object.keys(data).length > 0) {
-                // [FIX] Persist so passive scanners skip re-firing on SPA navigations
-                try { sessionStorage.setItem('_mf_identified', JSON.stringify(identifiedData)); } catch(e) {}
-                track('identify', data);
-            }
-        }
-    }
-
-    // Listen to ALL input fields for email/phone
-    document.addEventListener('input', function (e) {
-        var input = e.target;
-        if (input.tagName !== 'INPUT') return;
-
-        var type = input.type;
-        var name = (input.name || '').toLowerCase();
-        var value = (input.value || '').trim();
-
-        if (!value) return;
-
-        // Debounce to avoid too many requests
-        clearTimeout(identifyTimer);
-        identifyTimer = setTimeout(function () {
-            var email = null;
-            var phone = null;
-
-            if (type === 'email' || name.includes('email') || name.includes('mail')) {
-                if (validateEmail(value)) email = value;
-            }
-
-            if (type === 'tel' || name.includes('phone') || name.includes('tel') || name.includes('mobile')) {
-                if (validatePhone(value)) phone = value;
-            }
-
-            if (email || phone) attemptIdentify(email, phone, 1); // High priority
-        }, 1000);
-    }, true);
-
-    document.addEventListener('change', function (e) {
-        var input = e.target;
-        if (input.tagName !== 'INPUT') return;
-
-        var type = input.type;
-        var name = (input.name || '').toLowerCase();
-        var value = (input.value || '').trim();
-
-        if (!value) return;
-
-        var email = null;
-        var phone = null;
-
-        if (type === 'email' || name.includes('email') || name.includes('mail')) {
-            if (validateEmail(value)) email = value;
-        }
-
-        if (type === 'tel' || name.includes('phone') || name.includes('tel') || name.includes('mobile')) {
-            if (validatePhone(value)) phone = value;
-        }
-
-        if (email || phone) attemptIdentify(email, phone, 1); // High priority
-    }, true);
-
-    // --- DOM SCANNER FOR VISIBLE EMAIL/PHONE ---
-    // Aggressive global scan
-    function scanPageForIdentifiers() {
-        return; // [FIX] Disabled passive scanning to prevent incorrect mapping to footer/static emails
-    }
-
-    // --- STORAGE & COOKIE SCANNER ---
-    // Quét sạch sẽ Cookie và Local/Session Storage
-    function scanStorage() {
-        return; // [FIX] Disabled passive scanning of storage keys
-    }
-
-    // --- DEEP SCRIPT SCANNER ---
-    // [FIX] DISABLED: Scanning inline scripts is dangerous on admin pages.
-    // The app bundle often embeds the logged-in admin email in global state,
-    // causing ALL visitors to be linked to the admin account.
-    function scanScripts() {
-        return; // disabled
-    }
-
-    // Comprehensive Init
-    function runAllScanners() {
-        // [FIX] Disabled all scanners to prevent false-positive identifications.
-        // We now rely solely on active user inputs (input, change, submit listeners).
-        return;
-    }
-
-    // Scan on page load
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function () {
-            setTimeout(runAllScanners, 1000);
-            setTimeout(runAllScanners, 3000); // Rescan later for dynamic apps
-        });
-    } else {
-        runAllScanners();
-        setTimeout(runAllScanners, 3000);
-    }
-
-    // Re-scan when DOM changes (e.g., Google login button appears)
-    // [FIX] Target document.body instead of document to avoid observing <head> and
-    // inline <script> mutations which fire relentlessly on dynamic dashboards.
-    // Only watch childList (node additions) — attribute mutations are irrelevant for
-    // email/phone detection and cause excessive callbacks on e-commerce sites.
-    var scanTimer = null;
-    var observer = new MutationObserver(function (mutations) {
-        // [PERF] Only re-scan if actual DOM nodes were added (not attribute changes)
-        var hasNodeAdditions = mutations.some(function (m) { return m.addedNodes.length > 0; });
-        if (!hasNodeAdditions) return;
-        clearTimeout(scanTimer);
-        scanTimer = setTimeout(scanPageForIdentifiers, 3000); // Debounce 3s
-    });
-
-    // Observe body only — avoids head/script mutations & reduces callback frequency
-    var observeTarget = document.body || document;
-    observer.observe(observeTarget, {
-        childList: true,
-        subtree: true
-        // No 'attributes: true' — attribute churn is the main perf killer on SPAs
-    });
-
-    // Keep original submit listener as backup
-    document.addEventListener('submit', function (e) {
-        var f = e.target;
-        var em = f.querySelector('input[type="email"], input[name*="email"]');
-        var ph = f.querySelector('input[type="tel"], input[name*="phone"]');
-        var d = {};
-        if (em && em.value) d.email = em.value;
-        if (ph && ph.value) d.phone = ph.value;
-        if (Object.keys(d).length) track('identify', d);
-    });
-
-    // Heartbeat
+    // --- HEARTBEAT & ENGAGEMENT TIME ---
     function sendPing(isUnload) {
-        // Don't ping if tab is hidden to avoid fake duration
         if (document.visibilityState === 'hidden' && !isUnload) return;
-
         if (Date.now() - lastPing < 1000 && !isUnload) return;
         lastPing = Date.now();
 
@@ -697,6 +456,3 @@
     }
 
 })(window, document, 'https://automation.ideas.edu.vn/mail_api/track.php', (function(){ if(window._mf_config && window._mf_config.property_id) return window._mf_config.property_id; var c = document.currentScript; if(c && c.getAttribute('data-website-id')) return c.getAttribute('data-website-id'); var s = document.querySelector('script[data-website-id]'); if(s) return s.getAttribute('data-website-id'); return window._mf_property_id || null; })());
-
-
-

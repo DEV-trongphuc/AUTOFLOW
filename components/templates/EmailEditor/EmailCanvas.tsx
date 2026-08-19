@@ -277,13 +277,12 @@ const EmailCanvas: React.FC<EmailCanvasProps> = ({
         onUpdateBlocks(updateDeep(blocks), false);
     }, [blocks, onUpdateBlocks]);
 
-    // Atomic combined update — used by TableBlockCanvas to avoid double-render stale-cols bug
+    // Atomic combined update — used by TableBlockCanvas, timeline, etc. to update block data safely
     const handleUpdateBlock = useCallback((id: string, data: Partial<EmailBlock>) => {
         const updateDeep = (list: EmailBlock[]): EmailBlock[] => {
             return list.map(b => {
                 if (b.id === id) {
-                    const next: EmailBlock = { ...b };
-                    if (data.content !== undefined) next.content = data.content;
+                    const next: EmailBlock = { ...b, ...data };
                     if (data.style !== undefined) next.style = { ...b.style, ...data.style } as any;
                     return next;
                 }
@@ -547,6 +546,7 @@ const EmailCanvas: React.FC<EmailCanvasProps> = ({
                                                             onDeleteBlock={handleDeleteBlock}
                                                             onUpdateBlockContent={handleUpdateBlockContent}
                                                             onUpdateBlockStyle={handleUpdateBlockStyle}
+                                                            onUpdateBlock={handleUpdateBlock}
                                                             onSaveSection={onSaveSection}
                                                             onResizeColumns={handleResizeColumns}
                                                             onLeftResizeColumns={handleLeftResizeColumns}

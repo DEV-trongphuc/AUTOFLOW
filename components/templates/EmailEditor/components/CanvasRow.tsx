@@ -24,6 +24,7 @@ interface CanvasRowProps {
     onDeleteBlock: (id: string) => void;
     onUpdateBlockContent?: (id: string, content: string) => void;
     onUpdateBlockStyle?: (id: string, style: Partial<EmailBlock['style']>) => void;
+    onUpdateBlock?: (id: string, data: Partial<EmailBlock>) => void;
     onSaveSection?: (block: EmailBlock) => void;
     onSelectParent?: () => void;
     onResizeColumns: (rowId: string, colIndex: number, newLeftPct: number) => void;

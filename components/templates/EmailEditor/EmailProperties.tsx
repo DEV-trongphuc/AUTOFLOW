@@ -422,15 +422,56 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                         {selectedBlock.type === 'timeline' && (
                             <div className="space-y-4">
                                 <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Sự kiện Timeline</label>
-                                {selectedBlock.items?.map((item, i) => (<div key={item.id} className="bg-slate-50 p-3 rounded-xl border border-slate-100 relative group"><button onClick={() => removeTimelineItem(i)} className="absolute top-2 right-2 text-slate-300 hover:text-rose-500"><LucideIcons.X className="w-3.5 h-3.5" /></button><div className="grid grid-cols-3 gap-2 mb-2"><input className="col-span-1 bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold" value={item.date} onChange={(e) => handleTimelineItemChange(i, 'date', e.target.value)} /><input className="col-span-2 bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold" value={item.title} onChange={(e) => handleTimelineItemChange(i, 'title', e.target.value)} /></div><textarea className="w-full bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs h-16 outline-none focus:border-violet-600 resize-none" value={item.description} onChange={(e) => handleTimelineItemChange(i, 'description', e.target.value)} /></div>))}
-                                <button onClick={addTimelineItem} className="w-full py-2 border-2 border-dashed border-slate-200 rounded-xl text-xs font-bold text-slate-400 hover:text-violet-600"><LucideIcons.Plus className="w-3.5 h-3.5 inline mr-1" /> Thêm sự kiện</button>
+                                {selectedBlock.items?.map((item, i) => (
+                                    <div key={item.id || i} className="bg-slate-50 p-4 rounded-3xl border border-slate-100 relative group animate-in slide-in-from-left-1 space-y-3 transition-all focus-within:z-[50] focus-within:ring-2 focus-within:ring-violet-600/20 focus-within:border-violet-600/30 focus-within:bg-white shadow-sm hover:shadow-md">
+                                        <button onClick={() => removeTimelineItem(i)} className="absolute top-3 right-3 text-slate-300 hover:text-rose-500 z-10" title="Xóa sự kiện"><LucideIcons.X className="w-4 h-4" /></button>
+                                        <div className="space-y-1">
+                                            <label className="text-[8px] font-bold text-slate-400 uppercase px-1">Thời gian / Bước</label>
+                                            <input
+                                                className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold focus:border-violet-600 outline-none transition-all shadow-sm"
+                                                placeholder="VD: BƯỚC 1, 09:00 AM..."
+                                                value={item.date || ''}
+                                                onChange={(e) => handleTimelineItemChange(i, 'date', e.target.value)}
+                                            />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-[8px] font-bold text-slate-400 uppercase px-1">Tiêu đề</label>
+                                            <RichText
+                                                value={item.title || ''}
+                                                onChange={(v) => handleTimelineItemChange(i, 'title', v)}
+                                                minHeight="40px"
+                                                bodyLinkColor={bodyStyle.linkColor}
+                                                customMergeTags={customMergeTags}
+                                                usedColors={usedColors}
+                                            />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-[8px] font-bold text-slate-400 uppercase px-1">Mô tả chi tiết</label>
+                                            <RichText
+                                                value={item.description || ''}
+                                                onChange={(v) => handleTimelineItemChange(i, 'description', v)}
+                                                minHeight="70px"
+                                                bodyLinkColor={bodyStyle.linkColor}
+                                                customMergeTags={customMergeTags}
+                                                usedColors={usedColors}
+                                            />
+                                        </div>
+                                    </div>
+                                ))}
+                                <button onClick={addTimelineItem} className="w-full py-3.5 border-2 border-dashed border-slate-200 rounded-2xl text-xs font-bold text-slate-400 hover:text-violet-600 hover:border-violet-600 hover:bg-violet-50 transition-all">
+                                    <LucideIcons.Plus className="w-4 h-4 inline mr-1.5" /> Thêm sự kiện
+                                </button>
                                 <Accordion title="Giao diện Timeline" icon={LucideIcons.ListStart} defaultOpen>
                                     <div className="space-y-4">
                                         <ColorPicker label="Màu Chấm (Dot)" value={getStyle('timelineDotColor') || '#d97706'} onChange={(v, t) => handleColorUpdate(v, t, 'timelineDotColor' as any)} blocks={blocks} bodyStyle={bodyStyle} />
                                         <ColorPicker label="Màu Đường (Line)" value={getStyle('timelineLineColor') || '#e2e8f0'} onChange={(v, t) => handleColorUpdate(v, t, 'timelineLineColor' as any)} blocks={blocks} bodyStyle={bodyStyle} />
                                         <div className="space-y-2">
                                             <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Kiểu đường</label>
-                                            <div className="flex bg-slate-100 p-1 rounded-xl">{['solid', 'dashed', 'dotted'].map(st => (<button key={st} onClick={() => updateStyle({ timelineLineStyle: st as any })} className={`flex-1 py-1 text-[9px] font-bold uppercase rounded-lg transition-all ${getStyle('timelineLineStyle') === st ? 'bg-white shadow text-violet-600' : 'text-slate-400 hover:text-slate-600'}`}>{st}</button>))}</div>
+                                            <div className="flex bg-slate-100 p-1 rounded-xl">
+                                                {['solid', 'dashed', 'dotted'].map(st => (
+                                                    <button key={st} onClick={() => updateStyle({ timelineLineStyle: st as any })} className={`flex-1 py-1.5 text-[9px] font-bold uppercase rounded-lg transition-all ${getStyle('timelineLineStyle') === st ? 'bg-white shadow text-violet-600' : 'text-slate-400 hover:text-slate-600'}`}>{st}</button>
+                                                ))}
+                                            </div>
                                         </div>
                                     </div>
                                 </Accordion>

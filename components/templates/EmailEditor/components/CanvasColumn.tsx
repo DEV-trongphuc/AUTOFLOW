@@ -26,6 +26,7 @@ interface CanvasColumnProps {
     onDeleteBlock: (id: string) => void;
     onUpdateBlockContent?: (id: string, content: string) => void;
     onUpdateBlockStyle?: (id: string, style: Partial<EmailBlock['style']>) => void;
+    onUpdateBlock?: (id: string, data: Partial<EmailBlock>) => void;
     onSaveSection?: (block: EmailBlock) => void;
     onSelectParent?: () => void;
     isNoStack?: boolean;
@@ -38,7 +39,7 @@ interface CanvasColumnProps {
 const CanvasColumn: React.FC<CanvasColumnProps> = (props) => {
     const {
         col, bodyStyle, viewMode, selectedBlockId, dragOverId, dropPosition, draggingBlockId,
-        onSelectBlock, onDragStart, onDragOver, onDrop, onMoveOrder, onSwapColumns, onDuplicateBlock, onDeleteBlock, onUpdateBlockContent, onUpdateBlockStyle, onSaveSection, onSelectParent,
+        onSelectBlock, onDragStart, onDragOver, onDrop, onMoveOrder, onSwapColumns, onDuplicateBlock, onDeleteBlock, onUpdateBlockContent, onUpdateBlockStyle, onUpdateBlock, onSaveSection, onSelectParent,
         isNoStack, onResizeColumns, onLeftResizeColumns, customMergeTags = [], columnGap
     } = props;
 
@@ -216,6 +217,7 @@ const CanvasColumn: React.FC<CanvasColumnProps> = (props) => {
                                     onDeleteBlock={onDeleteBlock}
                                     onUpdateBlockContent={onUpdateBlockContent}
                                     onUpdateBlockStyle={onUpdateBlockStyle}
+                                    onUpdateBlock={onUpdateBlock}
                                     onSaveSection={onSaveSection}
                                     onSelectParent={() => onSelectBlock(col.id)}
                                     isNoStack={isNoStack} // Pass prop

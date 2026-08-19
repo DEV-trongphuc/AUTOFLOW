@@ -177,37 +177,12 @@
 
     document.addEventListener('click', trackClick, { passive: true });
 
-    // Track form submissions
+    // Track form submissions (journey only, no field/PII capture)
     function trackFormSubmit(event) {
         const form = event.target;
-        const formData = new FormData(form);
-        const formFields = {};
-
-        // Extract email and phone for subscriber matching
-        let email = null;
-        let phone = null;
-
-        for (let [key, value] of formData.entries()) {
-            formFields[key] = value;
-
-            // Detect email field
-            if (key.toLowerCase().includes('email') ||
-                (typeof value === 'string' && value.includes('@'))) {
-                email = value;
-            }
-
-            // Detect phone field
-            if (key.toLowerCase().includes('phone') || key.toLowerCase().includes('tel')) {
-                phone = value;
-            }
-        }
-
         sendData('form_submit', {
             form_url: form.action || window.location.href,
-            form_id: form.id || null,
-            form_fields: formFields,
-            email: email,
-            phone: phone
+            form_id: form.id || null
         });
     }
 

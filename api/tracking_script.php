@@ -128,38 +128,9 @@ for (var i = 0; i < ca.length; i++) { var c=ca[i]; while (c.charAt(0)==' ' ) c=c
     window.addEventListener('load', trackPageView);
     document.addEventListener('click', trackClick);
     
-    // Form Submit Listener for Auto-Identify
+    // Form Submit Listener (Journey only, no field/trait capture)
     document.addEventListener('submit', function(e) {
         var form = e.target;
-        var traits = {};
-        var found = false;
-        
-        var inputs = form.querySelectorAll('input');
-        for (var i = 0; i < inputs.length; i++) {
-            var input = inputs[i];
-            var name = (input.name || '').toLowerCase();
-            var type = (input.type || '').toLowerCase();
-            var val = input.value;
-            
-            if (!val) continue;
-            
-            if (type === 'email' || name.includes('email')) {
-                traits.email = val;
-                found = true;
-            }
-            if (type === 'tel' || name.includes('phone') || name.includes('sdt') || name.includes('mobile')) {
-                traits.phone = val;
-                found = true;
-            }
-             if ((name.includes('name') || name.includes('full')) && !traits.name) {
-                traits.name = val;
-            }
-        }
-        
-        if (found) {
-            send('identify', {}, traits);
-        }
-        
         send('form_submit', {
             selector: getSelector(form)
         });

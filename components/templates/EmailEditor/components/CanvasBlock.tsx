@@ -279,10 +279,32 @@ const CanvasBlock: React.FC<CanvasBlockProps> = (props) => {
                     <div style={{ position: 'relative', paddingLeft: '0px' }}>
                         {block.items?.map((item, i) => {
                             const isLast = i === (block.items?.length || 0) - 1;
+                            const hasDate = Boolean((item.date && item.date.trim() !== '') || isSelected);
+                            const dateWidth = hasDate ? (viewMode === 'mobile' ? '60px' : '80px') : '0px';
+                            const datePadding = hasDate ? '15px' : '0px';
+
                             return (
                                 <div key={item.id || i} style={{ position: 'relative', paddingBottom: isLast ? '0' : '30px', display: 'flex' }}>
-                                    <div style={{ width: item.date ? (viewMode === 'mobile' ? '60px' : '80px') : '0px', flexShrink: 0, paddingRight: item.date ? '15px' : '0px', textAlign: 'right', paddingTop: '4px', overflow: 'hidden' }}>
-                                        <strong style={{ color: titleClr, fontSize: css.fontSize || '12px', fontFamily: timelineFontFamily }}>{item.date}</strong>
+                                    <div style={{ width: dateWidth, flexShrink: 0, paddingRight: datePadding, textAlign: 'right', paddingTop: '4px', overflow: 'hidden' }}>
+                                        <RichText
+                                            html={item.date || ''}
+                                            onChange={(newHtml) => {
+                                                const nextItems = [...(block.items || [])];
+                                                nextItems[i] = { ...nextItems[i], date: newHtml };
+                                                onUpdateBlock?.(block.id, { items: nextItems });
+                                            }}
+                                            disabled={!isSelected}
+                                            bodyLinkColor={bodyStyle.linkColor}
+                                            customMergeTags={customMergeTags}
+                                            usedColors={usedColors}
+                                            style={{
+                                                color: titleClr,
+                                                fontSize: css.fontSize || '12px',
+                                                fontFamily: timelineFontFamily,
+                                                fontWeight: 'bold',
+                                                textAlign: 'right'
+                                            }}
+                                        />
                                     </div>
                                     <div style={{ width: '24px', flexShrink: 0, position: 'relative' }}>
                                         {!isLast && (
@@ -300,8 +322,47 @@ const CanvasBlock: React.FC<CanvasBlockProps> = (props) => {
                                         }}></div>
                                     </div>
                                     <div style={{ flex: 1, paddingLeft: '20px', paddingBottom: '10px' }}>
-                                        <h4 style={{ margin: '0 0 4px', fontSize: css.fontSize || '16px', color: titleClr, fontWeight: 'bold', textAlign: 'left', fontFamily: timelineFontFamily }}>{item.title}</h4>
-                                        <p style={{ margin: 0, fontSize: '14px', color: descClr, textAlign: 'left', lineHeight: css.lineHeight || '1.5', fontFamily: timelineFontFamily }}>{item.description}</p>
+                                        <RichText
+                                            html={item.title || ''}
+                                            onChange={(newHtml) => {
+                                                const nextItems = [...(block.items || [])];
+                                                nextItems[i] = { ...nextItems[i], title: newHtml };
+                                                onUpdateBlock?.(block.id, { items: nextItems });
+                                            }}
+                                            disabled={!isSelected}
+                                            bodyLinkColor={bodyStyle.linkColor}
+                                            customMergeTags={customMergeTags}
+                                            usedColors={usedColors}
+                                            style={{
+                                                margin: '0 0 4px',
+                                                fontSize: css.fontSize || '16px',
+                                                color: titleClr,
+                                                fontWeight: 'bold',
+                                                textAlign: 'left',
+                                                fontFamily: timelineFontFamily
+                                            }}
+                                        />
+                                        <RichText
+                                            html={item.description || ''}
+                                            onChange={(newHtml) => {
+                                                const nextItems = [...(block.items || [])];
+                                                nextItems[i] = { ...nextItems[i], description: newHtml };
+                                                onUpdateBlock?.(block.id, { items: nextItems });
+                                            }}
+                                            disabled={!isSelected}
+                                            bodyLinkColor={bodyStyle.linkColor}
+                                            customMergeTags={customMergeTags}
+                                            usedColors={usedColors}
+                                            blockLineHeight={css.lineHeight || '1.5'}
+                                            style={{
+                                                margin: 0,
+                                                fontSize: '14px',
+                                                color: descClr,
+                                                textAlign: 'left',
+                                                lineHeight: css.lineHeight || '1.5',
+                                                fontFamily: timelineFontFamily
+                                            }}
+                                        />
                                     </div>
                                 </div>
                             );
