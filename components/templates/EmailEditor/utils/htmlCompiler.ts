@@ -496,18 +496,31 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
             const playBtnColor = s.playButtonColor || '#d97706';
             const radius = sanitizeRadius(s.borderRadius || '12px');
             return wrapWithMargin(`
-                <td align="${videoAlign}" class="${customClassName}" style="${paddingCss} ${getBackgroundStyle(s)} ${radiusStyle} ${getBorderStyle(s)} ${hideOnDesktopCss}">
-                    <a href="${b.videoUrl || '#'}" target="_blank" style="display: inline-block; text-decoration: none; position: relative; width: 100%; max-width: 100%;">
-                        <img src="${b.thumbnailUrl || 'https://via.placeholder.com/600x340?text=Video+Thumbnail'}" width="100%" style="display: block; max-width: 100%; width: 100%; height: auto; border-radius: ${radius};" alt="Video Thumbnail" />
-                        <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.3); border-radius: ${radius}; pointer-events: none;"></div>
-                        <table role="presentation" border="0" cellspacing="0" cellpadding="0" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
-                            <tr>
-                                <td align="center" valign="middle" bgcolor="${playBtnColor}" style="width: 60px; height: 60px; border-radius: 50%; box-shadow: 0 4px 12px rgba(0,0,0,0.4);">
-                                    <img src="https://cdn-icons-png.flaticon.com/512/0/375.png" width="30" height="30" style="display: block; filter: invert(1); margin-left: 4px;" alt="Play" />
-                                </td>
-                            </tr>
-                        </table>
-                    </a>
+                <td align="${videoAlign}" class="video-block ${customClassName}" style="${paddingCss} ${getBackgroundStyle(s)} ${radiusStyle} ${getBorderStyle(s)} ${hideOnDesktopCss}">
+                    <table role="presentation" border="0" cellspacing="0" cellpadding="0" width="100%" align="${videoAlign}" style="max-width: 100%; border-collapse: separate; margin: 0 ${videoAlign === 'center' ? 'auto' : (videoAlign === 'right' ? '0 0 auto' : 'auto 0')};">
+                        <tr>
+                            <td align="${videoAlign}" style="padding: 0;">
+                                <a href="${b.videoUrl || '#'}" target="_blank" style="display: block; text-decoration: none; position: relative; width: 100%; max-width: 100%; border-radius: ${radius}; overflow: hidden;">
+                                    <img src="${b.thumbnailUrl || 'https://via.placeholder.com/600x340?text=Video+Thumbnail'}" width="100%" style="display: block; max-width: 100%; width: 100%; height: auto; border-radius: ${radius}; border: 0;" alt="Video Thumbnail" />
+                                    <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.3); border-radius: ${radius}; pointer-events: none;">
+                                        <table role="presentation" border="0" cellspacing="0" cellpadding="0" width="100%" height="100%" style="width: 100%; height: 100%; border-collapse: collapse;">
+                                            <tr>
+                                                <td align="center" valign="middle" style="text-align: center; vertical-align: middle; padding: 0;">
+                                                    <table role="presentation" border="0" cellspacing="0" cellpadding="0" align="center" style="display: inline-table; margin: 0 auto;">
+                                                        <tr>
+                                                            <td align="center" valign="middle" bgcolor="${playBtnColor}" style="width: 60px; height: 60px; border-radius: 50%; box-shadow: 0 4px 16px rgba(0,0,0,0.4); text-align: center; vertical-align: middle;">
+                                                                <img src="https://cdn-icons-png.flaticon.com/512/0/375.png" width="28" height="28" style="display: block; margin: 0 auto; filter: invert(1); width: 28px; height: 28px;" alt="Play" />
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </a>
+                            </td>
+                        </tr>
+                    </table>
                 </td>
             `);
         }

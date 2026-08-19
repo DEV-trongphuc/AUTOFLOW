@@ -554,17 +554,18 @@ const CanvasBlock: React.FC<CanvasBlockProps> = (props) => {
                 return (
                     <div style={{ textAlign: videoAlign }}>
                         {block.videoUrl ? (
-                            <div style={{ position: 'relative', display: 'inline-block', maxWidth: '100%' }}>
+                            <div style={{ position: 'relative', display: 'inline-block', maxWidth: '100%', borderRadius: sanitizeRadius(css.borderRadius || '12px'), overflow: 'hidden' }}>
                                 {/* Thumbnail */}
                                 <img
                                     src={block.thumbnailUrl || 'https://via.placeholder.com/600x340?text=Video+Thumbnail'}
-                                    style={{ maxWidth: '100%', borderRadius: sanitizeRadius(css.borderRadius || '12px'), display: 'block' }}
+                                    style={{ maxWidth: '100%', width: '100%', height: 'auto', borderRadius: sanitizeRadius(css.borderRadius || '12px'), display: 'block' }}
                                     alt="Video"
                                 />
                                 {/* ✅ Nút play overlay chính giữa bằng absolute */}
                                 <div style={{
                                     position: 'absolute',
                                     top: 0, left: 0, right: 0, bottom: 0,
+                                    width: '100%', height: '100%',
                                     backgroundColor: 'rgba(0,0,0,0.3)',
                                     borderRadius: sanitizeRadius(css.borderRadius || '12px'),
                                     display: 'flex',
