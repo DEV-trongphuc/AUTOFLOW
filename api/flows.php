@@ -2747,6 +2747,60 @@ if (isset($_GET['route']) && $_GET['route'] === 'inactive-users') {
 }
 
 
+// --- NEW ROUTE: Duplicate Flow ---
+if (isset($_GET['route']) && $_GET['route'] === 'duplicate') {
+    if ($method !== 'POST')
+        jsonResponse(false, null, 'Method not allowed');
+
+    try {
+        require_permission($pdo, 'edit_campaigns', $workspace_id);
+
+        $flowId = $_GET['id'] ?? null;
+        if (!$flowId)
+            jsonResponse(false, null, 'Flow ID required');
+        verifyFlowOwnership($pdo, $flowId, $workspace_id);
+
+        $stmt = $pdo->prepare("SELECT * FROM flows WHERE id = ? AND workspace_id = ?");
+        $stmt->execute([$flowId, $workspace_id]);
+        $original = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$original)
+            jsonResponse(false, null, 'Original flow not found');
+
+        $body = json_decode(file_get_contents("php://input"), true) ?? [];
+        $newName = trim($body['name'] ?? ($original['name'] . ' (Bản sao)'));
+        $newId = 'flow_' . uniqid() . '_' . bin2hex(random_bytes(4));
+
+        $stepsJson = $original['steps'] ?? '[]';
+        $configJson = $original['config'] ?? '{}';
+
+        // Update creator in config if passed
+        if (!empty($body['creator'])) {
+            $confObj = json_decode($configJson, true) ?: [];
+            $confObj['creator'] = $body['creator'];
+            $configJson = json_encode($confObj, JSON_UNESCAPED_UNICODE);
+        }
+
+        $sql = "INSERT INTO flows (workspace_id, id, name, description, status, steps, config, trigger_type, stat_enrolled, stat_completed, stat_total_sent, stat_total_opened, stat_unique_opened, stat_total_clicked, stat_unique_clicked, stat_total_failed, stat_total_unsubscribed, stat_zalo_sent, stat_zns_sent, stat_meta_sent, created_at, updated_at) VALUES (?, ?, ?, ?, 'draft', ?, ?, ?, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NOW(), NOW())";
+        $stmtInsert = $pdo->prepare($sql);
+        $stmtInsert->execute([
+            $workspace_id,
+            $newId,
+            $newName,
+            $original['description'] ?? '',
+            $stepsJson,
+            $configJson,
+            $original['trigger_type']
+        ]);
+
+        logSystemActivity($pdo, 'flows', 'duplicate', $newId, $newName, ['original_flow_id' => $flowId]);
+
+        jsonResponse(true, ['id' => $newId, 'message' => 'Đã nhân bản flow thành công!']);
+    } catch (Exception $e) {
+        error_log("Duplicate flow error: " . $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống khi nhân bản flow: ' . $e->getMessage());
+    }
+}
+
 // --- NEW ROUTE: Bulk Delete ---
 if (isset($_GET['route']) && $_GET['route'] === 'bulk-delete') {
     if ($method !== 'POST')

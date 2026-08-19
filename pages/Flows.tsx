@@ -1138,29 +1138,47 @@ const Flows: React.FC = () => {
                 setConfirmModal(prev => ({ ...prev, isOpen: false }));
                 const user = JSON.parse(localStorage.getItem('user') || localStorage.getItem('currentUser') || '{}');
                 const creatorInfo = user.name ? { name: user.name, picture: user.picture || "/imgs/ICON.png" } : null;
-                const { id, stats, status, createdAt, archivedAt, ...rest } = flow;
-                const newFlow = {
-                    ...rest,
-                    name: `${flow.name} (Bản sao)`,
-                    status: 'draft' as const,
-                    stats: { enrolled: 0, completed: 0, totalSent: 0, totalOpened: 0, uniqueOpened: 0, totalClicked: 0, uniqueClicked: 0 },
-                    config: {
-                        ...flow.config,
-                        creator: creatorInfo || { name: 'Hệ thống', picture: '/imgs/ICON.png' }
-                    }
-                };
 
                 setLoading(true);
                 try {
-                    const res = await api.post<Flow>('flows', newFlow);
-                    if (res.success) {
+                    // Call backend dedicated duplicate route (clones complete steps from DB)
+                    const res = await api.post<any>(`flows?route=duplicate&id=${flow.id}`, {
+                        name: `${flow.name} (Bản sao)`,
+                        creator: creatorInfo || { name: 'Hệ thống', picture: '/imgs/ICON.png' }
+                    });
+
+                    if (res && res.success) {
                         showToast('Đã nhân bản kịch bản thành công!', 'success');
                         loadData();
                     } else {
-                        showToast(res.message || 'Lỗi khi nhân bản kịch bản', 'error');
+                        // Fallback: Fetch complete flow by ID then POST
+                        const fullFlowRes = await api.get<any>(`flows/${flow.id}`);
+                        const fullFlow = fullFlowRes?.data || fullFlowRes;
+                        if (!fullFlow || !fullFlow.steps) {
+                            throw new Error(res?.message || 'Lỗi khi nhân bản kịch bản');
+                        }
+                        const { id, stats, status, createdAt, archivedAt, ...rest } = fullFlow;
+                        const newFlow = {
+                            ...rest,
+                            name: `${flow.name} (Bản sao)`,
+                            status: 'draft' as const,
+                            stats: { enrolled: 0, completed: 0, totalSent: 0, totalOpened: 0, uniqueOpened: 0, totalClicked: 0, uniqueClicked: 0 },
+                            config: {
+                                ...fullFlow.config,
+                                creator: creatorInfo || { name: 'Hệ thống', picture: '/imgs/ICON.png' }
+                            }
+                        };
+                        const createRes = await api.post<Flow>('flows', newFlow);
+                        if (createRes && createRes.success) {
+                            showToast('Đã nhân bản kịch bản thành công!', 'success');
+                            loadData();
+                        } else {
+                            showToast(createRes?.message || 'Lỗi khi nhân bản kịch bản', 'error');
+                        }
                     }
-                } catch (error) {
-                    showToast('Đã xảy ra lỗi hệ thống khi nhân bản kịch bản', 'error');
+                } catch (error: any) {
+                    console.error('Duplicate flow error:', error);
+                    showToast('Đã xảy ra lỗi khi nhân bản kịch bản', 'error');
                 } finally {
                     setLoading(false);
                 }
