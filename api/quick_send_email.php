@@ -164,6 +164,17 @@ try {
     $defaultSender = $stmtSettings->fetchColumn() ?: "marketing@ka-en.com.vn";
     
     $mailer = new Mailer($pdo, API_BASE_URL, $defaultSender, $workspaceId);
+    
+    // Set dynamic sender email and name if provided
+    $fromEmail = trim($input['from_email'] ?? '');
+    $fromName = trim($input['from_name'] ?? '');
+    if (!empty($fromEmail) && filter_var($fromEmail, FILTER_VALIDATE_EMAIL)) {
+        $mailer->setDynamicSender($fromEmail);
+    }
+    if (!empty($fromName)) {
+        $mailer->setDynamicSenderName($fromName);
+    }
+
     $attachments = $input['attachments'] ?? [];
     
     $sentCount = 0;

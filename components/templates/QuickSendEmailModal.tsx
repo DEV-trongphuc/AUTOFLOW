@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Modal from '../common/Modal';
 import { api } from '../../services/storageAdapter';
+import { useSettings } from '../contexts/SettingsContext';
 import { Subscriber, List } from '../../types';
 import {
     Send,
@@ -19,7 +20,9 @@ import {
     ChevronDown,
     Filter,
     Layers,
-    Trash2
+    Trash2,
+    AtSign,
+    User
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -32,6 +35,13 @@ interface QuickSendEmailModalProps {
     isDarkTheme?: boolean;
 }
 
+const cleanSubjectText = (raw?: string): string => {
+    if (!raw) return 'Thông báo từ hệ thống';
+    // Remove prefixes like [Test], Test:, [QA Check], (Test), etc.
+    let cleaned = raw.replace(/^\[?(?:Test|QA Check|Kiểm tra|Demo)\]?\s*[:-]?\s*/i, '').trim();
+    return cleaned || 'Thông báo từ hệ thống';
+};
+
 const QuickSendEmailModal: React.FC<QuickSendEmailModalProps> = ({
     isOpen,
     onClose,
@@ -40,10 +50,13 @@ const QuickSendEmailModal: React.FC<QuickSendEmailModalProps> = ({
     defaultSubject,
     isDarkTheme = false,
 }) => {
+    const { senderEmails } = useSettings();
     const finalHtml = htmlContent || template?.htmlContent || '';
-    const initialSubject = defaultSubject || template?.subject || template?.name || 'Thông báo từ hệ thống';
+    const initialSubject = cleanSubjectText(defaultSubject || template?.subject || template?.name);
 
     const [subject, setSubject] = useState(initialSubject);
+    const [fromEmail, setFromEmail] = useState<string>('');
+    const [fromName, setFromName] = useState<string>('');
     const [activeTab, setActiveTab] = useState<'subscribers' | 'import'>('subscribers');
 
     // Subscribers & Lists data
@@ -71,12 +84,15 @@ const QuickSendEmailModal: React.FC<QuickSendEmailModalProps> = ({
     // Reset when modal opens
     useEffect(() => {
         if (isOpen) {
-            setSubject(initialSubject);
+            setSubject(cleanSubjectText(defaultSubject || template?.subject || template?.name));
+            if (senderEmails && senderEmails.length > 0 && !fromEmail) {
+                setFromEmail(senderEmails[0]);
+            }
             setSendResult(null);
             setIsSending(false);
             loadData();
         }
-    }, [isOpen, initialSubject]);
+    }, [isOpen, defaultSubject, template, senderEmails]);
 
     const loadData = async () => {
         setIsLoadingData(true);
@@ -243,6 +259,8 @@ const QuickSendEmailModal: React.FC<QuickSendEmailModalProps> = ({
 
             const payload = {
                 subject: subject.trim(),
+                from_email: fromEmail.trim() || undefined,
+                from_name: fromName.trim() || undefined,
                 html_content: finalHtml,
                 template_name: template?.name || 'Quick Send',
                 recipients: recipientsPayload,
@@ -298,6 +316,7 @@ const QuickSendEmailModal: React.FC<QuickSendEmailModalProps> = ({
                         {totalRecipientsCount > 0 ? (
                             <span>
                                 Sẵn sàng gửi tới <strong className="text-amber-600">{totalRecipientsCount}</strong> người nhận
+                                {fromEmail ? ` từ ${fromEmail}` : ''}
                                 {ccInput.trim() ? ` (+ CC)` : ''}
                                 {bccInput.trim() ? ` (+ BCC)` : ''}
                             </span>
@@ -373,6 +392,49 @@ const QuickSendEmailModal: React.FC<QuickSendEmailModalProps> = ({
                         </div>
                     </div>
                 )}
+
+                {/* Sender & Subject Configuration */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 bg-slate-50/80 rounded-2xl border border-slate-200">
+                    <div>
+                        <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5 flex items-center gap-1">
+                            <AtSign className="w-3.5 h-3.5 text-amber-500" />
+                            Email gửi đi (Sender)
+                        </label>
+                        {senderEmails && senderEmails.length > 1 ? (
+                            <select
+                                value={fromEmail}
+                                onChange={e => setFromEmail(e.target.value)}
+                                className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 text-xs font-semibold transition-all bg-white text-slate-700"
+                            >
+                                {senderEmails.map(e => (
+                                    <option key={e} value={e}>{e}</option>
+                                ))}
+                            </select>
+                        ) : (
+                            <input
+                                type="email"
+                                value={fromEmail}
+                                onChange={e => setFromEmail(e.target.value)}
+                                placeholder={senderEmails[0] || 'marketing@ka-en.com.vn'}
+                                className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 text-xs font-semibold transition-all bg-white"
+                            />
+                        )}
+                    </div>
+
+                    <div>
+                        <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5 flex items-center gap-1">
+                            <User className="w-3.5 h-3.5 text-amber-500" />
+                            Tên hiển thị người gửi (Tùy chọn)
+                        </label>
+                        <input
+                            type="text"
+                            value={fromName}
+                            onChange={e => setFromName(e.target.value)}
+                            placeholder="Ví dụ: IDEAS AI Platform"
+                            className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 text-xs font-semibold transition-all bg-white"
+                        />
+                    </div>
+                </div>
 
                 {/* Email Subject Input */}
                 <div>

@@ -10,6 +10,7 @@ class Mailer {
     private $workspaceId = 0;
     private $sentInSession = 0; // Counter for SMTP session pooling
     private $dynamicSender = null; // Dynamic sender for specific campaigns/flows
+    private $dynamicSenderName = null; // Dynamic sender name
     private static $pathCache = []; // Optimization: Disk I/O cache for attachments
     private static $htmlTemplateCache = []; // Optimization: Regex-injected HTML cache
     private static $breovCh = null; // [PERF] Persistent Brevo API cURL handle (connection reuse)
@@ -63,6 +64,11 @@ class Mailer {
         }
     }
 
+    public function setDynamicSenderName($name)
+    {
+        $this->dynamicSenderName = !empty($name) ? trim($name) : null;
+    }
+
     /**
      * Dispatch an email without any tracking/footer overhead.
      * Used for QA copies and avoid recursion overhead.
@@ -97,7 +103,7 @@ class Mailer {
             return false;
         }
 
-        $fromName = $this->smtpSettings['smtp_from_name'] ?? "Marketing System";
+        $fromName = $this->dynamicSenderName ?: ($this->smtpSettings['smtp_from_name'] ?? "Marketing System");
 
         $success = false;
         if (isset($this->smtpSettings['smtp_enabled']) && $this->smtpSettings['smtp_enabled'] === '1') {
