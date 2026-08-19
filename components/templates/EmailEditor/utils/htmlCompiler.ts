@@ -138,18 +138,31 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
         
         @media screen and (max-width: 600px) {
             .full-width { width: 100% !important; }
+            .email-container {
+                width: 100% !important;
+                max-width: 100% !important;
+                min-width: 100% !important;
+                margin: 0 auto !important;
+            }
             .section-wrapper { 
-                /* Allow inline padding to override if present */
+                width: 100% !important;
+                max-width: 100% !important;
+                box-sizing: border-box !important;
                 padding-top: 10px; 
                 padding-bottom: 10px; 
             }
             .section-content {
                 width: 100% !important;
                 max-width: 100% !important;
+                margin: 0 auto !important;
+                box-sizing: border-box !important;
             }
             .row-resp { 
-                display: block !important; 
+                display: table !important; 
                 width: 100% !important; 
+                max-width: 100% !important;
+                margin: 0 auto !important;
+                box-sizing: border-box !important;
             }
             .col-resp { 
                 display: block !important; 
@@ -160,10 +173,15 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
                 padding-left: 10px; 
                 padding-right: 10px; 
                 margin-bottom: 20px; 
+                margin-left: auto !important;
+                margin-right: auto !important;
                 box-sizing: border-box !important;
                 clear: both !important;
             }
             .col-resp:last-child { margin-bottom: 0 !important; }
+            .email-container table {
+                box-sizing: border-box !important;
+            }
             .timeline-date {
                 width: 60px !important;
                 padding-right: 10px !important;
@@ -396,8 +414,11 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
             const rowClass = noStack ? "" : "row-resp";
             const rowWidth = s.width || '100%';
             const rowWidthHtml = typeof rowWidth === 'string' && rowWidth.includes('%') ? rowWidth : String(rowWidth).replace('px', '');
-            const rowMargin = `margin-top: 0px; margin-bottom: 0px; margin-left: ${s.marginLeft || 'auto'}; margin-right: ${s.marginRight || 'auto'};`;
-            return wrapWithMargin(`<td align="${s.textAlign || 'center'}" class="${customClassName}" style="${paddingCss} ${getBackgroundStyle(s)} ${radiusStyle} ${getBorderStyle(s)} ${hideOnDesktopCss}"><table class="${rowClass}" role="presentation" border="0" cellspacing="0" cellpadding="0" width="${rowWidthHtml}" align="${s.textAlign || 'center'}" style="width: ${rowWidth}; ${rowMargin} overflow: hidden; border-collapse: collapse;"><tr>${columnsHtml}</tr></table></td>`);
+            const rowAlign = s.textAlign || 'center';
+            const marginLeft = (s.marginLeft && s.marginLeft !== '0px' && s.marginLeft !== '0') ? s.marginLeft : (rowAlign === 'center' ? 'auto' : (rowAlign === 'right' ? 'auto' : '0px'));
+            const marginRight = (s.marginRight && s.marginRight !== '0px' && s.marginRight !== '0') ? s.marginRight : (rowAlign === 'center' ? 'auto' : (rowAlign === 'left' ? 'auto' : '0px'));
+            const rowMargin = `margin-top: 0px; margin-bottom: 0px; margin-left: ${marginLeft}; margin-right: ${marginRight};`;
+            return wrapWithMargin(`<td align="${rowAlign}" class="${customClassName}" style="${paddingCss} ${getBackgroundStyle(s)} ${radiusStyle} ${getBorderStyle(s)} ${hideOnDesktopCss} width: 100%;"><table class="${rowClass}" role="presentation" border="0" cellspacing="0" cellpadding="0" width="${rowWidthHtml}" align="${rowAlign}" style="width: ${rowWidth}; ${rowMargin} overflow: hidden; border-collapse: collapse;"><tr>${columnsHtml}</tr></table></td>`);
         }
 
         if (b.type === 'button') {
