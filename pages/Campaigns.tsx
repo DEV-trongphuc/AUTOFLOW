@@ -548,15 +548,15 @@ const Campaigns: React.FC = () => {
             const res = await api.post<any>('campaigns?route=pause', { campaign_id: id });
             if (res.success) {
                 toast.success('Đã tạm dừng chiến dịch thành công!');
-                logAction('campaigns', 'pause', id, 'Campaign paused');
+                logAction("Tạm dừng chiến dịch", `Chiến dịch: ${id}`);
             } else {
                 toast.error(res.message || 'Không thể tạm dừng chiến dịch');
-                fetchCampaigns();
+                loadCampaigns(pagination.page, debouncedSearch);
             }
         } catch (err) {
             console.error('handlePauseCampaign error:', err);
             toast.error('Lỗi khi tạm dừng chiến dịch');
-            fetchCampaigns();
+            loadCampaigns(pagination.page, debouncedSearch);
         }
     }, [pagination.page, debouncedSearch]);
 
@@ -566,15 +566,15 @@ const Campaigns: React.FC = () => {
             const res = await api.post<any>('campaigns?route=resume', { campaign_id: id });
             if (res.success) {
                 toast.success('Đã kích hoạt tiếp tục gửi chiến dịch!');
-                logAction('campaigns', 'resume', id, 'Campaign resumed');
+                logAction("Tiếp tục chiến dịch", `Chiến dịch: ${id}`);
             } else {
                 toast.error(res.message || 'Không thể tiếp tục chiến dịch');
-                fetchCampaigns();
+                loadCampaigns(pagination.page, debouncedSearch);
             }
         } catch (err) {
             console.error('handleResumeCampaign error:', err);
             toast.error('Lỗi khi tiếp tục chiến dịch');
-            fetchCampaigns();
+            loadCampaigns(pagination.page, debouncedSearch);
         }
     }, [pagination.page, debouncedSearch]);
 
@@ -585,7 +585,7 @@ const Campaigns: React.FC = () => {
                 toast.success('Đã cập nhật tên chiến dịch thành công!');
                 setCampaigns(prev => prev.map(c => c.id === id ? { ...c, name: newName } : c));
                 setSelectedDetailCampaign(prev => prev?.id === id ? { ...prev, name: newName } : prev);
-                logAction('campaigns', 'rename', id, `Renamed campaign to ${newName}`);
+                logAction("Đổi tên chiến dịch", `Đã đổi tên chiến dịch ${id} thành: ${newName}`);
             } else {
                 toast.error(res.message || 'Không thể đổi tên chiến dịch');
             }
@@ -593,7 +593,7 @@ const Campaigns: React.FC = () => {
             console.error('handleRenameCampaign error:', err);
             toast.error('Lỗi khi đổi tên chiến dịch');
         }
-    }, [logAction]);
+    }, []);
 
     const handlePlayClick = React.useCallback((campaign: Campaign) => {
         // Find if there's a flow triggered by this campaign
