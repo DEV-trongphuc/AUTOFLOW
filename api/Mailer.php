@@ -185,6 +185,8 @@ class Mailer {
 
         $utmCampaign = $flowName ? urlencode($flowName) : ($campaignId ? "camp_$campaignId" : "direct");
 
+        $cleanHtmlContent = $htmlContent;
+
         // 1. Resolve HTML with Tracking (Optimized with Local Cache Template)
         if (!$isQACopy) {
             // [PERF FIX] Use caller-supplied templateHash when available so that ALL subscribers
@@ -230,13 +232,7 @@ class Mailer {
 
                 $finalRid = $stepId ? $stepId : $reminderId;
 
-                // [FIX] Chống tràn RAM: Giới hạn cache tối đa 10 templates.
-                // Khi gửi chiến dịch 10k subscriber, $htmlContent đã được personalize
-                // nên mỗi subscriber tạo ra 1 cacheKey khác nhau → 10k entries → ~500MB RAM.
-                // array_shift() loại bỏ phần tử cũ nhất (FIFO), giữ cache luôn nhỏ gọn.
-                // [PERF B4] Increased cache from 10 → 30 slots.
-                // Worker priority runs multiple flow-step email types simultaneously.
-                // With <10 slots the cache thrashes; 30 covers most realistic flow depths.
+                // [FIX] Chống tràn RAM: Giới hạn cache tối đa 30 templates.
                 if (count(self::$htmlTemplateCache) >= 30) {
                     array_shift(self::$htmlTemplateCache);
                 }
@@ -250,14 +246,41 @@ class Mailer {
                 ($campaignId ? "&cid=$campaignId" : "") .
                 ($stepId ? "&rid=$stepId" : ($reminderId ? "&rid=$reminderId" : ""));
 
-            $htmlContent = str_replace(
+            $trackedHtml = str_replace(
                 ["[[SID_PLACEHOLDER]]", "[[EMAIL_PLACEHOLDER]]", "{{unsub_url_placeholder}}", "[[T_PLACEHOLDER]]", "[[VAR_PLACEHOLDER]]"],
                 [$subscriberId, urlencode($toEmail), $unsubUrl, microtime(true), $variant ?? ''],
                 self::$htmlTemplateCache[$cacheKey]
             );
+        } else {
+            $trackedHtml = $htmlContent;
         }
 
-        $success = $this->dispatchRaw($toEmail, $subject, $htmlContent, $attachments, $error, $ccEmails, $this->workspaceId, $bccEmails);
+        // [ANTI-FALSE-TRACKING] Send TRACKED version ONLY to the primary recipient ($toEmail).
+        // CC/BCC are NOT included in the tracked SMTP delivery envelope so that when staff/managers
+        // open CC/BCC emails, it NEVER triggers fake Open/Click events for the customer ($subscriberId).
+        $success = $this->dispatchRaw($toEmail, $subject, $trackedHtml, $attachments, $error, [], $this->workspaceId, []);
+
+        // Send CLEAN UNTRACKED copies to CC recipients (no open pixel, direct unmodified links)
+        if (!empty($ccEmails)) {
+            $cleanHtml = $this->getCleanUntrackedHtml($cleanHtmlContent);
+            foreach ($ccEmails as $ccEmail) {
+                if (filter_var($ccEmail, FILTER_VALIDATE_EMAIL)) {
+                    $dummyErr = "";
+                    $this->dispatchRaw($ccEmail, $subject, $cleanHtml, $attachments, $dummyErr, [], $this->workspaceId, []);
+                }
+            }
+        }
+
+        // Send CLEAN UNTRACKED copies to BCC recipients (no open pixel, direct unmodified links)
+        if (!empty($bccEmails)) {
+            $cleanHtml = $this->getCleanUntrackedHtml($cleanHtmlContent);
+            foreach ($bccEmails as $bccEmail) {
+                if (filter_var($bccEmail, FILTER_VALIDATE_EMAIL)) {
+                    $dummyErr = "";
+                    $this->dispatchRaw($bccEmail, $subject, $cleanHtml, $attachments, $dummyErr, [], $this->workspaceId, []);
+                }
+            }
+        }
 
         // Batch logging instead of synchronous DB hit
         if (!$isQACopy) {
@@ -447,6 +470,22 @@ class Mailer {
             }
         }
         return $filtered;
+    }
+
+    /**
+     * Build clean untracked HTML for CC / BCC / QA copies:
+     * - Strips open tracking pixel
+     * - Leaves original direct links (no webhook click tracking redirects)
+     * - Disables unsubscribe tags with safe # placeholder so CC/BCC cannot unsubscribe the customer
+     */
+    public function getCleanUntrackedHtml($htmlContent)
+    {
+        $clean = $htmlContent;
+        // Replace unsubscribe placeholders with safe # link
+        $clean = preg_replace('/(?:\{\{|%7B%7B)\s*unsubscribe(?:_url|Link)\s*(?:\}\}|%7D%7D)/i', '#', $clean);
+        // Remove tracking pixel if present
+        $clean = preg_replace('/<img[^>]+src=["\'][^"\']*webhook\.php\?type=open[^"\']*["\'][^>]*\/?>/i', '', $clean);
+        return $clean;
     }
 
     private function resolveAbsolutePath($att)
