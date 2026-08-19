@@ -64,6 +64,36 @@ try {
             }
         }
 
+        // [PREFILL LOOKUP] Look up subscriber if sid, email, or uid is passed in query
+        $prefill = null;
+        $querySid = $_GET['sid'] ?? '';
+        $queryEmail = filter_var($_GET['email'] ?? ($_GET['uid'] ?? ''), FILTER_VALIDATE_EMAIL) ?: '';
+        
+        $sub = null;
+        if (!empty($querySid)) {
+            $stmtSub = $pdo->prepare("SELECT id, email, first_name, last_name, phone_number, company_name FROM subscribers WHERE id = ? AND workspace_id = ? LIMIT 1");
+            $stmtSub->execute([$querySid, $survey['workspace_id']]);
+            $sub = $stmtSub->fetch(PDO::FETCH_ASSOC);
+        }
+        if (!$sub && !empty($queryEmail)) {
+            $stmtSub = $pdo->prepare("SELECT id, email, first_name, last_name, phone_number, company_name FROM subscribers WHERE email = ? AND workspace_id = ? LIMIT 1");
+            $stmtSub->execute([$queryEmail, $survey['workspace_id']]);
+            $sub = $stmtSub->fetch(PDO::FETCH_ASSOC);
+        }
+        
+        if ($sub) {
+            $fullName = trim(($sub['first_name'] ?? '') . ' ' . ($sub['last_name'] ?? ''));
+            $prefill = [
+                'subscriber_id' => $sub['id'],
+                'email'         => $sub['email'] ?? '',
+                'first_name'    => $sub['first_name'] ?? '',
+                'last_name'     => $sub['last_name'] ?? '',
+                'full_name'     => $fullName ?: ($sub['first_name'] ?? ''),
+                'phone_number'  => $sub['phone_number'] ?? '',
+                'company_name'  => $sub['company_name'] ?? ''
+            ];
+        }
+
         echo json_encode([
             'success' => true,
             'data' => [
@@ -77,6 +107,7 @@ try {
                 'cover_style'  => json_decode($survey['cover_style'] ?? '{}'),
                 'allow_anonymous' => (bool)$survey['allow_anonymous'],
                 'require_login'   => (bool)$survey['require_login'],
+                'prefill'      => $prefill,
             ]
         ]);
         exit;
@@ -223,68 +254,93 @@ try {
         $subscriberId = null;
         $submittedName = null;
         $submittedPhone = null;
+        $submittedCompany = null;
+        
         foreach ($answers as $ans) {
-            if (($ans['type'] ?? '') === 'email' && !empty($ans['answer_text'])) {
-                $submittedEmail = strtolower(trim($ans['answer_text']));
+            $ansType = $ans['type'] ?? '';
+            $ansText = trim((string)($ans['answer_text'] ?? ''));
+            $ansLabel = mb_strtolower(trim((string)($ans['label'] ?? '')));
+            
+            if ($ansType === 'email' && !empty($ansText)) {
+                $submittedEmail = strtolower($ansText);
             }
-            if (($ans['type'] ?? '') === 'phone_number' && !empty($ans['answer_text'])) {
-                // Ensure Phone extraction works too
-                $submittedPhone = trim($ans['answer_text']);
+            if (($ansType === 'phone' || $ansType === 'phone_number') && !empty($ansText)) {
+                $submittedPhone = $ansText;
             }
-            if (in_array($ans['type'] ?? '', ['short_text']) && stripos($ans['label'] ?? '', 'tên') !== false) {
-                $submittedName = trim($ans['answer_text'] ?? '');
+            if ($ansType === 'short_text' && !empty($ansText)) {
+                if (strpos($ansLabel, 'tên') !== false || strpos($ansLabel, 'name') !== false || strpos($ansLabel, 'họ') !== false) {
+                    $submittedName = $ansText;
+                } elseif (strpos($ansLabel, 'điện thoại') !== false || strpos($ansLabel, 'sđt') !== false || strpos($ansLabel, 'phone') !== false) {
+                    $submittedPhone = $ansText;
+                } elseif (strpos($ansLabel, 'công ty') !== false || strpos($ansLabel, 'company') !== false || strpos($ansLabel, 'đơn vị') !== false) {
+                    $submittedCompany = $ansText;
+                }
             }
         }
 
-        $settingsObj = json_decode($survey['settings_json'] ?? '{}', true);
-        if (empty($submittedEmail) && !empty($settingsObj['email_tracking']) && !empty($input['uid'])) {
-            // UID is expected to be passed via URL ?uid=xxx@email.com injected by email system merge tags
-            $parsedUid = filter_var(trim($input['uid']), FILTER_VALIDATE_EMAIL);
-            if ($parsedUid) {
-                $submittedEmail = $parsedUid;
-            }
+        // Check UID or email or SID passed from query/input
+        $passedSid = $input['sid'] ?? ($input['subscriber_id'] ?? ($_GET['sid'] ?? ''));
+        $passedUid = filter_var(trim($input['uid'] ?? ($input['email'] ?? ($_GET['uid'] ?? ($_GET['email'] ?? '')))), FILTER_VALIDATE_EMAIL);
+        if (empty($submittedEmail) && $passedUid) {
+            $submittedEmail = $passedUid;
         }
-        if ($submittedEmail) {
-            $subStmt = $pdo->prepare("SELECT id, phone_number, first_name FROM subscribers WHERE email = ? AND workspace_id = ? LIMIT 1");
+
+        $existSub = null;
+        if (!empty($passedSid)) {
+            $subStmt = $pdo->prepare("SELECT id, email, phone_number, first_name, last_name, company_name FROM subscribers WHERE id = ? AND workspace_id = ? LIMIT 1");
+            $subStmt->execute([$passedSid, $survey['workspace_id']]);
+            $existSub = $subStmt->fetch(PDO::FETCH_ASSOC);
+        }
+        if (!$existSub && !empty($submittedEmail)) {
+            $subStmt = $pdo->prepare("SELECT id, email, phone_number, first_name, last_name, company_name FROM subscribers WHERE email = ? AND workspace_id = ? LIMIT 1");
             $subStmt->execute([$submittedEmail, $survey['workspace_id']]);
-            $existSub = $subStmt->fetch();
-            if ($existSub) {
-                $subscriberId = $existSub['id'];
-                $updateFields = [];
-                $updateParams = [];
-                
-                // Update missing phone
-                if ($submittedPhone && empty($existSub['phone_number'])) {
-                    $updateFields[] = "phone_number = ?";
-                    $updateParams[] = $submittedPhone;
-                }
-                // Update missing name
-                if ($submittedName && (empty($existSub['first_name']) || $existSub['first_name'] === 'Guest')) {
-                    $updateFields[] = "first_name = ?";
-                    $updateParams[] = $submittedName;
-                }
-                
-                if (!empty($updateFields)) {
-                    $updateParams[] = $subscriberId;
-                    $pdo->prepare("UPDATE subscribers SET " . implode(', ', $updateFields) . " WHERE id = ?")
-                        ->execute($updateParams);
-                }
-            } else {
-                $subscriberId = generateUUID();
-                $pdo->prepare("INSERT INTO subscribers (id, email, phone_number, first_name, source, workspace_id, created_at)
-                    VALUES (?, ?, ?, ?, 'survey', ?, NOW())")
-                    ->execute([$subscriberId, $submittedEmail, $submittedPhone, $submittedName ?? '', $survey['workspace_id']]);
+            $existSub = $subStmt->fetch(PDO::FETCH_ASSOC);
+        }
+
+        if ($existSub) {
+            $subscriberId = $existSub['id'];
+            if (empty($submittedEmail)) {
+                $submittedEmail = $existSub['email'];
             }
+            $updateFields = [];
+            $updateParams = [];
+            
+            // Update missing phone
+            if ($submittedPhone && empty($existSub['phone_number'])) {
+                $updateFields[] = "phone_number = ?";
+                $updateParams[] = $submittedPhone;
+            }
+            // Update missing name
+            if ($submittedName && (empty($existSub['first_name']) || $existSub['first_name'] === 'Guest')) {
+                $updateFields[] = "first_name = ?";
+                $updateParams[] = $submittedName;
+            }
+            // Update missing company
+            if ($submittedCompany && empty($existSub['company_name'])) {
+                $updateFields[] = "company_name = ?";
+                $updateParams[] = $submittedCompany;
+            }
+            
+            if (!empty($updateFields)) {
+                $updateParams[] = $subscriberId;
+                $pdo->prepare("UPDATE subscribers SET " . implode(', ', $updateFields) . " WHERE id = ?")
+                    ->execute($updateParams);
+            }
+        } elseif (!empty($submittedEmail)) {
+            $subscriberId = generateUUID();
+            $pdo->prepare("INSERT INTO subscribers (id, email, phone_number, first_name, company_name, source, workspace_id, created_at)
+                VALUES (?, ?, ?, ?, ?, 'survey', ?, NOW())")
+                ->execute([$subscriberId, $submittedEmail, $submittedPhone, $submittedName ?? '', $submittedCompany ?? '', $survey['workspace_id']]);
+        }
+
+        if ($subscriberId) {
             // Tag subscriber
             $tagName = 'survey_responded_' . $survey['id'];
-            // (Simplified — full tag system integration can be added)
             
             // Add to Target List if configured (explicitly set workspace_id for isolation)
             if (!empty($survey['target_list_id'])) {
                 $stmtListIns = $pdo->prepare("INSERT IGNORE INTO subscriber_lists (subscriber_id, list_id, workspace_id) VALUES (?, ?, ?)");
                 $stmtListIns->execute([$subscriberId, $survey['target_list_id'], $survey['workspace_id']]);
-                // Only update lists counter if list subscription was newly created.
-                // Self-correcting count query guarantees no double-increment drift.
                 if ($stmtListIns->rowCount() > 0) {
                     $pdo->prepare("UPDATE lists SET subscriber_count = (SELECT COUNT(*) FROM subscriber_lists WHERE list_id = ? AND workspace_id = ?) WHERE id = ? AND workspace_id = ?")
                         ->execute([$survey['target_list_id'], $survey['workspace_id'], $survey['target_list_id'], $survey['workspace_id']]);

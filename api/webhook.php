@@ -1436,18 +1436,45 @@ if ($method === 'POST') {
         }
 
         if ($type === 'click') {
-            // [BÀN THỜ] Append Email logic for seamless login integration
-            if (isset($_GET['v']) && $_GET['v'] === '1' && $sid) {
+            // [SURVEY & SUBSCRIBER PREFILL] Forward subscriber context to surveys and verified domains
+            if ($sid) {
                 try {
-                    $stmtE = $pdo->prepare("SELECT email FROM subscribers WHERE id = ? LIMIT 1");
+                    $stmtE = $pdo->prepare("SELECT id, email, first_name, last_name, phone_number, company_name FROM subscribers WHERE id = ? LIMIT 1");
                     $stmtE->execute([$sid]);
-                    $email = $stmtE->fetchColumn();
-                    if ($email) {
-                        $connector = (strpos($url, '?') !== false) ? '&' : '?';
-                        $url .= $connector . "email=" . urlencode($email);
+                    $sub = $stmtE->fetch(PDO::FETCH_ASSOC);
+                    if ($sub) {
+                        $isSurveyOrInternal = (
+                            (isset($_GET['v']) && $_GET['v'] === '1') ||
+                            strpos($url, '/surveys/') !== false ||
+                            strpos($url, '/s/') !== false ||
+                            strpos($url, 'survey_public.php') !== false ||
+                            strpos($url, 'forms.php') !== false ||
+                            strpos($url, 'ideas.edu.vn') !== false
+                        );
+                        if ($isSurveyOrInternal) {
+                            $connector = (strpos($url, '?') !== false) ? '&' : '?';
+                            $paramsToAdd = [];
+                            if (!empty($sub['id']) && strpos($url, 'sid=') === false) {
+                                $paramsToAdd['sid'] = $sub['id'];
+                            }
+                            if (!empty($sub['email'])) {
+                                if (strpos($url, 'email=') === false) $paramsToAdd['email'] = $sub['email'];
+                                if (strpos($url, 'uid=') === false) $paramsToAdd['uid'] = $sub['email'];
+                            }
+                            if (!empty($sub['first_name']) && strpos($url, 'name=') === false) {
+                                $fullName = trim(($sub['first_name'] ?? '') . ' ' . ($sub['last_name'] ?? ''));
+                                $paramsToAdd['name'] = $fullName ?: $sub['first_name'];
+                            }
+                            if (!empty($sub['phone_number']) && strpos($url, 'phone=') === false) {
+                                $paramsToAdd['phone'] = $sub['phone_number'];
+                            }
+                            if (!empty($paramsToAdd)) {
+                                $url .= $connector . http_build_query($paramsToAdd);
+                            }
+                        }
                     }
                 } catch (Exception $e) {
-                    error_log('[webhook] Email append failed for sid=' . $sid . ': ' . $e->getMessage());
+                    error_log('[webhook] Subscriber info append failed for sid=' . $sid . ': ' . $e->getMessage());
                 }
             }
             header("Location: $url");

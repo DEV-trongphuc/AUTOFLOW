@@ -32,12 +32,23 @@ const PublicSurvey: React.FC = () => {
     const srcParam = searchParams.get('src') || searchParams.get('utm_source') || 'direct_link';
     const utmMedium = searchParams.get('utm_medium') || undefined;
     const utmCampaign = searchParams.get('utm_campaign') || undefined;
-    const uid = searchParams.get('uid') || undefined;
+    const sid = searchParams.get('sid') || undefined;
+    const emailParam = searchParams.get('email') || searchParams.get('uid') || undefined;
+    const uid = emailParam;
+    const nameParam = searchParams.get('name') || undefined;
+    const phoneParam = searchParams.get('phone') || undefined;
     const isPreview = !!searchParams.get('preview');
     const nextUrl = searchParams.get('next');
 
     useEffect(() => {
-        fetch(`${PUBLIC_API}?slug=${slug}${searchParams.get('preview') ? '&preview=1' : ''}`)
+        const query = new URLSearchParams();
+        query.set('slug', slug || '');
+        if (searchParams.get('preview')) query.set('preview', '1');
+        if (sid) query.set('sid', sid);
+        if (emailParam) query.set('email', emailParam);
+        if (uid) query.set('uid', uid);
+
+        fetch(`${PUBLIC_API}?${query.toString()}`)
             .then(r => { if (!r.ok) throw new Error("Fetch survey failed"); return r.json(); })
             .then(res => {
                 if (res.success) {
@@ -54,11 +65,42 @@ const PublicSurvey: React.FC = () => {
                         thankYouPage: d.thank_you_page || {},
                         thankYouPages: d.thank_you_page?.extraScreens || [],
                     });
+
+                    // [AUTO-PREFILL SUBSCRIBER INFO]
+                    const prefill = d.prefill || {};
+                    const initialAnswers: Record<string, SurveyAnswer> = {};
+                    const pEmail = prefill.email || emailParam || '';
+                    const pPhone = prefill.phone_number || phoneParam || '';
+                    const pName = prefill.full_name || prefill.first_name || nameParam || '';
+                    const pCompany = prefill.company_name || '';
+
+                    (d.blocks || []).forEach((b: SurveyBlock) => {
+                        const bType = b.type;
+                        const bLabel = (b.label || '').toLowerCase();
+
+                        if (bType === 'email' && pEmail) {
+                            initialAnswers[b.id] = { question_id: b.id, block_id: b.id, type: 'email', label: b.label || '', answer_text: pEmail };
+                        } else if (bType === 'phone' && pPhone) {
+                            initialAnswers[b.id] = { question_id: b.id, block_id: b.id, type: 'phone', label: b.label || '', answer_text: pPhone };
+                        } else if (bType === 'short_text') {
+                            if (pName && (bLabel.includes('tên') || bLabel.includes('name') || bLabel.includes('họ'))) {
+                                initialAnswers[b.id] = { question_id: b.id, block_id: b.id, type: 'short_text', label: b.label || '', answer_text: pName };
+                            } else if (pPhone && (bLabel.includes('điện thoại') || bLabel.includes('sđt') || bLabel.includes('phone'))) {
+                                initialAnswers[b.id] = { question_id: b.id, block_id: b.id, type: 'short_text', label: b.label || '', answer_text: pPhone };
+                            } else if (pCompany && (bLabel.includes('công ty') || bLabel.includes('company') || bLabel.includes('đơn vị'))) {
+                                initialAnswers[b.id] = { question_id: b.id, block_id: b.id, type: 'short_text', label: b.label || '', answer_text: pCompany };
+                            }
+                        }
+                    });
+
+                    if (Object.keys(initialAnswers).length > 0) {
+                        setAnswers(prev => ({ ...initialAnswers, ...prev }));
+                    }
                 }
                 else setError(res.error);
             })
             .finally(() => setIsLoading(false));
-    }, [slug]);
+    }, [slug, sid, emailParam, uid, nameParam, phoneParam]);
 
     // Active Expiration Checker
     useEffect(() => {
@@ -344,7 +386,9 @@ const PublicSurvey: React.FC = () => {
                 body: JSON.stringify({
                     session_token: sessionToken.current,
                     answers: Object.values(answers),
-                    uid,
+                    sid: sid || (survey as any)?.prefill?.subscriber_id,
+                    uid: uid || emailParam || (survey as any)?.prefill?.email,
+                    email: emailParam || (survey as any)?.prefill?.email,
                     completion_rate: 100,
                     time_spent_sec: Math.round((Date.now() - startTime.current) / 1000),
                     source_channel: ['qr_code', 'email_embed', 'widget', 'api'].includes(srcParam) ? srcParam : 'direct_link',
