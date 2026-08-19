@@ -510,6 +510,31 @@ AND NOT EXISTS (
     }
 }
 
+// --- NEW ROUTE: Rename Campaign ---
+if ($method === 'POST' && $route === 'rename') {
+    try {
+        $cid = $_GET['id'] ?? null;
+        $data = json_decode(file_get_contents("php://input"), true) ?? [];
+        if (!$cid) $cid = $data['id'] ?? null;
+        $newName = trim($data['name'] ?? '');
+        
+        if (!$cid) jsonResponse(false, null, 'Campaign ID is required.');
+        if (empty($newName)) jsonResponse(false, null, 'Tên chiến dịch không được để trống.');
+        
+        verifyCampaignOwnership($pdo, $cid, $workspace_id);
+        
+        $stmt = $pdo->prepare("UPDATE campaigns SET name = ?, updated_at = NOW() WHERE id = ? AND workspace_id = ?");
+        $stmt->execute([$newName, $cid, $workspace_id]);
+        
+        logSystemActivity($pdo, 'campaigns', 'rename', $cid, $newName);
+        jsonResponse(true, ['id' => $cid, 'name' => $newName], 'Đã cập nhật tên chiến dịch thành công!');
+    } catch (Exception $e) {
+        error_log("Rename campaign error: " . $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống khi đổi tên chiến dịch: ' . $e->getMessage());
+    }
+    exit;
+}
+
 // --- NEW ROUTE: Delete Unsubscribed Audience ---
 if ($method === 'POST' && $route === 'delete_unsubscribed') {
     try {

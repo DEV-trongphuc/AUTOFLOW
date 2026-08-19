@@ -5,7 +5,8 @@ import {
     Plus, TrendingUp, MousePointerClick,
     CheckCircle2, GitMerge, GitBranch, RefreshCw, FileText, CalendarClock, PieChart, Send, MailOpen, Paperclip, File as FileIcon,
     Search, ChevronLeft, ChevronRight, X, BarChart2, Calendar, Users, MailCheck, Activity, Zap, ExternalLink, Mail, Bell, Clock, Activity as ActivityIcon, MousePointer2, BadgeCheck, FileBarChart, MousePointerClick as ClickIcon,
-    Layers, List, AlertOctagon, UserMinus, History, Tag, Loader2, ShieldCheck, Smartphone, Globe, Laptop, Trash2, Monitor, Flame, Link as LinkIcon, PauseCircle, PlayCircle, ArrowLeft
+    Layers, List, AlertOctagon, UserMinus, History, Tag, Loader2, ShieldCheck, Smartphone, Globe, Laptop, Trash2, Monitor, Flame, Link as LinkIcon, PauseCircle, PlayCircle, ArrowLeft,
+    Edit2, Check
 } from 'lucide-react';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart as RePieChart, Pie, AreaChart, Area, FunnelChart, Funnel, LabelList
@@ -33,6 +34,7 @@ interface CampaignDetailDrawerProps {
     allSegments: Segment[];
     allTags: any[];
     allFlows: Flow[];
+    onRename?: (id: string, newName: string) => void;
 }
 
 const renderAvatar = (email: string, displayName?: string) => {
@@ -74,7 +76,7 @@ const renderAvatar = (email: string, displayName?: string) => {
 };
 
 const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
-    campaign, isOpen, onClose, allLists, allSegments, allTags, allFlows
+    campaign, isOpen, onClose, allLists, allSegments, allTags, allFlows, onRename
 }) => {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('overview');
@@ -94,6 +96,42 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
 
     const [showTestModal, setShowTestModal] = useState(false);
     const [localCampaign, setLocalCampaign] = useState<Campaign | null>(campaign);
+
+    // Inline Rename State
+    const [isEditingName, setIsEditingName] = useState(false);
+    const [nameInput, setNameInput] = useState('');
+    const [isSavingName, setIsSavingName] = useState(false);
+
+    useEffect(() => {
+        if (localCampaign?.name) {
+            setNameInput(localCampaign.name);
+        }
+    }, [localCampaign?.name]);
+
+    const handleSaveName = async () => {
+        const trimmed = nameInput.trim();
+        if (!trimmed || !localCampaign || trimmed === localCampaign.name) {
+            setIsEditingName(false);
+            return;
+        }
+        setIsSavingName(true);
+        try {
+            const res = await api.post<any>('campaigns?route=rename', { id: localCampaign.id, name: trimmed });
+            if (res.success) {
+                toast.success('Đã cập nhật tên chiến dịch thành công!');
+                setLocalCampaign(prev => prev ? { ...prev, name: trimmed } : null);
+                onRename?.(localCampaign.id, trimmed);
+                setIsEditingName(false);
+            } else {
+                toast.error(res.message || 'Không thể đổi tên chiến dịch');
+            }
+        } catch (err) {
+            console.error('Rename campaign error:', err);
+            toast.error('Lỗi khi đổi tên chiến dịch');
+        } finally {
+            setIsSavingName(false);
+        }
+    };
 
     // Extract unique links from email HTML
     const uniqueLinks = React.useMemo(() => {
@@ -546,7 +584,56 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                 ID: {localCampaign.id}
                             </span>
                         </div>
-                        <h2 className="text-lg md:text-xl font-black text-slate-800 tracking-tight leading-tight truncate pr-4">{localCampaign.name}</h2>
+                        {isEditingName ? (
+                            <div className="flex items-center gap-2 max-w-md my-1">
+                                <input
+                                    type="text"
+                                    autoFocus
+                                    value={nameInput}
+                                    onChange={e => setNameInput(e.target.value)}
+                                    onKeyDown={e => {
+                                        if (e.key === 'Enter') handleSaveName();
+                                        if (e.key === 'Escape') setIsEditingName(false);
+                                    }}
+                                    disabled={isSavingName}
+                                    className="px-3 py-1.5 text-base font-bold bg-white border border-amber-400 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/20 text-slate-800 flex-1 shadow-sm"
+                                    placeholder="Nhập tên chiến dịch..."
+                                />
+                                <button
+                                    onClick={handleSaveName}
+                                    disabled={isSavingName}
+                                    className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-xl transition-colors shrink-0"
+                                    title="Lưu tên (Enter)"
+                                >
+                                    {isSavingName ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4 stroke-[3]" />}
+                                </button>
+                                <button
+                                    onClick={() => { if (localCampaign) setNameInput(localCampaign.name); setIsEditingName(false); }}
+                                    disabled={isSavingName}
+                                    className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors shrink-0"
+                                    title="Hủy (Esc)"
+                                >
+                                    <X className="w-4 h-4" />
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="flex items-center gap-2 group/title my-0.5">
+                                <h2 
+                                    className="text-lg md:text-xl font-black text-slate-800 tracking-tight leading-tight truncate cursor-pointer hover:text-amber-600 transition-colors"
+                                    onDoubleClick={() => setIsEditingName(true)}
+                                    title="Double-click để đổi tên"
+                                >
+                                    {localCampaign.name}
+                                </h2>
+                                <button
+                                    onClick={() => setIsEditingName(true)}
+                                    className="opacity-0 group-hover/title:opacity-100 p-1 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all shrink-0"
+                                    title="Đổi tên chiến dịch"
+                                >
+                                    <Edit2 className="w-4 h-4" />
+                                </button>
+                            </div>
+                        )}
                     </div>
                     <div className="flex items-center gap-2">
                         <Button

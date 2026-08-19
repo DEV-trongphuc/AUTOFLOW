@@ -578,6 +578,22 @@ const Campaigns: React.FC = () => {
         }
     }, [pagination.page, debouncedSearch]);
 
+    const handleRenameCampaign = React.useCallback(async (id: string, newName: string) => {
+        try {
+            const res = await api.post<any>('campaigns?route=rename', { id, name: newName });
+            if (res.success) {
+                toast.success('Đã cập nhật tên chiến dịch thành công!');
+                setCampaigns(prev => prev.map(c => c.id === id ? { ...c, name: newName } : c));
+                setSelectedDetailCampaign(prev => prev?.id === id ? { ...prev, name: newName } : prev);
+                logAction('campaigns', 'rename', id, `Renamed campaign to ${newName}`);
+            } else {
+                toast.error(res.message || 'Không thể đổi tên chiến dịch');
+            }
+        } catch (err) {
+            console.error('handleRenameCampaign error:', err);
+            toast.error('Lỗi khi đổi tên chiến dịch');
+        }
+    }, [logAction]);
 
     const handlePlayClick = React.useCallback((campaign: Campaign) => {
         // Find if there's a flow triggered by this campaign
@@ -902,6 +918,7 @@ const Campaigns: React.FC = () => {
                             onPlayFlow={handlePlayClick}
                             onPause={handlePauseCampaign}
                             onResume={handleResumeCampaign}
+                            onRename={handleRenameCampaign}
                         />
                     </TabTransition>
 
@@ -999,6 +1016,7 @@ const Campaigns: React.FC = () => {
                 allSegments={allSegments}
                 allTags={allTags}
                 allFlows={allFlows}
+                onRename={handleRenameCampaign}
             />
 
             <FlowReviewModal isOpen={!!flowReviewData} onClose={() => setFlowReviewData(null)} onConfirm={handleConfirmStart} campaign={flowReviewData?.campaign || null} flow={flowReviewData?.flow || null} isProcessing={isStartingFlow} isDarkTheme={isDark} />

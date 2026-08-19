@@ -1,8 +1,9 @@
 import { EXTERNAL_ASSET_BASE } from '@/utils/config';
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Send, CheckCircle2, CalendarClock, FileText, Loader2,
-    GitMerge, Play, Trash2, ChevronRight, Clock, Calendar, PieChart, PauseCircle
+    GitMerge, Play, Trash2, ChevronRight, Clock, Calendar, PieChart, PauseCircle,
+    Edit2, Check, X
 } from 'lucide-react';
 import { Campaign, CampaignStatus } from '../../types';
 import Badge from '../../components/common/Badge';
@@ -20,6 +21,7 @@ interface CampaignListProps {
     onPlayFlow: (campaign: Campaign) => void;
     onPause?: (id: string) => void;
     onResume?: (id: string) => void;
+    onRename?: (id: string, newName: string) => Promise<boolean | void> | void;
 }
 
 interface CampaignRowProps {
@@ -30,11 +32,12 @@ interface CampaignRowProps {
     onPlayFlow: (campaign: Campaign) => void;
     onPause?: (id: string) => void;
     onResume?: (id: string) => void;
+    onRename?: (id: string, newName: string) => Promise<boolean | void> | void;
     navigate: any;
     'data-index'?: number;
 }
 
-const CampaignTableRow = React.memo(React.forwardRef<HTMLTableRowElement, CampaignRowProps>(({ c, onSelect, onEdit, onDelete, onPlayFlow, onPause, onResume, navigate, 'data-index': dataIndex }, ref) => {
+const CampaignTableRow = React.memo(React.forwardRef<HTMLTableRowElement, CampaignRowProps>(({ c, onSelect, onEdit, onDelete, onPlayFlow, onPause, onResume, onRename, navigate, 'data-index': dataIndex }, ref) => {
     const isSent = c.status === CampaignStatus.SENT;
     const isWaiting = c.status === CampaignStatus.WAITING_FLOW;
     const isSending = c.status === CampaignStatus.SENDING;
@@ -50,12 +53,52 @@ const CampaignTableRow = React.memo(React.forwardRef<HTMLTableRowElement, Campai
 
     const openRate = sentCount > 0 ? Math.round(((c.stats?.opened || 0) / sentCount) * 100) : 0;
 
+    // Inline Rename State
+    const [isEditingName, setIsEditingName] = useState(false);
+    const [nameInput, setNameInput] = useState(c.name);
+    const [isSavingName, setIsSavingName] = useState(false);
+
+    useEffect(() => {
+        setNameInput(c.name);
+    }, [c.name]);
+
+    const handleStartEdit = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setNameInput(c.name);
+        setIsEditingName(true);
+    };
+
+    const handleCancelEdit = (e?: React.MouseEvent) => {
+        e?.stopPropagation();
+        setNameInput(c.name);
+        setIsEditingName(false);
+    };
+
+    const handleSaveEdit = async (e?: React.MouseEvent | React.FormEvent) => {
+        e?.stopPropagation();
+        const trimmed = nameInput.trim();
+        if (!trimmed || trimmed === c.name) {
+            setIsEditingName(false);
+            return;
+        }
+        setIsSavingName(true);
+        try {
+            await onRename?.(c.id, trimmed);
+            setIsEditingName(false);
+        } catch (err) {
+            console.error('Save campaign name error:', err);
+        } finally {
+            setIsSavingName(false);
+        }
+    };
+
     return (
         <tr
             ref={ref}
             data-index={dataIndex}
             className="hidden md:table-row group cursor-pointer"
             onClick={() => {
+                if (isEditingName) return;
                 if (c.status === CampaignStatus.DRAFT || c.status === CampaignStatus.SCHEDULED) {
                     onEdit(c);
                 } else {
@@ -102,7 +145,56 @@ const CampaignTableRow = React.memo(React.forwardRef<HTMLTableRowElement, Campai
 
                     </div>
                     <div className="min-w-0 flex-1">
-                        <p className="font-bold text-slate-800 dark:text-slate-200 text-sm leading-tight mb-1 group-hover:text-amber-600 transition-colors truncate pr-4">{c.name}</p>
+                        {isEditingName ? (
+                            <div className="flex items-center gap-1.5 min-w-0 mb-1" onClick={e => e.stopPropagation()}>
+                                <input
+                                    type="text"
+                                    autoFocus
+                                    value={nameInput}
+                                    onChange={e => setNameInput(e.target.value)}
+                                    onKeyDown={e => {
+                                        if (e.key === 'Enter') handleSaveEdit();
+                                        if (e.key === 'Escape') handleCancelEdit();
+                                    }}
+                                    disabled={isSavingName}
+                                    className="px-2.5 py-1 text-xs font-bold bg-white dark:bg-slate-900 border border-amber-400 dark:border-amber-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/20 text-slate-800 dark:text-slate-100 flex-1 min-w-[180px] shadow-sm"
+                                    placeholder="Nhập tên chiến dịch..."
+                                />
+                                <button
+                                    onClick={handleSaveEdit}
+                                    disabled={isSavingName}
+                                    className="p-1 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 rounded-md transition-colors shrink-0"
+                                    title="Lưu tên (Enter)"
+                                >
+                                    {isSavingName ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                                </button>
+                                <button
+                                    onClick={handleCancelEdit}
+                                    disabled={isSavingName}
+                                    className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 rounded-md transition-colors shrink-0"
+                                    title="Hủy (Esc)"
+                                >
+                                    <X className="w-3.5 h-3.5" />
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="flex items-center gap-1.5 group/name mb-1">
+                                <p 
+                                    className="font-bold text-slate-800 dark:text-slate-200 text-sm leading-tight group-hover:text-amber-600 transition-colors truncate pr-1"
+                                    title={c.name}
+                                    onDoubleClick={handleStartEdit}
+                                >
+                                    {c.name}
+                                </p>
+                                <button
+                                    onClick={handleStartEdit}
+                                    className="opacity-0 group-hover:opacity-100 group-hover/name:opacity-100 p-1 text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/40 rounded transition-all shrink-0"
+                                    title="Đổi tên chiến dịch (Double-click để sửa)"
+                                >
+                                    <Edit2 className="w-3 h-3" />
+                                </button>
+                            </div>
+                        )}
                         <div className="flex items-center gap-1.5 mt-0.5 min-w-0">
                             {/* Creator Avatar & Name */}
                             <div className="flex items-center gap-1 shrink-0 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700/50 px-1.5 py-0.5 rounded-full">
@@ -285,14 +377,17 @@ const CampaignTableRow = React.memo(React.forwardRef<HTMLTableRowElement, Campai
                         <Trash2 className="w-4 h-4" />
                     </button>
                     {!isWaiting && (
-                        <button onClick={(e) => {
-                            e.stopPropagation();
-                            if (c.status === CampaignStatus.DRAFT || c.status === CampaignStatus.SCHEDULED) {
-                                onEdit(c);
-                            } else {
-                                onSelect(c);
-                            }
-                        }} className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-xl transition-all duration-500">
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                if (c.status === CampaignStatus.DRAFT || c.status === CampaignStatus.SCHEDULED) {
+                                    onEdit(c);
+                                } else {
+                                    onSelect(c);
+                                }
+                            }}
+                            className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-xl transition-all duration-500"
+                        >
                             <ChevronRight className="w-4 h-4" />
                         </button>
                     )}
@@ -301,26 +396,64 @@ const CampaignTableRow = React.memo(React.forwardRef<HTMLTableRowElement, Campai
         </tr>
     );
 }));
-const CampaignMobileCard = React.memo<CampaignRowProps>(({ c, onSelect, onEdit, onDelete, onPlayFlow, onPause, onResume, navigate }) => {
+
+const CampaignMobileCard = React.memo<CampaignRowProps>(({ c, onSelect, onEdit, onDelete, onPlayFlow, onPause, onResume, onRename, navigate }) => {
     const isSent = c.status === CampaignStatus.SENT;
     const isWaiting = c.status === CampaignStatus.WAITING_FLOW;
     const isSending = c.status === CampaignStatus.SENDING;
-    // [FIX P7-C1] Mobile card: also needs dedicated paused state
     const isPaused = c.status === CampaignStatus.PAUSED;
     const sentCount = c.stats?.sent || 0;
     const linkedFlow = c.linkedFlow;
     const isFlow = !!linkedFlow;
     const showFlowStatus = isSent && linkedFlow;
-    // [UI-R1] Reminder badge for mobile
     const hasReminders = (c.reminderCount ?? (c.reminders?.length ?? 0)) > 0;
     const showReminderBadge = isSent && hasReminders;
 
     const openRate = sentCount > 0 ? Math.round(((c.stats?.opened || 0) / sentCount) * 100) : 0;
 
+    const [isEditingName, setIsEditingName] = useState(false);
+    const [nameInput, setNameInput] = useState(c.name);
+    const [isSavingName, setIsSavingName] = useState(false);
+
+    useEffect(() => {
+        setNameInput(c.name);
+    }, [c.name]);
+
+    const handleStartEdit = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setNameInput(c.name);
+        setIsEditingName(true);
+    };
+
+    const handleCancelEdit = (e?: React.MouseEvent) => {
+        e?.stopPropagation();
+        setNameInput(c.name);
+        setIsEditingName(false);
+    };
+
+    const handleSaveEdit = async (e?: React.MouseEvent | React.FormEvent) => {
+        e?.stopPropagation();
+        const trimmed = nameInput.trim();
+        if (!trimmed || trimmed === c.name) {
+            setIsEditingName(false);
+            return;
+        }
+        setIsSavingName(true);
+        try {
+            await onRename?.(c.id, trimmed);
+            setIsEditingName(false);
+        } catch (err) {
+            console.error('Save mobile campaign name error:', err);
+        } finally {
+            setIsSavingName(false);
+        }
+    };
+
     return (
         <div
             className="md:hidden bg-white p-3.5 rounded-2xl border border-slate-100 shadow-sm flex flex-col gap-3 active:scale-[0.98] transition-all hover-lift"
             onClick={() => {
+                if (isEditingName) return;
                 if (c.status === CampaignStatus.DRAFT || c.status === CampaignStatus.SCHEDULED) {
                     onEdit(c);
                 } else {
@@ -329,7 +462,7 @@ const CampaignMobileCard = React.memo<CampaignRowProps>(({ c, onSelect, onEdit, 
             }}
         >
             <div className="flex justify-between items-start">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
                     <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border ${c.type === 'zalo_zns' ? 'bg-white p-1.5 border-[#0068ff]/20' : (isFlow ? 'bg-violet-50 text-violet-600 border-violet-100 shadow-[0_0_10px_rgba(139,92,246,0.1)]' : 'bg-slate-50 border-slate-100')}`}>
                         {c.type === 'zalo_zns' ? <img src={`${EXTERNAL_ASSET_BASE}/imgs/zalolog.png`} alt="Zalo" className="w-full h-full object-contain" /> :
                             (isFlow ? (isSending ? <Loader2 className="w-4 h-4 animate-spin text-violet-600" /> : <GitMerge className="w-4 h-4 text-violet-600" />) :
@@ -339,8 +472,56 @@ const CampaignMobileCard = React.memo<CampaignRowProps>(({ c, onSelect, onEdit, 
                                             (isSending ? <Loader2 className="w-4 h-4 animate-spin text-blue-600" /> :
                                                 (c.status === CampaignStatus.SCHEDULED ? <CalendarClock className="w-4 h-4 text-indigo-600" /> : <FileText className="w-4 h-4 text-slate-400" />))))))}
                     </div>
-                    <div className="min-w-0">
-                        <p className="font-bold text-slate-800 text-[13px] leading-tight truncate">{c.name}</p>
+                    <div className="min-w-0 flex-1">
+                        {isEditingName ? (
+                            <div className="flex items-center gap-1 min-w-0" onClick={e => e.stopPropagation()}>
+                                <input
+                                    type="text"
+                                    autoFocus
+                                    value={nameInput}
+                                    onChange={e => setNameInput(e.target.value)}
+                                    onKeyDown={e => {
+                                        if (e.key === 'Enter') handleSaveEdit();
+                                        if (e.key === 'Escape') handleCancelEdit();
+                                    }}
+                                    disabled={isSavingName}
+                                    className="px-2 py-0.5 text-xs font-bold bg-white border border-amber-400 rounded-lg focus:outline-none focus:ring-1 focus:ring-amber-500 text-slate-800 flex-1 min-w-0"
+                                    placeholder="Tên chiến dịch..."
+                                />
+                                <button
+                                    onClick={handleSaveEdit}
+                                    disabled={isSavingName}
+                                    className="p-1 text-emerald-600 hover:bg-emerald-50 rounded"
+                                    title="Lưu"
+                                >
+                                    {isSavingName ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3 stroke-[3]" />}
+                                </button>
+                                <button
+                                    onClick={handleCancelEdit}
+                                    disabled={isSavingName}
+                                    className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded"
+                                    title="Hủy"
+                                >
+                                    <X className="w-3 h-3" />
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="flex items-center gap-1 group/mname">
+                                <p 
+                                    className="font-bold text-slate-800 text-[13px] leading-tight truncate"
+                                    onDoubleClick={handleStartEdit}
+                                >
+                                    {c.name}
+                                </p>
+                                <button
+                                    onClick={handleStartEdit}
+                                    className="p-0.5 text-slate-400 hover:text-amber-600 rounded shrink-0"
+                                    title="Đổi tên"
+                                >
+                                    <Edit2 className="w-2.5 h-2.5" />
+                                </button>
+                            </div>
+                        )}
                         <div className="flex items-center gap-1.5 mt-0.5 min-w-0">
                             <div className="flex items-center gap-1 shrink-0 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-850 px-1.5 py-0.5 rounded-full">
                                 <img 
@@ -358,7 +539,7 @@ const CampaignMobileCard = React.memo<CampaignRowProps>(({ c, onSelect, onEdit, 
                         </div>
                     </div>
                 </div>
-                <div className="flex items-center gap-1.5" onClick={e => e.stopPropagation()}>
+                <div className="flex items-center gap-1.5 shrink-0 ml-2" onClick={e => e.stopPropagation()}>
                     {isSending && onPause && (
                         <button 
                             onClick={() => onPause(c.id)} 
@@ -398,7 +579,6 @@ const CampaignMobileCard = React.memo<CampaignRowProps>(({ c, onSelect, onEdit, 
                                 FLOW
                             </span>
                         ) : showReminderBadge ? (
-                            // [UI-R1] Mobile sent+reminder badge
                             <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-orange-50 text-orange-600 border border-orange-200 text-[8px] font-black uppercase tracking-wide">
                                 <Clock className="w-2.5 h-2.5" /> +Reminder
                             </span>
@@ -407,35 +587,58 @@ const CampaignMobileCard = React.memo<CampaignRowProps>(({ c, onSelect, onEdit, 
                                 SENT
                             </span>
                         ) : isPaused ? (
-                            // [FIX P7-C1] Mobile paused badge — orange to match desktop
-                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-orange-50 text-orange-700 border border-orange-200 text-[8px] font-black uppercase tracking-wide">
+                            <span className="inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-md bg-orange-50 text-orange-700 border border-orange-200 text-[8px] font-black uppercase tracking-wide">
                                 <PauseCircle className="w-2.5 h-2.5" /> PAUSED
+                            </span>
+                        ) : c.status === CampaignStatus.SCHEDULED ? (
+                            <span className="inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-100 text-[8px] font-black uppercase tracking-wide">
+                                SCHEDULED
                             </span>
                         ) : (
                             <span className="inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200 text-[8px] font-black uppercase tracking-wide">
-                                {(c.status || 'DRAFT').toUpperCase()}
+                                DRAFT
                             </span>
                         )}
                     </div>
                 </div>
                 <div className="space-y-1">
                     <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Lịch trình</p>
-                    <p className="text-[9px] font-bold text-slate-700 flex items-center gap-1">
-                        <Clock className="w-2.5 h-2.5 text-slate-300" />
-                        {isSent && c.sentAt ? new Date(c.sentAt).toLocaleDateString('vi-VN') : (c.scheduledAt ? new Date(c.scheduledAt).toLocaleDateString('vi-VN') : '---')}
-                    </p>
+                    <div className="flex flex-col">
+                        <span className="text-[10px] font-bold text-slate-700">
+                            {isSent ? (
+                                c.sentAt ? `${new Date(c.sentAt).toLocaleDateString('vi-VN')} ${new Date(c.sentAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}` : 'Đã gửi'
+                            ) : isSending ? (
+                                c.scheduledAt ? `${new Date(c.scheduledAt).toLocaleDateString('vi-VN')} ${new Date(c.scheduledAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}` : 'Đang gửi...'
+                            ) : c.scheduledAt ? (
+                                `${new Date(c.scheduledAt).toLocaleDateString('vi-VN')} ${new Date(c.scheduledAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}`
+                            ) : (
+                                'Chưa đặt lịch'
+                            )}
+                        </span>
+                        <span className="text-[9px] text-slate-400 font-medium">
+                            {isSent ? (
+                                `${sentCount.toLocaleString()} ${c.type === 'zalo_zns' ? 'tin' : 'emails'}`
+                            ) : isSending ? (
+                                `${sentCount.toLocaleString()} / ${(c.totalTargetAudience || 0).toLocaleString()} ${c.type === 'zalo_zns' ? 'tin' : 'emails'}`
+                            ) : (
+                                ''
+                            )}
+                        </span>
+                    </div>
                 </div>
             </div>
 
             {(isSent || isSending) && (
-                <div className="bg-slate-50/50 p-2 rounded-xl border border-slate-100">
-                    <div className="flex justify-between items-center mb-1">
-                        <div className="flex items-center gap-1.5 flex-nowrap">
-                            <Send className={`w-3 h-3 shrink-0 ${isFlow ? 'text-violet-500' : 'text-blue-500'}`} />
-                            <span translate="no" className="text-[9px] font-black text-slate-700 whitespace-nowrap">
+                <div className="pt-2 border-t border-slate-50 space-y-1">
+                    <div className="flex justify-between items-center text-[9px]">
+                        <span className="font-bold text-slate-400 uppercase">
+                            {isSending ? 'Tiến độ gửi' : (c.type === 'zalo_zns' ? 'Chi phí' : 'Hiệu suất Open')}
+                        </span>
+                        <div className="flex items-center gap-1 font-bold">
+                            <span className="text-slate-600">
                                 {isSending
-                                    ? `${sentCount.toLocaleString()} / ${(c.totalTargetAudience || 0).toLocaleString()} ${c.type === 'zalo_zns' ? 'ZNS' : 'Emails'}`
-                                    : `${sentCount.toLocaleString()} ${c.type === 'zalo_zns' ? 'ZNS' : 'Emails'}`
+                                    ? `${sentCount.toLocaleString()} / ${(c.totalTargetAudience || 0).toLocaleString()}`
+                                    : (c.type === 'zalo_zns' ? `${(sentCount * 300).toLocaleString()}đ` : `${(c.stats?.opened || 0).toLocaleString()}/${sentCount.toLocaleString()}`)
                                 }
                             </span>
                         </div>
@@ -501,7 +704,7 @@ const CampaignMobileSkeleton = () => (
     </div>
 );
 
-const CampaignList: React.FC<CampaignListProps> = ({ campaigns, loading, onSelect, onEdit, onDelete, onPlayFlow, onPause, onResume }) => {
+const CampaignList: React.FC<CampaignListProps> = ({ campaigns, loading, onSelect, onEdit, onDelete, onPlayFlow, onPause, onResume, onRename }) => {
     const navigate = useNavigate();
 
     const handleSelect = React.useCallback((c: Campaign) => onSelect(c), [onSelect]);
@@ -510,6 +713,7 @@ const CampaignList: React.FC<CampaignListProps> = ({ campaigns, loading, onSelec
     const handlePlayFlow = React.useCallback((c: Campaign) => onPlayFlow(c), [onPlayFlow]);
     const handlePause = React.useCallback((id: string) => onPause?.(id), [onPause]);
     const handleResume = React.useCallback((id: string) => onResume?.(id), [onResume]);
+    const handleRename = React.useCallback((id: string, newName: string) => onRename?.(id, newName), [onRename]);
 
     const parentRef = React.useRef<HTMLDivElement>(null);
     const rowVirtualizer = useVirtualizer({
@@ -621,6 +825,7 @@ const CampaignList: React.FC<CampaignListProps> = ({ campaigns, loading, onSelec
                                             onPlayFlow={handlePlayFlow}
                                             onPause={handlePause}
                                             onResume={handleResume}
+                                            onRename={handleRename}
                                             navigate={navigate}
                                             ref={rowVirtualizer.measureElement}
                                             data-index={virtualRow.index}
@@ -649,6 +854,7 @@ const CampaignList: React.FC<CampaignListProps> = ({ campaigns, loading, onSelec
                             onPlayFlow={handlePlayFlow}
                             onPause={handlePause}
                             onResume={handleResume}
+                            onRename={handleRename}
                             navigate={navigate}
                         />
                     ))
