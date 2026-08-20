@@ -385,58 +385,39 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                                 </Accordion>
                             </div>
                         )}
-                        {isButton && (() => {
-                            const isVariableUrl = /(?:{{\s*([^{}%]+?)\s*}}|%7B%7B\s*([^{}%]+?)\s*%7D%7D)/i.test(selectedBlock.url || '');
-                            const varMatches = (selectedBlock.url || '').match(/(?:{{\s*([^{}%]+?)\s*}}|%7B%7B\s*([^{}%]+?)\s*%7D%7D)/gi);
+                        {isButton && (
+                            <div className="space-y-4">
+                                <Input label="Nhãn nút" value={(() => { const d = document.createElement('div'); d.innerHTML = selectedBlock.content || ''; return d.textContent || d.innerText || ''; })()} onChange={(e) => onUpdateBlock(selectedBlock.id, { content: e.target.value })} customSize="sm" />
+                                <Input label="Đường dẫn" value={selectedBlock.url || ''} onChange={(e) => onUpdateBlock(selectedBlock.id, { url: e.target.value })} icon={LucideIcons.Link} customSize="sm" placeholder="VD: https://domain.com hoặc {{cert_link}}" />
 
-                            return (
-                                <div className="space-y-4">
-                                    <Input label="Nhãn nút" value={(() => { const d = document.createElement('div'); d.innerHTML = selectedBlock.content || ''; return d.textContent || d.innerText || ''; })()} onChange={(e) => onUpdateBlock(selectedBlock.id, { content: e.target.value })} customSize="sm" />
-                                    <Input label="Đường dẫn" value={selectedBlock.url || ''} onChange={(e) => onUpdateBlock(selectedBlock.id, { url: e.target.value })} icon={LucideIcons.Link} customSize="sm" placeholder="VD: https://domain.com hoặc {{cert_link}}" />
+                                {/* Auto-detected Dynamic Variable in Button URL -> Show Fallback Link Input */}
+                                {/(?:{{\s*([^{}%]+?)\s*}}|%7B%7B\s*([^{}%]+?)\s*%7D%7D)/i.test(selectedBlock.url || '') && (
+                                    <Input 
+                                        label="Đường dẫn dự phòng (Fallback Link URL)" 
+                                        placeholder="VD: https://ideas.edu.vn hoặc https://yoursite.com"
+                                        value={selectedBlock.fallbackUrl || ''} 
+                                        onChange={(e) => onUpdateBlock(selectedBlock.id, { fallbackUrl: e.target.value })} 
+                                        icon={LucideIcons.ShieldCheck} 
+                                        customSize="sm" 
+                                    />
+                                )}
 
-                                    {/* Auto-detected Dynamic Variable in Button URL */}
-                                    {isVariableUrl && (
-                                        <div className="p-3.5 bg-gradient-to-br from-violet-50 via-indigo-50/40 to-white dark:from-violet-950/40 dark:to-slate-900 border border-violet-200/80 dark:border-violet-800/60 rounded-2xl space-y-2.5 animate-in slide-in-from-top-2 shadow-xs">
-                                            <div className="flex items-center justify-between">
-                                                <div className="flex items-center gap-1.5 text-violet-700 dark:text-violet-300 font-extrabold text-xs">
-                                                    <LucideIcons.Sparkles className="w-3.5 h-3.5 text-amber-500 animate-pulse" />
-                                                    <span>Phát hiện biến URL cá nhân</span>
-                                                </div>
-                                                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-violet-100 dark:bg-violet-900/60 text-violet-700 dark:text-violet-300 border border-violet-200/80">
-                                                    {varMatches?.join(', ')}
-                                                </span>
-                                            </div>
-                                            <p className="text-[11px] text-violet-900/80 dark:text-violet-200/80 leading-relaxed font-medium">
-                                                Nút chứa biến động. Nhập <strong>Đường dẫn dự phòng</strong> để nút vẫn hoạt động khi khách hàng chưa có dữ liệu link cá nhân:
-                                            </p>
-                                            <Input 
-                                                label="Đường dẫn dự phòng (Fallback URL)" 
-                                                placeholder="VD: https://ideas.edu.vn hoặc https://yoursite.com"
-                                                value={selectedBlock.fallbackUrl || ''} 
-                                                onChange={(e) => onUpdateBlock(selectedBlock.id, { fallbackUrl: e.target.value })} 
-                                                icon={LucideIcons.ShieldCheck} 
-                                                customSize="sm" 
-                                            />
-                                        </div>
-                                    )}
-
-                                    {/* Validation hint for button */}
-                                    {(!selectedBlock.url || selectedBlock.url === '#' || !selectedBlock.url.trim()) && (
-                                        <div className="flex items-start gap-2 p-2 bg-rose-50 border border-rose-100 rounded-xl">
-                                            <LucideIcons.AlertCircle className="w-3.5 h-3.5 text-rose-500 shrink-0 mt-0.5" />
-                                            <p className="text-[10px] text-rose-700 font-medium">Nút chưa có đường dẫn — nhớ điền URL để nút có tác dụng.</p>
-                                        </div>
-                                    )}
-                                    <Accordion title="Typography" icon={LucideIcons.Type} defaultOpen>
-                                        <div className="grid grid-cols-2 gap-3 mb-2">
-                                            <VisualMeasure label="Cỡ" value={getStyle('fontSize')} defaultValue={14} onChange={(v) => updateStyle({ fontSize: v })} max={100} unit="px" />
-                                            <VisualMeasure label="Dòng" tooltip="Tỷ lệ chiều cao của mỗi dòng chữ. Giá trị chuẩn thường là 1.5 để dễ đọc." value={getStyle('lineHeight')} defaultValue={1.5} onChange={(v) => updateStyle({ lineHeight: v })} max={3} unit="" hideSlider />
-                                        </div>
-                                        <ColorPicker label="Màu chữ" value={getStyle('color') || '#1e293b'} onChange={(v, t) => handleColorUpdate(v, t, 'color')} blocks={blocks} bodyStyle={bodyStyle} />
-                                    </Accordion>
-                                </div>
-                            );
-                        })()}
+                                {/* Validation hint for button */}
+                                {(!selectedBlock.url || selectedBlock.url === '#' || !selectedBlock.url.trim()) && (
+                                    <div className="flex items-start gap-2 p-2 bg-rose-50 border border-rose-100 rounded-xl">
+                                        <LucideIcons.AlertCircle className="w-3.5 h-3.5 text-rose-500 shrink-0 mt-0.5" />
+                                        <p className="text-[10px] text-rose-700 font-medium">Nút chưa có đường dẫn — nhớ điền URL để nút có tác dụng.</p>
+                                    </div>
+                                )}
+                                <Accordion title="Typography" icon={LucideIcons.Type} defaultOpen>
+                                    <div className="grid grid-cols-2 gap-3 mb-2">
+                                        <VisualMeasure label="Cỡ" value={getStyle('fontSize')} defaultValue={14} onChange={(v) => updateStyle({ fontSize: v })} max={100} unit="px" />
+                                        <VisualMeasure label="Dòng" tooltip="Tỷ lệ chiều cao của mỗi dòng chữ. Giá trị chuẩn thường là 1.5 để dễ đọc." value={getStyle('lineHeight')} defaultValue={1.5} onChange={(v) => updateStyle({ lineHeight: v })} max={3} unit="" hideSlider />
+                                    </div>
+                                    <ColorPicker label="Màu chữ" value={getStyle('color') || '#1e293b'} onChange={(v, t) => handleColorUpdate(v, t, 'color')} blocks={blocks} bodyStyle={bodyStyle} />
+                                </Accordion>
+                            </div>
+                        )}
                         {selectedBlock.type === 'countdown' && (
                             <div className="space-y-4">
                                 <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl space-y-4">
@@ -525,70 +506,30 @@ const EmailProperties: React.FC<EmailPropertiesProps> = ({
                                 </Accordion>
                             </div>
                         )}
-                        {selectedBlock.type === 'image' && (() => {
-                            const isVarSrc = /(?:{{\s*([^{}%]+?)\s*}}|%7B%7B\s*([^{}%]+?)\s*%7D%7D)/i.test(selectedBlock.content || '');
-                            const varSrcMatches = (selectedBlock.content || '').match(/(?:{{\s*([^{}%]+?)\s*}}|%7B%7B\s*([^{}%]+?)\s*%7D%7D)/gi);
-                            const isVarLink = /(?:{{\s*([^{}%]+?)\s*}}|%7B%7B\s*([^{}%]+?)\s*%7D%7D)/i.test(selectedBlock.url || '');
-                            const varLinkMatches = (selectedBlock.url || '').match(/(?:{{\s*([^{}%]+?)\s*}}|%7B%7B\s*([^{}%]+?)\s*%7D%7D)/gi);
+                        {selectedBlock.type === 'image' && (
+                            <div className="space-y-4">
+                                <ImageUploader 
+                                    label="Upload ảnh" 
+                                    value={selectedBlock.content} 
+                                    onChange={(url: string) => onUpdateBlock(selectedBlock.id, { content: url })} 
+                                    fallbackValue={selectedBlock.fallbackContent}
+                                    onFallbackChange={(fbUrl: string) => onUpdateBlock(selectedBlock.id, { fallbackContent: fbUrl })}
+                                />
 
-                            return (
-                                <div className="space-y-4">
-                                    <ImageUploader label="Upload ảnh" value={selectedBlock.content} onChange={(url: string) => onUpdateBlock(selectedBlock.id, { content: url })} />
+                                <Input label="Alt Text" value={selectedBlock.altText || ''} onChange={(e) => onUpdateBlock(selectedBlock.id, { altText: e.target.value })} customSize="sm" />
+                                <Input label="Link khi click vào ảnh" value={selectedBlock.url || ''} onChange={(e) => onUpdateBlock(selectedBlock.id, { url: e.target.value })} icon={LucideIcons.Link} customSize="sm" placeholder="VD: https://domain.com hoặc {{cert_link}}" />
 
-                                    {/* Auto-detected Dynamic Variable in Image src */}
-                                    {isVarSrc && (
-                                        <div className="p-3.5 bg-gradient-to-br from-amber-50 via-orange-50/40 to-white dark:from-amber-950/40 dark:to-slate-900 border border-amber-200/80 dark:border-amber-800/60 rounded-2xl space-y-2.5 animate-in slide-in-from-top-2 shadow-xs">
-                                            <div className="flex items-center justify-between">
-                                                <div className="flex items-center gap-1.5 text-amber-800 dark:text-amber-300 font-extrabold text-xs">
-                                                    <LucideIcons.Sparkles className="w-3.5 h-3.5 text-amber-500 animate-pulse" />
-                                                    <span>Phát hiện biến ảnh động</span>
-                                                </div>
-                                                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-300 border border-amber-200/80">
-                                                    {varSrcMatches?.join(', ')}
-                                                </span>
-                                            </div>
-                                            <p className="text-[11px] text-amber-900/80 dark:text-amber-200/80 leading-relaxed font-medium">
-                                                Ảnh chứa biến động. Nhập <strong>Ảnh dự phòng (Fallback)</strong> hiển thị khi liên hệ chưa có ảnh:
-                                            </p>
-                                            <Input 
-                                                label="Ảnh dự phòng (Fallback Image URL)" 
-                                                placeholder="https://images.unsplash.com/... hoặc link ảnh mẫu"
-                                                value={selectedBlock.fallbackContent || ''} 
-                                                onChange={(e) => onUpdateBlock(selectedBlock.id, { fallbackContent: e.target.value })} 
-                                                icon={LucideIcons.Image} 
-                                                customSize="sm" 
-                                            />
-                                        </div>
-                                    )}
-
-                                    <Input label="Alt Text" value={selectedBlock.altText || ''} onChange={(e) => onUpdateBlock(selectedBlock.id, { altText: e.target.value })} customSize="sm" />
-                                    <Input label="Link khi click vào ảnh" value={selectedBlock.url || ''} onChange={(e) => onUpdateBlock(selectedBlock.id, { url: e.target.value })} icon={LucideIcons.Link} customSize="sm" placeholder="VD: https://domain.com hoặc {{cert_link}}" />
-
-                                    {/* Auto-detected Dynamic Variable in Image click link */}
-                                    {isVarLink && (
-                                        <div className="p-3.5 bg-gradient-to-br from-violet-50 via-indigo-50/40 to-white dark:from-violet-950/40 dark:to-slate-900 border border-violet-200/80 dark:border-violet-800/60 rounded-2xl space-y-2.5 animate-in slide-in-from-top-2 shadow-xs">
-                                            <div className="flex items-center justify-between">
-                                                <div className="flex items-center gap-1.5 text-violet-700 dark:text-violet-300 font-extrabold text-xs">
-                                                    <LucideIcons.Sparkles className="w-3.5 h-3.5 text-amber-500 animate-pulse" />
-                                                    <span>Phát hiện biến link ảnh</span>
-                                                </div>
-                                                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-violet-100 dark:bg-violet-900/60 text-violet-700 dark:text-violet-300 border border-violet-200/80">
-                                                    {varLinkMatches?.join(', ')}
-                                                </span>
-                                            </div>
-                                            <p className="text-[11px] text-violet-900/80 dark:text-violet-200/80 leading-relaxed font-medium">
-                                                Link ảnh chứa biến động. Nhập <strong>Đường dẫn dự phòng (Fallback)</strong>:
-                                            </p>
-                                            <Input 
-                                                label="Đường dẫn dự phòng (Fallback URL)" 
-                                                placeholder="VD: https://ideas.edu.vn hoặc https://yoursite.com"
-                                                value={selectedBlock.fallbackUrl || ''} 
-                                                onChange={(e) => onUpdateBlock(selectedBlock.id, { fallbackUrl: e.target.value })} 
-                                                icon={LucideIcons.ShieldCheck} 
-                                                customSize="sm" 
-                                            />
-                                        </div>
-                                    )}
+                                {/* Auto-detected Dynamic Variable in Image click link */}
+                                {/(?:{{\s*([^{}%]+?)\s*}}|%7B%7B\s*([^{}%]+?)\s*%7D%7D)/i.test(selectedBlock.url || '') && (
+                                    <Input 
+                                        label="Đường dẫn dự phòng (Fallback Link URL)" 
+                                        placeholder="VD: https://ideas.edu.vn hoặc https://yoursite.com"
+                                        value={selectedBlock.fallbackUrl || ''} 
+                                        onChange={(e) => onUpdateBlock(selectedBlock.id, { fallbackUrl: e.target.value })} 
+                                        icon={LucideIcons.ShieldCheck} 
+                                        customSize="sm" 
+                                    />
+                                )}
 
                                 {/* Ratio & Fit */}
                                 <div className="p-3 bg-slate-50 border border-slate-100 rounded-2xl space-y-4">

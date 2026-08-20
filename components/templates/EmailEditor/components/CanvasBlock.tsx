@@ -581,6 +581,7 @@ const CanvasBlock: React.FC<CanvasBlockProps> = (props) => {
                 const objectFit = block.style.objectFit || 'cover';
                 const aspectRatio = (block.style as any).aspectRatio;
                 const borderRadius = sanitizeRadius(css.borderRadius);
+                const isVariableSrc = /(?:{{\s*([^{}%]+?)\s*}}|%7B%7B\s*([^{}%]+?)\s*%7D%7D)/i.test(block.content || '');
 
                 return (
                     <div style={{ 
@@ -589,28 +590,83 @@ const CanvasBlock: React.FC<CanvasBlockProps> = (props) => {
                         width: '100%' 
                     }}>
                         {block.content ? (
-                            <div style={{
-                                width: imgWidth,
-                                height: imgHeight,
-                                aspectRatio: aspectRatio && aspectRatio !== 'auto' ? aspectRatio : undefined,
-                                borderRadius: borderRadius,
-                                overflow: 'hidden',
-                                display: 'inline-block',
-                                maxWidth: '100%',
-                            }}>
-                                <img
-                                    src={block.content}
-                                    style={{
-                                        width: '100%',
-                                        height: '100%',
-                                        objectFit: objectFit as any,
-                                        objectPosition: 'center',
-                                        display: 'block',
-                                        borderRadius: borderRadius
-                                    }}
-                                    alt={block.altText}
-                                />
-                            </div>
+                            isVariableSrc ? (
+                                block.fallbackContent ? (
+                                    <div style={{
+                                        width: imgWidth,
+                                        height: imgHeight,
+                                        aspectRatio: aspectRatio && aspectRatio !== 'auto' ? aspectRatio : undefined,
+                                        borderRadius: borderRadius,
+                                        overflow: 'hidden',
+                                        display: 'inline-block',
+                                        maxWidth: '100%',
+                                        position: 'relative'
+                                    }} className="group/dynimg">
+                                        <img
+                                            src={block.fallbackContent}
+                                            style={{
+                                                width: '100%',
+                                                height: '100%',
+                                                objectFit: objectFit as any,
+                                                objectPosition: 'center',
+                                                display: 'block',
+                                                borderRadius: borderRadius
+                                            }}
+                                            alt={block.altText || 'Fallback preview'}
+                                            onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                                        />
+                                        <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-slate-900/80 backdrop-blur-xs text-amber-300 font-mono text-[9px] font-bold border border-amber-500/30 flex items-center gap-1 shadow-sm">
+                                            <LucideIcons.Sparkles className="w-2.5 h-2.5" />
+                                            <span>{block.content}</span>
+                                            <span className="text-white/60 font-sans font-normal">(Ảnh dự phòng)</span>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div 
+                                        style={{
+                                            width: imgWidth,
+                                            height: imgHeight !== 'auto' ? imgHeight : undefined,
+                                            aspectRatio: aspectRatio && aspectRatio !== 'auto' ? aspectRatio : '16/9',
+                                            borderRadius: borderRadius || '16px',
+                                            maxWidth: '100%',
+                                        }}
+                                        className="w-full bg-gradient-to-br from-amber-50/80 via-orange-50/40 to-amber-100/30 border-2 border-dashed border-amber-300/80 rounded-2xl flex flex-col items-center justify-center p-6 text-center shadow-xs"
+                                    >
+                                        <div className="w-12 h-12 bg-amber-500/10 border border-amber-200 rounded-2xl flex items-center justify-center mb-2 shadow-xs">
+                                            <LucideIcons.Sparkles className="text-amber-600 w-6 h-6 animate-pulse" />
+                                        </div>
+                                        <div className="font-mono text-xs font-bold text-amber-900 bg-amber-200/60 px-2.5 py-1 rounded-lg border border-amber-300/70 mb-1">
+                                            {block.content}
+                                        </div>
+                                        <span className="text-[11px] font-bold text-slate-700 tracking-wide">ẢNH ĐỘNG CÁ NHÂN HÓA</span>
+                                        <span className="text-[9px] text-slate-400 font-medium max-w-xs mt-0.5">Hệ thống sẽ tự động gán ảnh riêng cho từng người nhận khi gửi mail</span>
+                                    </div>
+                                )
+                            ) : (
+                                <div style={{
+                                    width: imgWidth,
+                                    height: imgHeight,
+                                    aspectRatio: aspectRatio && aspectRatio !== 'auto' ? aspectRatio : undefined,
+                                    borderRadius: borderRadius,
+                                    overflow: 'hidden',
+                                    display: 'inline-block',
+                                    maxWidth: '100%',
+                                }}>
+                                    <img
+                                        src={block.content}
+                                        style={{
+                                            width: '100%',
+                                            height: '100%',
+                                            objectFit: objectFit as any,
+                                            objectPosition: 'center',
+                                            display: 'block',
+                                            borderRadius: borderRadius
+                                        }}
+                                        alt={block.altText}
+                                        onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                                    />
+                                </div>
+                            )
                         ) : (
                             <div className="w-full aspect-video bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center group/img transition-all hover:bg-slate-100 hover:border-emerald-500/30">
                                 <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center mb-3 group-hover/img:scale-110 transition-transform">
