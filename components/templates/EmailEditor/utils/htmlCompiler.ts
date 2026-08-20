@@ -451,8 +451,9 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
             const btnLineHeight = s.lineHeight ? `line-height: ${s.lineHeight}; ` : '';
 
             const tableMarginCss = `margin-top: ${btnMarginTop}; margin-bottom: ${btnMarginBottom}; margin-left: ${btnMarginLeft}; margin-right: ${btnMarginRight};`;
+            const dataFallbackAttr = b.fallbackUrl ? ` data-fallback-url="${b.fallbackUrl}"` : '';
 
-            return `<tr><td align="${btnAlign}" class="${customClassName}" style="width: 100%; text-align: ${btnAlign} !important; ${hideOnDesktopCss}"><!--[if mso]><table role="presentation" border="0" cellspacing="0" cellpadding="0" align="${btnAlign}" ${tableWidthAttr} style="${tableMarginCss} ${inlineWidth}"><tr><td align="center" style="background: ${btnBg}; border-radius: ${btnRadius};"><![endif]--><!--[if !mso]><!--><table border="0" cellspacing="0" cellpadding="0" align="${btnAlign}" ${tableWidthAttr} style="${tableMarginCss} display: table; border-collapse: separate; ${inlineWidth}"><!--<![endif]--><tr><td align="center" class="${parentNoStack ? 'btn-nostack' : ''}" style="${getBorderStyle(s)} border-radius: ${btnRadius};"><a class="btn-link ${customClassName} ${parentNoStack ? 'btn-nostack' : ''}" href="${b.url || '#'}" target="_blank" style="font-family: ${bodyStyle.fontFamily || "'Roboto', Arial, sans-serif"}; font-size: ${s.fontSize || '16px'}; font-weight: ${s.fontWeight || 'bold'}; font-style: ${s.fontStyle || 'normal'}; text-decoration: ${s.textDecoration || 'none'}; text-transform: ${s.textTransform || 'none'}; color: ${btnColor} !important; border-radius: ${btnRadius}; -webkit-border-radius: ${btnRadius}; -moz-border-radius: ${btnRadius}; ${btnPadding} ${btnHeight}${btnLineHeight}display: block; background: ${btnBg}; ${inlineWidth} box-sizing: border-box; text-align: center; overflow: hidden;">${b.content || 'BUTTON'}</a></td></tr></table><!--[if mso]></td></tr></table><![endif]--></td></tr>`;
+            return `<tr><td align="${btnAlign}" class="${customClassName}" style="width: 100%; text-align: ${btnAlign} !important; ${hideOnDesktopCss}"><!--[if mso]><table role="presentation" border="0" cellspacing="0" cellpadding="0" align="${btnAlign}" ${tableWidthAttr} style="${tableMarginCss} ${inlineWidth}"><tr><td align="center" style="background: ${btnBg}; border-radius: ${btnRadius};"><![endif]--><!--[if !mso]><!--><table border="0" cellspacing="0" cellpadding="0" align="${btnAlign}" ${tableWidthAttr} style="${tableMarginCss} display: table; border-collapse: separate; ${inlineWidth}"><!--<![endif]--><tr><td align="center" class="${parentNoStack ? 'btn-nostack' : ''}" style="${getBorderStyle(s)} border-radius: ${btnRadius};"><a class="btn-link ${customClassName} ${parentNoStack ? 'btn-nostack' : ''}" href="${b.url || '#'}"${dataFallbackAttr} target="_blank" style="font-family: ${bodyStyle.fontFamily || "'Roboto', Arial, sans-serif"}; font-size: ${s.fontSize || '16px'}; font-weight: ${s.fontWeight || 'bold'}; font-style: ${s.fontStyle || 'normal'}; text-decoration: ${s.textDecoration || 'none'}; text-transform: ${s.textTransform || 'none'}; color: ${btnColor} !important; border-radius: ${btnRadius}; -webkit-border-radius: ${btnRadius}; -moz-border-radius: ${btnRadius}; ${btnPadding} ${btnHeight}${btnLineHeight}display: block; background: ${btnBg}; ${inlineWidth} box-sizing: border-box; text-align: center; overflow: hidden;">${b.content || 'BUTTON'}</a></td></tr></table><!--[if mso]></td></tr></table><![endif]--></td></tr>`;
         }
 
         if (b.type === 'header') {
@@ -968,17 +969,20 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
             const marginCss = imgAlign === 'center' ? 'margin: 0 auto;' : (imgAlign === 'right' ? 'margin-left: auto; margin-right: 0;' : 'margin-right: auto; margin-left: 0;');
             const imgClass = (isPercent || imgWidth === '100%') ? 'full-width' : '';
 
+            const dataFallbackSrcAttr = b.fallbackContent ? ` data-fallback-src="${b.fallbackContent}"` : '';
+            const dataFallbackLinkAttr = b.fallbackUrl ? ` data-fallback-url="${b.fallbackUrl}"` : '';
+
             let imgHtml: string;
             if (isPercent) {
-                imgHtml = `<img src="${b.content}" class="${imgClass} ${customClassName}" style="display: block; width: 100%; max-width: 100%; height: ${imgHeight}; object-fit: ${objectFit}; ${ratioCss} ${marginCss} border-radius: ${sanitizeRadius(s.borderRadius || '0')};" alt="${b.altText || ''}" />`;
+                imgHtml = `<img src="${b.content}"${dataFallbackSrcAttr} class="${imgClass} ${customClassName}" style="display: block; width: 100%; max-width: 100%; height: ${imgHeight}; object-fit: ${objectFit}; ${ratioCss} ${marginCss} border-radius: ${sanitizeRadius(s.borderRadius || '0')};" alt="${b.altText || ''}" />`;
             } else {
                 const pxVal = imgWidth.replace('px', '') || '600';
                 const pxHeight = imgHeight !== 'auto' ? imgHeight.replace('px', '') : '';
-                imgHtml = `<img src="${b.content}" width="${pxVal}" ${pxHeight ? `height="${pxHeight}"` : ''} class="${imgClass} ${customClassName}" style="display: block; width: ${imgWidth}; max-width: 100%; height: ${imgHeight}; object-fit: ${objectFit}; ${ratioCss} ${marginCss} border-radius: ${sanitizeRadius(s.borderRadius || '0')};" alt="${b.altText || ''}" />`;
+                imgHtml = `<img src="${b.content}"${dataFallbackSrcAttr} width="${pxVal}" ${pxHeight ? `height="${pxHeight}"` : ''} class="${imgClass} ${customClassName}" style="display: block; width: ${imgWidth}; max-width: 100%; height: ${imgHeight}; object-fit: ${objectFit}; ${ratioCss} ${marginCss} border-radius: ${sanitizeRadius(s.borderRadius || '0')};" alt="${b.altText || ''}" />`;
             }
 
             if (b.url) {
-                return wrapWithMargin(`<td align="${imgAlign}" class="image-block ${customClassName}" width="100%" style="width: 100%; ${paddingCss} ${getBackgroundStyle(s)} ${radiusStyle} ${borderCss} ${hideOnDesktopCss} text-align: ${imgAlign};"><a href="${b.url}" target="_blank" style="display: block; text-decoration: none; width: 100%;">${imgHtml}</a></td>`);
+                return wrapWithMargin(`<td align="${imgAlign}" class="image-block ${customClassName}" width="100%" style="width: 100%; ${paddingCss} ${getBackgroundStyle(s)} ${radiusStyle} ${borderCss} ${hideOnDesktopCss} text-align: ${imgAlign};"><a href="${b.url}"${dataFallbackLinkAttr} target="_blank" style="display: block; text-decoration: none; width: 100%;">${imgHtml}</a></td>`);
             }
             return wrapWithMargin(`<td align="${imgAlign}" class="image-block ${customClassName}" width="100%" style="width: 100%; ${paddingCss} ${getBackgroundStyle(s)} ${radiusStyle} ${borderCss} ${hideOnDesktopCss} text-align: ${imgAlign};">${imgHtml}</td>`);
         }

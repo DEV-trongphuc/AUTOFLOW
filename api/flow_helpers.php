@@ -1014,11 +1014,24 @@ function canonicalizeVarKey($str)
 
         // Handle empty/missing value with smart fallback
         if ($val === null || $val === '') {
+            $after = substr($html, $offset, 300);
+            $tagSurround = $tagBeforeAttr . $after;
+            $tagClose = strpos($tagSurround, '>');
+            if ($tagClose !== false) {
+                $tagSurround = substr($tagSurround, 0, $tagClose + 1);
+            }
+
             if ($isInsideSrc) {
+                if (preg_match('/data-fallback-src\s*=\s*["\']([^"\']+)["\']/i', $tagSurround, $mFbSrc)) {
+                    return $mFbSrc[1];
+                }
                 $fbImg = $fallbacks[$tag] ?? ($canonicalFallbacks[$canon] ?? ($fallbacks['default_image'] ?? 'https://placehold.co/600x400/f8fafc/94a3b8?text=Image'));
                 return $fbImg;
             }
             if ($isInsideHref) {
+                if (preg_match('/data-fallback-url\s*=\s*["\']([^"\']+)["\']/i', $tagSurround, $mFbUrl)) {
+                    return $mFbUrl[1];
+                }
                 $fbLink = $fallbacks[$tag] ?? ($canonicalFallbacks[$canon] ?? ($fallbacks['default_link'] ?? '#'));
                 return $fbLink;
             }

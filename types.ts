@@ -286,6 +286,8 @@ export interface EmailBlock {
   type: EmailBlockType;
   content: string;          // For table: JSON string of TableCell[][]
   url?: string;
+  fallbackUrl?: string;
+  fallbackContent?: string;
   altText?: string;
   videoUrl?: string;
   thumbnailUrl?: string;

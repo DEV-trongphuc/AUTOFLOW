@@ -329,13 +329,22 @@ export const interpolateMergeTags = (
 
         // 2. Handle missing / empty value
         if (val === undefined || val === null || val === '') {
+            const after = text.substring(offset, offset + 300);
+            const tagSurround = tagBeforeAttr + after;
+            const tagClose = tagSurround.indexOf('>');
+            const fullTagStr = tagClose !== -1 ? tagSurround.substring(0, tagClose + 1) : tagSurround;
+
             // Fallback for image src (prevent broken img box)
             if (isInsideSrc) {
+                const matchSrc = fullTagStr.match(/data-fallback-src\s*=\s*["']([^"']+)["']/i);
+                if (matchSrc) return normalizeUrl(matchSrc[1]);
                 const fbImg = fallbacks[tag] || canonicalFallbacks[canon] || fallbacks.default_image || fallbacks.cert_img || 'https://placehold.co/600x400/f8fafc/94a3b8?text=Image';
                 return normalizeUrl(String(fbImg));
             }
             // Fallback for link href
             if (isInsideHref) {
+                const matchUrl = fullTagStr.match(/data-fallback-url\s*=\s*["']([^"']+)["']/i);
+                if (matchUrl) return normalizeUrl(matchUrl[1]);
                 const fbLink = fallbacks[tag] || canonicalFallbacks[canon] || fallbacks.default_link || fallbacks.cert_link || '#';
                 return normalizeUrl(String(fbLink));
             }
