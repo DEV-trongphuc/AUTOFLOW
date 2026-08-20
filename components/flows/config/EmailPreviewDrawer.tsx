@@ -51,7 +51,7 @@ const EmailPreviewDrawer: React.FC<EmailPreviewDrawerProps> = ({ template, htmlC
   const drawerContent = (
     <div className="fixed inset-0 z-[100000] flex justify-end">
       <div
-        className={`absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-500 ${animateIn ? 'opacity-100' : 'opacity-0'}`}
+        className={`absolute inset-0 bg-black/80 backdrop-blur-[2px] transition-opacity duration-500 ${animateIn ? 'opacity-100' : 'opacity-0'}`}
         onClick={onClose}
       />
       

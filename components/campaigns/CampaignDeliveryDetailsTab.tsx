@@ -479,10 +479,10 @@ const CampaignDeliveryDetailsTab: React.FC<Props> = ({ campaign, allLists, allTa
                 </div>
             </div>
 
-            <Card noPadding className="border-slate-100 shadow-sm min-h-[400px] overflow-visible">
-                <div className="overflow-x-auto max-h-[650px] overflow-y-auto custom-scrollbar">
+            <Card noPadding className="border-slate-100 shadow-sm min-h-[300px] overflow-visible">
+                <div className="overflow-x-auto max-h-[400px] overflow-y-auto custom-scrollbar">
                     <table className="w-full text-left">
-                        <thead className="bg-slate-50/80 border-b border-slate-100 sticky top-0 z-20 backdrop-blur-sm">
+                        <thead className="bg-slate-50/95 border-b border-slate-100 sticky top-0 z-20 backdrop-blur-sm">
                             {selectedIds.length > 0 ? (
                                 <tr className="bg-[#fffbf0] border-b border-orange-200 shadow-sm animate-in fade-in duration-200">
                                     <th colSpan={6} className="px-6 py-3">

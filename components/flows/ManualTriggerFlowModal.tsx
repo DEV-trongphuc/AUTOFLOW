@@ -14,6 +14,7 @@ interface ManualTriggerFlowModalProps {
     subscriber: Subscriber;
     flows: Flow[];
     onSuccess: (flowName: string) => void;
+    zIndex?: number;
 }
 
 const ManualTriggerFlowModal: React.FC<ManualTriggerFlowModalProps> = ({
@@ -21,7 +22,8 @@ const ManualTriggerFlowModal: React.FC<ManualTriggerFlowModalProps> = ({
     onClose,
     subscriber,
     flows,
-    onSuccess
+    onSuccess,
+    zIndex
 }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState<string | null>(null);
@@ -61,6 +63,7 @@ const ManualTriggerFlowModal: React.FC<ManualTriggerFlowModalProps> = ({
             onClose={onClose}
             title="Kích hoạt Automation thủ công"
             size="md"
+            zIndex={zIndex ?? 40000}
         >
             <div className="space-y-5">
                 {/* Banner Thông Báo */}

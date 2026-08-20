@@ -239,6 +239,8 @@ class FlowExecutor
                         'unsubscribe_url' => ($this->apiUrl . '/unsubscribe.php?token=' . $unsubToken . '&flow_id=' . $flowId),
                         'campaign_name' => $flowName,
                         'campaignName' => $flowName,
+                        'variable_fallbacks' => $config['variable_fallbacks'] ?? ($config['fallbacks'] ?? []),
+                        'config' => $config
                     ];
 
                     $htmlContent = resolveEmailContent($this->pdo, $config['templateId'] ?? '', $config['customHtml'] ?? '', $config['contentBody'] ?? '', $resolverContext);
@@ -377,7 +379,11 @@ class FlowExecutor
                         break;
                     }
 
-                    $finalText = replaceMergeTags($config['content'] ?? '', $subscriber, []);
+                    $csContext = [
+                        'variable_fallbacks' => $config['variable_fallbacks'] ?? ($config['fallbacks'] ?? []),
+                        'config' => $config
+                    ];
+                    $finalText = replaceMergeTags($config['content'] ?? '', $subscriber, $csContext);
                     $res = sendConsultationMessage($this->pdo, $oaConfigId, $zaloUserId, $finalText, null, $subscriber['workspace_id']);
 
                     if ($res['success']) {
@@ -412,8 +418,12 @@ class FlowExecutor
                                 $templateData = [];
                                 $rawTemplateData = $config['fallback_zns_data'] ?? [];
                                 $fbShortFieldMap = ['id' => 20, 'ma_giao_dich' => 20, 'ma_don_hang' => 20, 'tracking_id' => 20, 'order_id' => 20, 'invoice_id' => 20];
+                                $fbZnsContext = [
+                                    'variable_fallbacks' => $config['variable_fallbacks'] ?? ($config['fallbacks'] ?? []),
+                                    'config' => $config
+                                ];
                                 foreach ($rawTemplateData as $key => $value) {
-                                    $fbVal = is_string($value) ? replaceMergeTags($value, $subscriber, []) : $value;
+                                    $fbVal = is_string($value) ? replaceMergeTags($value, $subscriber, $fbZnsContext) : $value;
                                     // [FIX] Apply same per-field ZNS length limits as primary zalo_zns step
                                     if (is_string($fbVal)) {
                                         $fbMax = $fbShortFieldMap[$key] ?? 100;
@@ -523,9 +533,13 @@ class FlowExecutor
                     $templateData = [];
                     $missingParams = [];
                     $rawData = $config['template_data'] ?? [];
+                    $znsContext = [
+                        'variable_fallbacks' => $config['variable_fallbacks'] ?? ($config['fallbacks'] ?? []),
+                        'config' => $config
+                    ];
 
                     foreach ($rawData as $key => $value) {
-                        $val = is_string($value) ? replaceMergeTags($value, $subscriber, []) : $value;
+                        $val = is_string($value) ? replaceMergeTags($value, $subscriber, $znsContext) : $value;
 
                         if ($val === '') {
                             $missingParams[] = $key;
@@ -658,7 +672,11 @@ class FlowExecutor
                     // Prepare Content
                     $msgConfig = [];
                     if (!empty($config['content'])) {
-                        $msgConfig['text'] = replaceMergeTags($config['content'], $subscriber, []);
+                        $metaContext = [
+                            'variable_fallbacks' => $config['variable_fallbacks'] ?? ($config['fallbacks'] ?? []),
+                            'config' => $config
+                        ];
+                        $msgConfig['text'] = replaceMergeTags($config['content'], $subscriber, $metaContext);
                     }
                     if (!empty($config['attachment_url'])) {
                         $msgConfig['attachment_url'] = $config['attachment_url'];

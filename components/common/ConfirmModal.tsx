@@ -20,6 +20,7 @@ interface ConfirmModalProps {
     dangerText?: string;
     dangerAction?: () => void;
     isDarkTheme?: boolean;
+    zIndex?: number;
 }
 
 const ConfirmModal: React.FC<ConfirmModalProps> = ({
@@ -37,7 +38,8 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
     confirmPlaceholder,
     dangerText,
     dangerAction,
-    isDarkTheme
+    isDarkTheme,
+    zIndex
 }) => {
     const [isVisible, setIsVisible] = useState(false);
     const [animateIn, setAnimateIn] = useState(false);
@@ -118,6 +120,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
             size="sm"
             isLoading={activeLoading}
             isDarkTheme={isDarkTheme}
+            zIndex={zIndex ?? 35000}
             footer={
                 <div className="flex items-center justify-center gap-3 w-full p-2">
                     {dangerText && dangerAction && (

@@ -1441,7 +1441,24 @@ const Audience: React.FC = () => {
                                     <Button size="md" onClick={adminGuard(() => { setEditingSegment(null); setSegmentBuilderOpen(true); }, 'tạo phân khúc')}>Tạo phân khúc</Button>
                                 </>
                             )}
-                            {activeTab === 'lists' && <Button size="md" onClick={adminGuard(() => setIsCreateListModalOpen(true), 'tạo danh sách')}>Tạo danh sách</Button>}
+                            {activeTab === 'lists' && (
+                                <div className="flex items-center gap-2">
+                                    <Button
+                                        variant="secondary"
+                                        size="md"
+                                        icon={UserPlus}
+                                        onClick={() => setImportModalOpen(true)}
+                                    >
+                                        Import liên hệ
+                                    </Button>
+                                    <Button
+                                        size="md"
+                                        onClick={adminGuard(() => setIsCreateListModalOpen(true), 'tạo danh sách')}
+                                    >
+                                        Tạo danh sách
+                                    </Button>
+                                </div>
+                            )}
                         </div>
                     </div>
 

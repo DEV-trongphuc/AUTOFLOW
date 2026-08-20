@@ -482,8 +482,8 @@ export const renderMarkdown = (
         .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_match, label, url) => {
             return buildRichLinkHtml(url, label);
         })
-        // Plain URL autolinker - identifying http/https/www links not already in a markdown link or HTML attribute
-        .replace(/((?:^|[^\w"'>]))((?:https?:\/\/|www\.)[^\s<)\]]+)/g, (match, prefix, rawUrl) => {
+        // Plain URL & Domain autolinker - identifying http/https/www links and domains not already in a markdown link or HTML attribute
+        .replace(/((?:^|[^\w"'>]))((?:https?:\/\/|www\.)[^\s<)\]]+|[a-zA-Z0-9][-a-zA-Z0-9]*\.(?:com|vn|edu\.vn|gov\.vn|net|org|io|co|info|biz|me|cc|xyz|app|dev|store|site|online|tech|club|shop|top|vip|pro|ai|cloud|space|fun|live|link|work|agency|digital|design|asia|tv|mobi)(?::[0-9]+)?(?:\/[^\s<)\]]*)?)/gi, (match, prefix, rawUrl) => {
             let urlPart = rawUrl;
             let trailing = "";
             const punct = ".,;:?!";

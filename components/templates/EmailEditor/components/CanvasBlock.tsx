@@ -145,7 +145,8 @@ const CanvasBlock: React.FC<CanvasBlockProps> = (props) => {
                                 marginTop: btnMarginTop, marginBottom: btnMarginBottom,
                                 marginLeft: btnMarginLeft, marginRight: btnMarginRight,
                                 display: 'table',
-                                width: btnWidth === 'auto' ? 'fit-content' : btnWidth,  // ✅ fix: auto → fit-content
+                                width: btnWidth === 'auto' ? 'fit-content' : btnWidth,
+                                minWidth: '120px',
                                 maxWidth: '100%',
                                 borderCollapse: 'separate'
                             }}
@@ -160,27 +161,39 @@ const CanvasBlock: React.FC<CanvasBlockProps> = (props) => {
                                         borderStyle: css.borderStyle,
                                         borderColor: css.borderColor,
                                         borderRadius: btnRadius,
-                                        padding: 0,
-                                        whiteSpace: 'nowrap'  // ✅ giữ button không bị wrap
+                                        padding: 0
                                     }}>
-                                        <div style={{ background: btnBg, borderRadius: btnRadius, overflow: 'hidden', display: 'block', boxSizing: 'border-box', height: css.height }}>
-                                            <div style={{
-                                                paddingTop: paddingTop ?? '12px', paddingBottom: paddingBottom ?? '12px',
-                                                paddingLeft: paddingLeft ?? '24px', paddingRight: paddingRight ?? '24px',
-                                                fontFamily: css.fontFamily ?? bodyStyle.fontFamily,
-                                                fontSize: css.fontSize ?? '16px',
-                                                fontWeight: css.fontWeight ?? 'bold',
-                                                color: btnColor,
-                                                textAlign: 'center',
-                                                textDecoration: 'none',
-                                                display: 'block',
-                                                cursor: 'pointer',
-                                                letterSpacing: css.letterSpacing,
-                                                textTransform: css.textTransform as any,
-                                                fontStyle: css.fontStyle as any,
-                                                whiteSpace: 'nowrap',
-                                                lineHeight: css.lineHeight ?? 'normal'
-                                            }} dangerouslySetInnerHTML={{ __html: block.content || 'BUTTON' }} />
+                                        <div style={{
+                                            background: btnBg,
+                                            borderRadius: btnRadius,
+                                            overflow: 'hidden',
+                                            display: 'block',
+                                            boxSizing: 'border-box',
+                                            height: css.height,
+                                            paddingTop: paddingTop ?? '12px',
+                                            paddingBottom: paddingBottom ?? '12px',
+                                            paddingLeft: paddingLeft ?? '24px',
+                                            paddingRight: paddingRight ?? '24px'
+                                        }}>
+                                            <RichText
+                                                html={block.content || 'BUTTON'}
+                                                onChange={(newHtml) => onUpdateBlockContent?.(block.id, newHtml)}
+                                                disabled={!isSelected}
+                                                bodyLinkColor={btnColor}
+                                                customMergeTags={customMergeTags}
+                                                usedColors={usedColors}
+                                                style={{
+                                                    fontFamily: css.fontFamily ?? bodyStyle.fontFamily,
+                                                    fontSize: css.fontSize ?? '16px',
+                                                    fontWeight: css.fontWeight ?? 'bold',
+                                                    color: btnColor,
+                                                    textAlign: 'center',
+                                                    letterSpacing: css.letterSpacing,
+                                                    textTransform: css.textTransform as any,
+                                                    fontStyle: css.fontStyle as any,
+                                                    lineHeight: css.lineHeight ?? 'normal'
+                                                }}
+                                            />
                                         </div>
                                     </td>
                                 </tr>
@@ -211,9 +224,22 @@ const CanvasBlock: React.FC<CanvasBlockProps> = (props) => {
                         display: 'block',
                         wordBreak: 'break-all'
                     }}>
-                        <span style={{ transform: 'translateX(6px)', display: 'inline-block' }}>
-                            {block.content || '[short_code]'}
-                        </span>
+                        <RichText
+                            html={block.content || '[short_code]'}
+                            onChange={(newHtml) => onUpdateBlockContent?.(block.id, newHtml)}
+                            disabled={!isSelected}
+                            bodyLinkColor={css.color ?? '#166534'}
+                            customMergeTags={customMergeTags}
+                            usedColors={usedColors}
+                            style={{
+                                color: css.color ?? '#166534',
+                                fontSize: css.fontSize ?? '36px',
+                                fontWeight: css.fontWeight ?? 'bold',
+                                textAlign: 'center',
+                                letterSpacing: css.letterSpacing ?? '12px',
+                                fontFamily: css.fontFamily ?? bodyStyle.fontFamily
+                            }}
+                        />
                     </div>
                 );
             }
@@ -243,6 +269,7 @@ const CanvasBlock: React.FC<CanvasBlockProps> = (props) => {
                             disabled={!isSelected}
                             bodyLinkColor={bodyStyle.linkColor}
                             customMergeTags={customMergeTags}
+                            usedColors={usedColors}
                             blockFontSize={css.fontSize}
                             blockLineHeight={css.lineHeight}
                             style={{
@@ -395,7 +422,23 @@ const CanvasBlock: React.FC<CanvasBlockProps> = (props) => {
                         width: '100%'
                     }}>
                         {showTitle && (
-                            <h3 style={{ fontSize: titleSize, fontWeight: 'bold', marginBottom: '15px', color: titleColor, textAlign: css.textAlign as any ?? 'left', fontFamily: titleFont }} dangerouslySetInnerHTML={{ __html: block.checkListTitle || 'Checklist' }} />
+                            <div style={{ marginBottom: '15px' }}>
+                                <RichText
+                                    html={block.checkListTitle || 'Checklist'}
+                                    onChange={(newHtml) => onUpdateBlock?.(block.id, { checkListTitle: newHtml })}
+                                    disabled={!isSelected}
+                                    bodyLinkColor={bodyStyle.linkColor}
+                                    customMergeTags={customMergeTags}
+                                    usedColors={usedColors}
+                                    style={{
+                                        fontSize: titleSize,
+                                        fontWeight: 'bold',
+                                        color: titleColor,
+                                        textAlign: css.textAlign as any ?? 'left',
+                                        fontFamily: titleFont
+                                    }}
+                                />
+                            </div>
                         )}
                         <table width="100%" border={0} cellPadding={0} cellSpacing={0}>
                             <tbody>
@@ -441,8 +484,48 @@ const CanvasBlock: React.FC<CanvasBlockProps> = (props) => {
                                                 </div>
                                             </td>
                                             <td valign={vAlign} style={{ padding: `${textPaddingTop} 0 12px 10px`, fontFamily: itemFontFamily, textAlign: 'left' }}>
-                                                {showItemTitle && <div style={{ fontSize: itemSize, fontWeight: 'bold', color: itemColor, marginBottom: showItemDesc ? '2px' : '0' }} dangerouslySetInnerHTML={{ __html: item.title }} />}
-                                                {showItemDesc && <div style={{ fontSize: descSize, color: descColor, lineHeight: '1.4' }} dangerouslySetInnerHTML={{ __html: item.description }} />}
+                                                {showItemTitle && (
+                                                    <RichText
+                                                        html={item.title || ''}
+                                                        onChange={(newHtml) => {
+                                                            const nextItems = [...(block.items || [])];
+                                                            nextItems[i] = { ...nextItems[i], title: newHtml };
+                                                            onUpdateBlock?.(block.id, { items: nextItems });
+                                                        }}
+                                                        disabled={!isSelected}
+                                                        bodyLinkColor={bodyStyle.linkColor}
+                                                        customMergeTags={customMergeTags}
+                                                        usedColors={usedColors}
+                                                        style={{
+                                                            fontSize: itemSize,
+                                                            fontWeight: 'bold',
+                                                            color: itemColor,
+                                                            marginBottom: showItemDesc ? '2px' : '0',
+                                                            textAlign: 'left'
+                                                        }}
+                                                    />
+                                                )}
+                                                {showItemDesc && (
+                                                    <RichText
+                                                        html={item.description || ''}
+                                                        onChange={(newHtml) => {
+                                                            const nextItems = [...(block.items || [])];
+                                                            nextItems[i] = { ...nextItems[i], description: newHtml };
+                                                            onUpdateBlock?.(block.id, { items: nextItems });
+                                                        }}
+                                                        disabled={!isSelected}
+                                                        bodyLinkColor={bodyStyle.linkColor}
+                                                        customMergeTags={customMergeTags}
+                                                        usedColors={usedColors}
+                                                        blockLineHeight="1.4"
+                                                        style={{
+                                                            fontSize: descSize,
+                                                            color: descColor,
+                                                            lineHeight: '1.4',
+                                                            textAlign: 'left'
+                                                        }}
+                                                    />
+                                                )}
                                             </td>
                                         </tr>
                                     );

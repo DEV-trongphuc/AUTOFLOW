@@ -1,6 +1,7 @@
 
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import {
     X, Save, History, FileText, Mail, MousePointer2,
     Tag, User, List, Trash2, Plus, MailOpen, UserPlus, Layers, GitMerge,
@@ -70,10 +71,9 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
     subscriber, onClose, onUpdate, onDelete, allLists, allSegments, allFlows, allTags = [], checkMatch,
     onAddToList, onRemoveFromList
 }) => {
-    // CRITICAL: Early return MUST be before any hooks to prevent "Rendered fewer hooks than expected" error
-    if (!subscriber) return null;
-
     const navigate = useNavigate();
+    const [isVisible, setIsVisible] = useState(false);
+    const [animateIn, setAnimateIn] = useState(false);
     const [activeTab, setActiveTab] = useState('info');
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState<any>({});
@@ -103,15 +103,24 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
     const [activitySubTab, setActivitySubTab] = useState<'all' | 'mail' | 'system' | 'website'>('all');
     const [isSummarizing, setIsSummarizing] = useState(false);
 
+    const handleClose = () => {
+        setAnimateIn(false);
+        setTimeout(() => {
+            onClose();
+        }, 350);
+    };
+
     const isZalo = formData.email?.endsWith('@zalo-oa.vn');
     const isMeta = formData.email?.endsWith('@facebook.com');
     const isVirtualEmail = formData.email?.endsWith('@no-email.domation') || isZalo || isMeta;
 
     const handleAISummarize = async () => {
+        const targetId = subscriber?.id || formData?.id;
+        if (!targetId) return;
         setIsSummarizing(true);
         const tid = toast.loading('AI đang phân tích dữ liệu...');
         try {
-            const res = await api.post<any>('subscriber_ai_summary', { subscriber_id: subscriber.id });
+            const res = await api.post<any>('subscriber_ai_summary', { subscriber_id: targetId });
             if (res.success && res.data?.summary) {
                 toast.success('Đã tóm tắt thành công!', { id: tid });
                 const newNoteObj: SubscriberNote = {
@@ -141,41 +150,58 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
         }
     };
 
-    const resetState = async () => {
-        if (subscriber) {
-            setFormData(JSON.parse(JSON.stringify(subscriber)));
+    const resetState = async (targetSub?: Subscriber | null) => {
+        const current = targetSub || subscriber;
+        if (current) {
+            setFormData(JSON.parse(JSON.stringify(current)));
             setIsEditing(false);
             setNewNote('');
             setTagPickerValue('');
 
             // Fetch full subscriber data including activity, always fresh on open
-            const res = await api.get<any>(`subscribers/${subscriber.id}`);
-            if (res.success) {
-                // Ensure formData reflects latest from API, but keep notes from prop if it's more up-to-date
-                setFormData({ ...res.data, notes: Array.isArray(subscriber.notes) ? subscriber.notes : [] });
-                setFullActivity(res.data.activity || []);
-            } else {
-                // Fallback to prop if API fails
-                setFullActivity(subscriber.activity || []);
+            if (current.id) {
+                const res = await api.get<any>(`subscribers/${current.id}`);
+                if (res.success) {
+                    setFormData({ ...res.data, notes: Array.isArray(current.notes) ? current.notes : [] });
+                    setFullActivity(res.data.activity || []);
+                } else {
+                    setFullActivity(current.activity || []);
+                }
             }
         }
     };
 
     useEffect(() => {
         if (subscriber) {
-            resetState();
+            setIsVisible(true);
+            resetState(subscriber);
+            const timer = setTimeout(() => setAnimateIn(true), 20);
+            return () => clearTimeout(timer);
+        } else {
+            setAnimateIn(false);
+            const timer = setTimeout(() => {
+                setIsVisible(false);
+            }, 350);
+            return () => clearTimeout(timer);
         }
     }, [subscriber]);
 
-    // When formData.notes changes, ensure the subscriber prop's notes are also up-to-date (for other parts of the app)
-    // This useEffect ensures consistency if external changes happen via `onUpdate` prop call
     useEffect(() => {
-        // FIX: Ensure subscriber.notes and formData.notes are arrays for comparison
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape' && isVisible && !confirmConfig.isOpen && !triggerWarning.isOpen && !isManualTriggerOpen && !isMetaModalOpen) {
+                handleClose();
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isVisible, confirmConfig.isOpen, triggerWarning.isOpen, isManualTriggerOpen, isMetaModalOpen]);
+
+    // When formData.notes changes, ensure the subscriber prop's notes are also up-to-date (for other parts of the app)
+    useEffect(() => {
         const subscriberNotes = Array.isArray(subscriber?.notes) ? subscriber!.notes : [];
         const formDataNotes = Array.isArray(formData.notes) ? formData.notes : [];
 
         if (subscriber && JSON.stringify(subscriberNotes) !== JSON.stringify(formDataNotes)) {
-            // If notes in prop are different from local, update local to match prop (e.g. after onUpdate in parent)
             setFormData(prev => ({ ...prev, notes: subscriberNotes }));
         }
     }, [subscriber?.notes, formData.notes]);
@@ -612,23 +638,35 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
         setFormData({ ...formData, listIds: (Array.isArray(formData.listIds) ? formData.listIds : []).filter((id: string) => id !== listId) });
     };
 
-    return (
+    if (!isVisible && !subscriber) return null;
+
+    const drawerContent = (
         <>
-            <div className="fixed inset-0 z-[300] overflow-hidden animate-fade-in">
+            <div className={`fixed inset-0 z-[30000] flex justify-end overflow-hidden ${isVisible ? 'pointer-events-auto' : 'pointer-events-none'}`}>
                 {/* Backdrop Blur Overlay with Floating Circular Arrow Close Button */}
                 <div
-                    className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm transition-opacity duration-300 z-[300] cursor-pointer group"
-                    onClick={onClose}
+                    className={`fixed inset-0 bg-black/80 backdrop-blur-[2px] transition-opacity duration-500 z-[30000] cursor-pointer ${animateIn ? 'opacity-100' : 'opacity-0'}`}
+                    onClick={handleClose}
+                />
+
+                {/* Floating Circular Arrow Button (Centered over sidebar on desktop) */}
+                <div 
+                    className={`customer-profile-modal-back-btn hidden lg:flex absolute top-1/2 -translate-y-1/2 z-[30010] transition-opacity duration-500 ${animateIn ? 'opacity-100' : 'opacity-0'}`}
+                    style={{ pointerEvents: 'none' }}
                 >
-                    {/* Floating Circular Arrow Button (Centered over sidebar) */}
-                    <div className="customer-profile-modal-back-btn hidden lg:flex absolute top-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-slate-900/90 border border-slate-700/80 text-white items-center justify-center shadow-2xl transition-all duration-300 group-hover:scale-110 group-hover:bg-violet-600 group-hover:border-violet-500">
+                    <button
+                        onClick={handleClose}
+                        className="w-12 h-12 rounded-full bg-slate-900/90 border border-slate-700/80 text-white flex items-center justify-center shadow-2xl transition-all duration-300 hover:scale-110 hover:bg-violet-600 hover:border-violet-500 cursor-pointer"
+                        style={{ pointerEvents: 'auto' }}
+                        title="Quay lại (Esc)"
+                    >
                         <ArrowLeft className="w-6 h-6 stroke-[2.5]" />
-                    </div>
+                    </button>
                 </div>
 
                 {/* Slide-over Right Drawer Panel - Anchored to sidebar */}
-                <div className="customer-profile-modal-container fixed inset-y-0 right-0 z-[310] max-w-full flex pl-0 pointer-events-none">
-                    <div className="customer-profile-modal-panel w-screen max-w-none bg-white dark:bg-slate-950 shadow-2xl flex flex-col transition-all duration-300 overflow-hidden pointer-events-auto">
+                <div className="customer-profile-modal-container fixed inset-y-0 right-0 z-[30020] max-w-full flex pl-0 pointer-events-none">
+                    <div className={`customer-profile-modal-panel w-screen max-w-none bg-white dark:bg-slate-950 shadow-2xl flex flex-col transform transition-all duration-500 cubic-bezier(0.16, 1, 0.3, 1) overflow-hidden pointer-events-auto ${animateIn ? 'translate-x-0 opacity-100' : 'translate-x-full lg:translate-x-[100px] opacity-0'}`}>
                         <style>{`
                           @media (min-width: 1024px) {
                             .customer-profile-modal-container {
@@ -639,6 +677,7 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                             }
                             .customer-profile-modal-back-btn {
                               left: calc(var(--sidebar-width, 260px) / 2) !important;
+                              transform: translate(-50%, -50%) !important;
                             }
                           }
                         `}</style>
@@ -713,13 +752,20 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
 
                                 {isEditing ? (
                                     <div className="flex items-center gap-2">
-                                        <button onClick={resetState} className="px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-bold">Hủy</button>
+                                        <button onClick={() => resetState()} className="px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-bold">Hủy</button>
                                         <button onClick={handleSave} className="px-4 py-2 rounded-2xl bg-violet-600 hover:bg-violet-700 text-white text-xs font-extrabold uppercase tracking-wider shadow-md shadow-violet-500/25">Lưu cập nhật</button>
                                     </div>
                                 ) : (
                                     <button onClick={() => setIsEditing(true)} className="px-4 py-2 rounded-2xl bg-violet-600 hover:bg-violet-700 text-white text-xs font-extrabold uppercase tracking-wider shadow-md shadow-violet-500/25 transition-all">Sửa hồ sơ</button>
                                 )}
 
+                                <button
+                                    onClick={handleClose}
+                                    className="p-2 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all ml-1"
+                                    title="Đóng (Esc)"
+                                >
+                                    <X className="w-5 h-5" />
+                                </button>
                             </div>
                         </div>
 
@@ -808,7 +854,7 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                             title: "Xóa hồ sơ khách hàng?",
                                             message: "Tất cả dữ liệu lịch sử và phân khúc của khách hàng này sẽ bị xóa hoàn toàn.",
                                             variant: 'danger',
-                                            onConfirm: () => { onDelete(subscriber.id); onClose(); }
+                                            onConfirm: () => { const id = subscriber?.id || formData?.id; if (id) onDelete(id); handleClose(); }
                                         })}
                                         className="w-full flex items-center gap-2 px-3.5 py-3.5 rounded-xl text-xs font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-all border border-rose-200 dark:border-rose-900/40"
                                     >
@@ -1771,6 +1817,7 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                 onConfirm={triggerWarning.onConfirm}
                 variant="warning"
                 title="Xác nhận Kích hoạt Flow"
+                zIndex={40000}
                 message={
                     <div className="text-left space-y-4">
                         <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3">
@@ -1790,14 +1837,23 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                 confirmLabel="Xác nhận & Kích hoạt"
             />
 
-            <ConfirmModal isOpen={confirmConfig.isOpen} onClose={() => setConfirmConfig({ ...confirmConfig, isOpen: false })} onConfirm={confirmConfig.onConfirm} title={confirmConfig.title} message={confirmConfig.message} variant={confirmConfig.variant} />
+            <ConfirmModal
+                isOpen={confirmConfig.isOpen}
+                onClose={() => setConfirmConfig({ ...confirmConfig, isOpen: false })}
+                onConfirm={confirmConfig.onConfirm}
+                title={confirmConfig.title}
+                message={confirmConfig.message}
+                variant={confirmConfig.variant}
+                zIndex={40000}
+            />
 
             <ManualTriggerFlowModal
                 isOpen={isManualTriggerOpen}
                 onClose={() => setIsManualTriggerOpen(false)}
-                subscriber={subscriber}
+                subscriber={formData?.id ? formData : (subscriber || {} as any)}
                 flows={allFlows}
                 onSuccess={(flowName) => showToast(`Đã kích hoạt flow "${flowName}"`, 'success')}
+                zIndex={40000}
             />
 
             {isMetaModalOpen && formData.meta_psid && (
@@ -1808,6 +1864,8 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
             )}
         </>
     );
+
+    return createPortal(drawerContent, document.body);
 };
 
 // Helper Component for Chat History

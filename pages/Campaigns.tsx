@@ -518,6 +518,9 @@ const Campaigns: React.FC = () => {
         // [FIX] Nếu đang xem campaign này thì đóng drawer lại
         setSelectedDetailCampaign(prev => prev?.id === id ? null : prev);
 
+        const targetCampaign = campaigns.find(c => c.id === id);
+        const isDraft = !targetCampaign?.status || targetCampaign.status === CampaignStatus.DRAFT || (targetCampaign.status as any) === 'draft';
+
         const connectedFlows = allFlows.filter(f => {
             const trigger = f.steps.find(s => s.type === 'trigger');
             return trigger?.config.type === 'campaign' && trigger.config.targetId === id;
@@ -533,14 +536,16 @@ const Campaigns: React.FC = () => {
         } else {
             setConfirmModal({
                 isOpen: true,
-                title: 'Xác nhận xóa chiến dịch',
-                message: 'Bạn có chắc chắn muốn xóa chiến dịch này không? Toàn bộ dữ liệu kết quả và thống kê sẽ bị xóa vĩnh viễn.',
+                title: isDraft ? 'Xóa bản nháp chiến dịch' : 'Xác nhận xóa chiến dịch',
+                message: isDraft 
+                    ? `Bạn có chắc chắn muốn xóa bản nháp "${targetCampaign?.name || 'Chiến dịch mới'}" này không?`
+                    : 'Bạn có chắc chắn muốn xóa chiến dịch này không? Toàn bộ dữ liệu kết quả và thống kê sẽ bị xóa vĩnh viễn.',
                 variant: 'danger',
-                requireConfirmText: 'DELETE',
+                requireConfirmText: isDraft ? undefined : 'DELETE',
                 onConfirm: () => executeDelete(id, 1)
             });
         }
-    }, [allFlows]);
+    }, [allFlows, campaigns]);
 
     const handlePauseCampaign = React.useCallback(async (id: string) => {
         try {
@@ -1081,7 +1086,7 @@ const Campaigns: React.FC = () => {
                     </div>
                 }
                 variant={advancedDeleteModal.deleteFlowMode === 1 ? 'danger' : 'warning'}
-                requireConfirmText="DELETE"
+                requireConfirmText={advancedDeleteModal.deleteFlowMode === 1 ? 'DELETE' : undefined}
             />
 
             <TipsModal

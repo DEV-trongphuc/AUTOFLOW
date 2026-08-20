@@ -155,6 +155,56 @@ if ($method === 'POST' && ($route === 'resume' || $route === 'play')) {
     }
 }
 
+// --- NEW ROUTE: Clear/Delete Campaign Attachments (Free Server Storage) ---
+if ($method === 'POST' && ($route === 'clear_attachments' || $route === 'delete_attachments')) {
+    try {
+        $data = json_decode(file_get_contents("php://input"), true) ?: [];
+        $campaignId = $data['campaign_id'] ?? $data['id'] ?? $_GET['id'] ?? null;
+
+        if (!$campaignId) {
+            jsonResponse(false, null, 'Campaign ID is required.');
+            exit;
+        }
+
+        verifyCampaignOwnership($pdo, $campaignId, $workspace_id);
+
+        $stmt = $pdo->prepare("SELECT attachments FROM campaigns WHERE id = ? AND workspace_id = ?");
+        $stmt->execute([$campaignId, $workspace_id]);
+        $rawAttachments = $stmt->fetchColumn();
+        $attachments = json_decode($rawAttachments ?: '[]', true);
+
+        $deletedCount = 0;
+        $realUploadDir = realpath(__DIR__ . '/../uploadss/');
+
+        if (is_array($attachments) && !empty($attachments)) {
+            foreach ($attachments as $att) {
+                $fileUrl = $att['url'] ?? $att['path'] ?? '';
+                if ($fileUrl) {
+                    $fileName = basename(parse_url($fileUrl, PHP_URL_PATH));
+                    if ($fileName && $realUploadDir) {
+                        $targetPath = $realUploadDir . DIRECTORY_SEPARATOR . $fileName;
+                        if (file_exists($targetPath) && is_file($targetPath)) {
+                            @unlink($targetPath);
+                            $deletedCount++;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Update campaign database record to empty attachments array
+        $pdo->prepare("UPDATE campaigns SET attachments = '[]', updated_at = NOW() WHERE id = ? AND workspace_id = ?")
+            ->execute([$campaignId, $workspace_id]);
+
+        logSystemActivity($pdo, 'campaigns', 'clear_attachments', $campaignId, "Deleted $deletedCount attachments from server to clean storage.");
+        jsonResponse(true, ['deleted_count' => $deletedCount], "Đã làm sạch $deletedCount tệp đính kèm trên máy chủ thành công!");
+        exit;
+    } catch (Exception $e) {
+        jsonResponse(false, null, 'Lỗi khi dọn dẹp tệp đính kèm: ' . $e->getMessage());
+        exit;
+    }
+}
+
 // --- NEW ROUTE: Resend Failed Emails ---
 if ($method === 'POST' && $route === 'resend_failed_emails') {
     try {
@@ -531,6 +581,60 @@ if ($method === 'POST' && $route === 'rename') {
     } catch (Exception $e) {
         error_log("Rename campaign error: " . $e->getMessage());
         jsonResponse(false, null, 'Lỗi hệ thống khi đổi tên chiến dịch: ' . $e->getMessage());
+    }
+    exit;
+}
+
+// --- NEW ROUTE: Clear Attachments on Server ---
+if ($method === 'POST' && $route === 'clear_attachments') {
+    try {
+        $data = json_decode(file_get_contents("php://input"), true);
+        $cid = $data['id'] ?? ($data['campaign_id'] ?? null);
+        if (!$cid) {
+            jsonResponse(false, null, 'Campaign ID is required.');
+        }
+
+        verifyCampaignOwnership($pdo, $cid, $workspace_id);
+
+        $stmt = $pdo->prepare("SELECT attachments, status FROM campaigns WHERE id = ? AND workspace_id = ?");
+        $stmt->execute([$cid, $workspace_id]);
+        $camp = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$camp) {
+            jsonResponse(false, null, 'Chiến dịch không tồn tại.');
+            exit;
+        }
+
+        $attachments = json_decode($camp['attachments'] ?? '[]', true) ?: [];
+        $deletedFiles = 0;
+
+        foreach ($attachments as $att) {
+            $filePath = $att['path'] ?? null;
+            if ($filePath && file_exists($filePath)) {
+                @unlink($filePath);
+                $deletedFiles++;
+            } elseif (!empty($att['url'])) {
+                $parsed = parse_url($att['url'], PHP_URL_PATH);
+                if ($parsed) {
+                    $baseName = basename($parsed);
+                    $localPath = __DIR__ . '/../uploadss/' . $baseName;
+                    if (file_exists($localPath)) {
+                        @unlink($localPath);
+                        $deletedFiles++;
+                    }
+                }
+            }
+        }
+
+        // Update campaign record: attachments = '[]'
+        $updateStmt = $pdo->prepare("UPDATE campaigns SET attachments = '[]', updated_at = NOW() WHERE id = ? AND workspace_id = ?");
+        $updateStmt->execute([$cid, $workspace_id]);
+
+        logSystemActivity($pdo, 'campaigns', 'clear_attachments', $cid, "Cleared $deletedFiles attachments for Campaign $cid");
+        jsonResponse(true, ['deleted_files' => $deletedFiles], "Đã làm sạch $deletedFiles tệp đính kèm và giải phóng bộ nhớ máy chủ thành công!");
+    } catch (Exception $e) {
+        error_log("Clear attachments error: " . $e->getMessage());
+        jsonResponse(false, null, 'Lỗi hệ thống khi dọn dẹp tệp đính kèm: ' . $e->getMessage());
     }
     exit;
 }
@@ -1067,8 +1171,15 @@ if ($method === 'POST' && $route === 'send_test') {
                 }
             }
 
-            $finalSubject = replaceMergeTags($subject, $subscriber);
-            $finalHtml = replaceMergeTags($htmlContent, $subscriber);
+            $campConfig = json_decode($campaign['config'] ?? '{}', true) ?: [];
+            $context = [
+                'unsubscribe_url' => API_BASE_URL . "/webhook.php?type=unsubscribe&sid=" . ($subscriber['id'] ?? '') . "&cid=" . $campaignId,
+                'campaign_name' => $campaign['name'] ?? '',
+                'variable_fallbacks' => $campConfig['variable_fallbacks'] ?? [],
+                'config' => $campConfig
+            ];
+            $finalSubject = replaceMergeTags($subject, $subscriber, $context);
+            $finalHtml = replaceMergeTags($htmlContent, $subscriber, $context);
             $stmtSettings = $pdo->prepare("SELECT `value` FROM system_settings WHERE `key` = 'smtp_user' AND workspace_id IN (0, ?) ORDER BY workspace_id DESC LIMIT 1");
             $stmtSettings->execute([$workspace_id]);
             $defaultSender = $stmtSettings->fetchColumn() ?: "marketing@ka-en.com.vn";

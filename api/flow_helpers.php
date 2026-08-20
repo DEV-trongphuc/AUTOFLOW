@@ -636,6 +636,77 @@ function resolveEmailContent($pdo, $templateId, $customHtml, $fallbackBody = '',
 }
 
 /**
+ * Helper to detect if a value is an active URL or domain name (e.g. https://..., www...., ideas.edu.vn, domain.com/path).
+ */
+function isLinkOrDomainValue($val, &$normalizedHref = null)
+{
+    if (!is_string($val) && !is_numeric($val)) return false;
+    $val = trim((string)$val);
+    if (empty($val)) return false;
+
+    // Do NOT match email addresses (e.g. user@gmail.com)
+    if (strpos($val, '@') !== false && !preg_match('/^https?:\/\//i', $val)) {
+        return false;
+    }
+
+    // Must not have whitespace or line breaks
+    if (preg_match('/\s/', $val)) {
+        return false;
+    }
+
+    // 1. Explicit http:// or https:// URL
+    if (preg_match('/^https?:\/\/[^\s<>"\'`]+$/i', $val)) {
+        $normalizedHref = $val;
+        return true;
+    }
+
+    // 2. Starts with www.
+    if (preg_match('/^www\.[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,}(?::[0-9]+)?(?:\/[^\s<>"\'`]*)?$/i', $val)) {
+        $normalizedHref = 'https://' . $val;
+        return true;
+    }
+
+    // 3. Domain pattern (e.g. domain.com, sub.domain.vn, shop.io/product/123)
+    if (preg_match('/^[a-zA-Z0-9](?:[a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*\.(?:[a-zA-Z]{2,63})(?::[0-9]+)?(?:\/[^\s<>"\'`]*)?$/i', $val)) {
+        $normalizedHref = 'https://' . $val;
+        return true;
+    }
+
+    return false;
+}
+
+/**
+ * Determine the HTML context at a given offset in a document to decide whether to wrap in <a> or provide raw/normalized URL.
+ */
+function getHtmlContextAtOffset($html, $offset)
+{
+    $before = substr($html, 0, $offset);
+
+    // 1. Inside an HTML tag attribute (e.g. <a href="{{var}}" ...> or <img src="{{var}}">)
+    $lastOpenBracket = strrpos($before, '<');
+    $lastCloseBracket = strrpos($before, '>');
+    if ($lastOpenBracket !== false && ($lastCloseBracket === false || $lastOpenBracket > $lastCloseBracket)) {
+        return 'inside_tag';
+    }
+
+    // 2. Inside an already open <a> tag (e.g. <a href="...">{{var}}</a>)
+    $lastAOpen = preg_match_all('/<a[\s>]/i', $before, $mOpen);
+    $lastAClose = preg_match_all('/<\/a\s*>/i', $before, $mClose);
+    $numOpen = $lastAOpen ? $lastAOpen : 0;
+    $numClose = $lastAClose ? $lastAClose : 0;
+    if ($numOpen > $numClose) {
+        return 'inside_anchor';
+    }
+
+    // 3. Check if document has HTML markup
+    if (preg_match('/<[a-z][\s\S]*>/i', $html)) {
+        return 'html_text';
+    }
+
+    return 'plain_text';
+}
+
+/**
  * Replace merge tags in content
  */
 function replaceMergeTags($html, $subscriber, $context = [])
@@ -872,15 +943,114 @@ function replaceMergeTags($html, $subscriber, $context = [])
         }, $html);
     }
 
-    // [ROBUST FIX] Use Regex to handle {{ var }}, {{var}}, {{ VAR }} etc
-    $html = preg_replace_callback('/{{\s*(.*?)\s*}}/i', function ($m) use ($map) {
-        $tag = trim($m[1]);
-        if (array_key_exists($tag, $map)) {
-            return $map[$tag];
+/**
+ * Canonicalize variable keys for fuzzy matching (case/dash/underscore/Vietnamese-accent insensitive)
+ * e.g. "Mã chứng chỉ", "cert_no", "certNo", "CERT_NO", "cert-no" -> "machungchi", "certno"
+ */
+function canonicalizeVarKey($str)
+{
+    if (!is_string($str) || $str === '') return '';
+    $unicode = [
+        'a' => 'á|à|ả|ã|ạ|ă|ắ|ặ|ằ|ẳ|ẵ|â|ấ|ầ|ẩ|ẫ|ậ|Á|À|Ả|Ã|Ạ|Ă|Ắ|Ặ|Ằ|Ẳ|Ẵ|Â|Ấ|Ầ|Ẩ|Ẫ|Ậ',
+        'd' => 'đ|Đ',
+        'e' => 'é|è|ẻ|ẽ|ẹ|ê|ế|ề|ể|ễ|ệ|É|È|Ẻ|Ẽ|Ẹ|Ê|Ế|Ề|Ể|Ễ|Ệ',
+        'i' => 'í|ì|ỉ|ĩ|ị|Í|Ì|Ỉ|Ĩ|Ị',
+        'o' => 'ó|ò|ỏ|õ|ọ|ô|ố|ồ|ổ|ỗ|ộ|ơ|ớ|ờ|ở|ỡ|ợ|Ó|Ò|Ỏ|Õ|Ọ|Ô|Ố|Ồ|Ổ|Ỗ|Ộ|Ơ|Ớ|Ờ|Ở|Ỡ|Ợ',
+        'u' => 'ú|ù|ủ|ũ|ụ|ư|ứ|ừ|ử|ữ|ự|Ú|Ù|Ủ|Ũ|Ụ|Ư|Ứ|Ừ|Ử|Ữ|Ự',
+        'y' => 'ý|ỳ|ỷ|ỹ|ỵ|Ý|Ỳ|Ỷ|Ỹ|Ỵ',
+    ];
+    foreach ($unicode as $nonAccent => $accent) {
+        $str = preg_replace("/($accent)/u", $nonAccent, $str);
+    }
+    return preg_replace('/[^a-z0-9]/', '', strtolower($str));
+}
+
+    // Build Canonical Map & Collect Fallbacks
+    $canonicalMap = [];
+    foreach ($map as $k => $v) {
+        $cKey = canonicalizeVarKey($k);
+        if ($v !== null && $v !== '') {
+            $canonicalMap[$cKey] = $v;
         }
-        // Return original if tag not found to avoid stripping potential system tags
-        return $m[0];
-    }, $html);
+    }
+
+    $fallbacks = array_merge(
+        $context['fallbacks'] ?? [],
+        $context['variable_fallbacks'] ?? [],
+        $context['config']['variable_fallbacks'] ?? []
+    );
+    $canonicalFallbacks = [];
+    foreach ($fallbacks as $k => $v) {
+        $cKey = canonicalizeVarKey($k);
+        $canonicalFallbacks[$cKey] = $v;
+    }
+
+    // [ROBUST FIX] Use Regex with PREG_OFFSET_CAPTURE to handle {{ var }}, {{var}}, {{ VAR }}, %7B%7Bvar%7D%7D
+    // and automatically auto-link / normalize link and domain variables!
+    $html = preg_replace_callback('/(?:{{\s*([^{}%]+?)\s*}}|%7B%7B\s*([^{}%]+?)\s*%7D%7D)/i', function ($m) use ($map, $canonicalMap, $fallbacks, $canonicalFallbacks, $html) {
+        $rawTag = $m[0][0];
+        $tag = trim(!empty($m[1][0]) ? $m[1][0] : ($m[2][0] ?? ''));
+        $offset = $m[0][1];
+        $canon = canonicalizeVarKey($tag);
+
+        // Resolve value from exact map, canonical map, or fallbacks
+        $val = null;
+        if (array_key_exists($tag, $map) && $map[$tag] !== null && $map[$tag] !== '') {
+            $val = $map[$tag];
+        } elseif (array_key_exists($canon, $canonicalMap) && $canonicalMap[$canon] !== null && $canonicalMap[$canon] !== '') {
+            $val = $canonicalMap[$canon];
+        } elseif (array_key_exists($tag, $fallbacks) && $fallbacks[$tag] !== null && $fallbacks[$tag] !== '') {
+            $val = $fallbacks[$tag];
+        } elseif (array_key_exists($canon, $canonicalFallbacks) && $canonicalFallbacks[$canon] !== null && $canonicalFallbacks[$canon] !== '') {
+            $val = $canonicalFallbacks[$canon];
+        }
+
+        $htmlContext = getHtmlContextAtOffset($html, $offset);
+        $before = substr($html, 0, $offset);
+        $lastOpen = strrpos($before, '<');
+        $tagBeforeAttr = ($lastOpen !== false) ? substr($before, $lastOpen) : '';
+        $isInsideSrc = ($htmlContext === 'inside_tag') && preg_match('/src\s*=\s*["\'][^"\']*$/i', $tagBeforeAttr);
+        $isInsideHref = ($htmlContext === 'inside_tag') && preg_match('/href\s*=\s*["\'][^"\']*$/i', $tagBeforeAttr);
+
+        // Handle empty/missing value with smart fallback
+        if ($val === null || $val === '') {
+            if ($isInsideSrc) {
+                $fbImg = $fallbacks[$tag] ?? ($canonicalFallbacks[$canon] ?? ($fallbacks['default_image'] ?? 'https://placehold.co/600x400/f8fafc/94a3b8?text=Image'));
+                return $fbImg;
+            }
+            if ($isInsideHref) {
+                $fbLink = $fallbacks[$tag] ?? ($canonicalFallbacks[$canon] ?? ($fallbacks['default_link'] ?? '#'));
+                return $fbLink;
+            }
+            return (string)($fallbacks[$tag] ?? ($canonicalFallbacks[$canon] ?? ''));
+        }
+
+        // Check if the variable value is a Link or Domain (https://..., www...., ideas.edu.vn, domain.com, etc.)
+        $normalizedHref = null;
+        if (isLinkOrDomainValue($val, $normalizedHref)) {
+            if ($isInsideSrc || $isInsideHref || $htmlContext === 'inside_tag') {
+                // Inside <a href="{{var}}"> or <img src="{{var}}"> -> return normalized href without wrapping <a>
+                return $normalizedHref;
+            } elseif ($htmlContext === 'inside_anchor') {
+                // Already inside <a href="...">{{var}}</a> -> return raw value text without nesting <a>
+                return $val;
+            } elseif ($htmlContext === 'html_text') {
+                // In HTML body text -> render as a clean, active clickable anchor tag
+                $escapedHref = htmlspecialchars($normalizedHref, ENT_QUOTES, 'UTF-8');
+                $escapedText = htmlspecialchars($val, ENT_QUOTES, 'UTF-8');
+                return '<a href="' . $escapedHref . '" target="_blank" rel="noopener noreferrer" style="color: #2563eb; text-decoration: underline; word-break: break-all;">' . $escapedText . '</a>';
+            } else {
+                // Plain text message (Zalo/SMS/Telegram/Meta) -> return normalized URL so messaging clients auto-link
+                return $normalizedHref;
+            }
+        }
+
+        if ($isInsideSrc || $isInsideHref) {
+            return (string)$val;
+        }
+
+        return (string)$val;
+    }, $html, -1, $count, PREG_OFFSET_CAPTURE);
 
     return $html;
 }

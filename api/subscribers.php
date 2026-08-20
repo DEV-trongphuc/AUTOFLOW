@@ -735,12 +735,19 @@ WHERE sfs.workspace_id = ? AND f.workspace_id = ? AND sfs.subscriber_id = ? AND 
                 $params = array_merge($params, $tagArray);
             }
 
-            // List Filter - OPTIMIZED with JOIN
-            if ($listId !== 'all') {
-                // PERF: Use JOIN instead of EXISTS to drive query from small list index
-                $joins[] = "JOIN subscriber_lists sl ON s.id = sl.subscriber_id";
-                $whereClauses[] = "sl.list_id = ?";
-                $params[] = $listId;
+            // List Filter - OPTIMIZED with JOIN (Supports single list or comma-separated list IDs)
+            if ($listId !== 'all' && $listId !== '') {
+                $listArray = array_values(array_filter(explode(',', $listId)));
+                if (count($listArray) > 1) {
+                    $placeholders = implode(',', array_fill(0, count($listArray), '?'));
+                    $joins[] = "JOIN subscriber_lists sl ON s.id = sl.subscriber_id";
+                    $whereClauses[] = "sl.list_id IN ($placeholders)";
+                    $params = array_merge($params, $listArray);
+                } else if (count($listArray) === 1) {
+                    $joins[] = "JOIN subscriber_lists sl ON s.id = sl.subscriber_id";
+                    $whereClauses[] = "sl.list_id = ?";
+                    $params[] = $listArray[0];
+                }
             }
 
             // Birthday Filters (via Sort param)
@@ -849,8 +856,9 @@ WHERE sfs.workspace_id = ? AND f.workspace_id = ? AND sfs.subscriber_id = ? AND 
                 */
 
                 if (!$useCachedCount) {
-                    // Get Total Count (Standard)
-                    $sqlCount = "SELECT COUNT(*) FROM subscribers s $joinSql WHERE $whereSql";
+                    // Get Total Count (Standard with DISTINCT for multi-joins)
+                    $countField = !empty($joins) ? "COUNT(DISTINCT s.id)" : "COUNT(*)";
+                    $sqlCount = "SELECT $countField FROM subscribers s $joinSql WHERE $whereSql";
                     $stmtCount = $pdo->prepare($sqlCount);
                     $stmtCount->execute($params);
                     $total = (int) $stmtCount->fetchColumn();
@@ -868,7 +876,8 @@ WHERE sfs.workspace_id = ? AND f.workspace_id = ? AND sfs.subscriber_id = ? AND 
                     $orderBy = "s.lead_score DESC";
                 }
 
-                $sql = "SELECT s.* FROM subscribers s $joinSql WHERE $whereSql ORDER BY $orderBy LIMIT $limit OFFSET $offset";
+                $selectPrefix = !empty($joins) ? "SELECT DISTINCT s.*" : "SELECT s.*";
+                $sql = "$selectPrefix FROM subscribers s $joinSql WHERE $whereSql ORDER BY $orderBy LIMIT $limit OFFSET $offset";
                 $stmt = $pdo->prepare($sql);
                 $stmt->execute($params);
                 $rawRows = $stmt->fetchAll(PDO::FETCH_ASSOC);

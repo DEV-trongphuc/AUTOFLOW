@@ -144,11 +144,16 @@ const RichTextToolbar: React.FC<RichTextToolbarProps> = ({ isVisible, position, 
     if (!isVisible && !showLinkModal) return null;
     if (!mounted) return null;
 
+    const isTopCutoff = position.top < 100;
+    const effectiveTop = isTopCutoff ? position.top + 30 : position.top;
+    const transform = isTopCutoff ? 'translate(-50%, 0)' : 'translate(-50%, -100%)';
+    const marginTop = isTopCutoff ? '12px' : '-12px';
+
     return createPortal(
         <>
             <div
                 className={`fixed z-[100100] flex flex-col bg-slate-900 text-white rounded-2xl shadow-2xl px-1.5 py-1.5 gap-0.5 border border-slate-700/50 ${!isVisible ? 'invisible pointer-events-none' : 'animate-in fade-in zoom-in-95 duration-150'}`}
-                style={{ top: position.top, left: position.left, transform: 'translate(-50%, -100%)', width: 'max-content', marginTop: '-12px' }}
+                style={{ top: effectiveTop, left: Math.max(180, Math.min(typeof window !== 'undefined' ? window.innerWidth - 180 : 800, position.left)), transform, width: 'max-content', marginTop }}
                 onMouseDown={(e) => e.preventDefault()}
                 onMouseEnter={onToolbarMouseEnter}
                 onMouseLeave={onToolbarMouseLeave}
@@ -306,15 +311,23 @@ const RichTextToolbar: React.FC<RichTextToolbarProps> = ({ isVisible, position, 
 
                     <div className="relative">
                         <button
-                            onClick={() => { saveSelection(); closeAllDropdowns(); setShowMergeTags(v => !v); }}
+                            onMouseDown={(e) => { e.preventDefault(); saveSelection(); closeAllDropdowns(); setShowMergeTags(v => !v); }}
                             title="Chèn biến"
                             className="px-2 py-1 rounded-lg transition-colors text-[9px] font-black text-violet-400 hover:bg-violet-600/20 border border-violet-600/30 hover:border-violet-600 flex-shrink-0"
                         >BIẾN</button>
                         {showMergeTags && (
-                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-slate-900 border border-slate-700 rounded-xl shadow-xl p-1 w-56 z-50 animate-in slide-in-from-bottom-2 max-h-72 overflow-y-auto">
+                            <div
+                                onMouseDown={(e) => e.preventDefault()}
+                                className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-slate-900 border border-slate-700 rounded-xl shadow-xl p-1 w-56 z-50 animate-in slide-in-from-bottom-2 max-h-72 overflow-y-auto"
+                            >
                                 <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest px-3 pt-1.5 pb-1">Biến chuẩn</p>
                                 {MERGE_TAGS.map(tag => (
-                                    <button key={tag.val} onClick={() => insertMergeTag(tag.val)} className="w-full text-left px-3 py-1.5 text-xs hover:bg-slate-800 rounded-lg transition-colors flex justify-between items-center">
+                                    <button
+                                        key={tag.val}
+                                        onMouseDown={(e) => { e.preventDefault(); }}
+                                        onClick={() => insertMergeTag(tag.val)}
+                                        className="w-full text-left px-3 py-1.5 text-xs hover:bg-slate-800 rounded-lg transition-colors flex justify-between items-center"
+                                    >
                                         <span className="text-slate-300">{tag.label}</span>
                                         <span className="text-violet-400 text-[9px] font-mono">{tag.val}</span>
                                     </button>
@@ -326,7 +339,10 @@ const RichTextToolbar: React.FC<RichTextToolbarProps> = ({ isVisible, position, 
                                     <Braces className="w-2.5 h-2.5" /> Biến đặc biệt
                                 </p>
                                 {SPECIAL_MERGE_TAGS.map(tag => (
-                                    <button key={tag.val} onClick={() => insertMergeTag(tag.val)}
+                                    <button
+                                        key={tag.val}
+                                        onMouseDown={(e) => { e.preventDefault(); }}
+                                        onClick={() => insertMergeTag(tag.val)}
                                         className="w-full text-left px-3 py-1.5 text-xs hover:bg-emerald-900/30 rounded-lg transition-colors"
                                         title={tag.desc}
                                     >
@@ -345,7 +361,12 @@ const RichTextToolbar: React.FC<RichTextToolbarProps> = ({ isVisible, position, 
                                             <Tag className="w-2.5 h-2.5" /> Custom Fields
                                         </p>
                                         {customMergeTags.map(f => (
-                                            <button key={f.key} onClick={() => insertMergeTag(`{{${f.key}}}`)} className="w-full text-left px-3 py-1.5 text-xs hover:bg-violet-900/30 rounded-lg transition-colors flex justify-between items-center">
+                                            <button
+                                                key={f.key}
+                                                onMouseDown={(e) => { e.preventDefault(); }}
+                                                onClick={() => insertMergeTag(`{{${f.key}}}`)}
+                                                className="w-full text-left px-3 py-1.5 text-xs hover:bg-violet-900/30 rounded-lg transition-colors flex justify-between items-center"
+                                            >
                                                 <span className="text-slate-300">{f.label}</span>
                                                 <span className="text-violet-400 text-[9px] font-mono">{`{{${f.key}}}`}</span>
                                             </button>
@@ -360,7 +381,11 @@ const RichTextToolbar: React.FC<RichTextToolbarProps> = ({ isVisible, position, 
                     <ToolbarBtn onClick={() => execCommand('removeFormat')} title="Xóa định dạng"><Eraser className="w-3.5 h-3.5" /></ToolbarBtn>
 
                     {/* Tooltip arrow */}
-                    <div className="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900" />
+                    {isTopCutoff ? (
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-b-slate-900" />
+                    ) : (
+                        <div className="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900" />
+                    )}
                 </div>{/* end Row 2 */}
 
             </div>{/* end toolbar wrapper */}

@@ -43,14 +43,37 @@ if (!$campaignId && !$templateId) {
 
 try {
     $workspace_id = get_current_workspace_id();
-    // 1. Fetch Subscriber (Optional for general preview)
-    $subscriber = ['first_name' => 'Khách hàng', 'last_name' => '', 'email' => 'customer@example.com'];
+    // 1. Fetch Subscriber for live personalization
+    $subscriber = [
+        'first_name' => 'Phúc',
+        'last_name' => 'Trần Trọng',
+        'full_name' => 'Trần Trọng Phúc',
+        'email' => 'trongphuc@ideas.edu.vn',
+        'phone' => '0901234567',
+        'company_name' => 'IDEAS Vietnam',
+        'job_title' => 'Học viên K2026'
+    ];
+
     if ($email) {
         $stmtSub = $pdo->prepare("SELECT * FROM subscribers WHERE email = ? AND workspace_id = ? LIMIT 1");
         $stmtSub->execute([$email, $workspace_id]);
         $fetchedSub = $stmtSub->fetch(PDO::FETCH_ASSOC);
-        if ($fetchedSub)
+        if ($fetchedSub) {
             $subscriber = $fetchedSub;
+        }
+    } elseif ($campaignId) {
+        // Try finding a real subscriber from this campaign's target lists or past delivery
+        $stmtAud = $pdo->prepare("SELECT s.* FROM subscribers s JOIN mail_delivery_logs mdl ON s.id = mdl.subscriber_id WHERE mdl.campaign_id = ? AND s.workspace_id = ? LIMIT 1");
+        $stmtAud->execute([$campaignId, $workspace_id]);
+        $fetchedSub = $stmtAud->fetch(PDO::FETCH_ASSOC);
+        if (!$fetchedSub) {
+            $stmtAud2 = $pdo->prepare("SELECT * FROM subscribers WHERE workspace_id = ? AND status = 'subscribed' ORDER BY id DESC LIMIT 1");
+            $stmtAud2->execute([$workspace_id]);
+            $fetchedSub = $stmtAud2->fetch(PDO::FETCH_ASSOC);
+        }
+        if ($fetchedSub) {
+            $subscriber = $fetchedSub;
+        }
     }
 
     // 2. Fetch Content
@@ -115,8 +138,15 @@ try {
     }
 
     // 3. Personalize
-    $finalSubject = replaceMergeTags($subject, $subscriber);
-    $finalHtml = replaceMergeTags($htmlContent, $subscriber);
+    $campConfig = json_decode($campaign['config'] ?? '{}', true) ?: [];
+    $context = [
+        'unsubscribe_url' => '#unsubscribe',
+        'campaign_name' => $campaign['name'] ?? '',
+        'variable_fallbacks' => $campConfig['variable_fallbacks'] ?? [],
+        'config' => $campConfig
+    ];
+    $finalSubject = replaceMergeTags($subject, $subscriber, $context);
+    $finalHtml = replaceMergeTags($htmlContent, $subscriber, $context);
 
     jsonResponse(true, [
         'subject' => $finalSubject,

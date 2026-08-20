@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
     X, User, History, Edit2, Check,
     Copy, Calendar, Clock, ArrowRight, ExternalLink,
@@ -31,8 +32,8 @@ export const ZaloUserProfileModal: React.FC<ZaloUserProfileModalProps> = ({
     const [updating, setUpdating] = useState(false);
     const [editMode, setEditMode] = useState(false);
     const [animateIn, setAnimateIn] = useState(false);
-    useEffect(() => { setTimeout(() => setAnimateIn(true), 10); }, []);
-    const handleClose = () => { setAnimateIn(false); setTimeout(onClose, 400); };
+    useEffect(() => { const t = setTimeout(() => setAnimateIn(true), 20); return () => clearTimeout(t); }, []);
+    const handleClose = () => { setAnimateIn(false); setTimeout(onClose, 350); };
 
     // Form fields
     const [formData, setFormData] = useState({
@@ -167,23 +168,33 @@ export const ZaloUserProfileModal: React.FC<ZaloUserProfileModalProps> = ({
 
     if (!animateIn) return null;
 
-    return (
+    const drawerContent = (
         <>
-            <div className="fixed inset-0 z-[300] overflow-hidden animate-fade-in">
+            <div className="fixed inset-0 z-[35000] flex justify-end overflow-hidden">
                 {/* Backdrop Blur Overlay with Floating Circular Arrow Close Button */}
                 <div
-                    className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm transition-opacity duration-300 z-[300] cursor-pointer group"
+                    className={`fixed inset-0 bg-black/80 backdrop-blur-[2px] transition-opacity duration-500 z-[35000] cursor-pointer ${animateIn ? 'opacity-100' : 'opacity-0'}`}
                     onClick={handleClose}
+                />
+
+                {/* Floating Circular Arrow Button (Centered over sidebar) */}
+                <div 
+                    className={`zalo-user-profile-modal-back-btn hidden lg:flex absolute top-1/2 -translate-y-1/2 z-[35010] transition-opacity duration-500 ${animateIn ? 'opacity-100' : 'opacity-0'}`}
+                    style={{ pointerEvents: 'none' }}
                 >
-                    {/* Floating Circular Arrow Button (Centered over sidebar) */}
-                    <div className="zalo-user-profile-modal-back-btn hidden lg:flex absolute top-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-slate-900/90 border border-slate-700/80 text-white items-center justify-center shadow-2xl transition-all duration-300 group-hover:scale-110 group-hover:bg-violet-600 group-hover:border-violet-500">
+                    <button
+                        onClick={handleClose}
+                        className="w-12 h-12 rounded-full bg-slate-900/90 border border-slate-700/80 text-white items-center justify-center shadow-2xl transition-all duration-300 hover:scale-110 hover:bg-violet-600 hover:border-violet-500 cursor-pointer"
+                        style={{ pointerEvents: 'auto' }}
+                        title="Quay lại (Esc)"
+                    >
                         <ArrowLeft className="w-6 h-6 stroke-[2.5]" />
-                    </div>
+                    </button>
                 </div>
 
                 {/* Slide-over Right Drawer Panel - Anchored to sidebar */}
-                <div className="zalo-user-profile-modal-container fixed inset-y-0 right-0 z-[310] max-w-full flex pl-0 pointer-events-none">
-                    <div className="zalo-user-profile-modal-panel w-screen max-w-none bg-white dark:bg-slate-950 shadow-2xl flex flex-col transition-all duration-300 overflow-hidden pointer-events-auto">
+                <div className="zalo-user-profile-modal-container fixed inset-y-0 right-0 z-[35020] max-w-full flex pl-0 pointer-events-none">
+                    <div className={`zalo-user-profile-modal-panel w-screen max-w-none bg-white dark:bg-slate-950 shadow-2xl flex flex-col transform transition-all duration-500 cubic-bezier(0.16, 1, 0.3, 1) overflow-hidden pointer-events-auto ${animateIn ? 'translate-x-0 opacity-100' : 'translate-x-full lg:translate-x-[100px] opacity-0'}`}>
                     <style>{`
                       @media (min-width: 1024px) {
                         .zalo-user-profile-modal-container {
@@ -194,6 +205,7 @@ export const ZaloUserProfileModal: React.FC<ZaloUserProfileModalProps> = ({
                         }
                         .zalo-user-profile-modal-back-btn {
                           left: calc(var(--sidebar-width, 260px) / 2) !important;
+                          transform: translate(-50%, -50%) !important;
                         }
                       }
                     `}</style>
@@ -569,17 +581,20 @@ export const ZaloUserProfileModal: React.FC<ZaloUserProfileModalProps> = ({
             </div>
         </div>
 
-        <ConfirmModal
-            isOpen={showDeleteConfirm}
-            onClose={() => setShowDeleteConfirm(false)}
-            onConfirm={handleDelete}
-            title="Xóa kết nối Zalo"
-            message="Bạn có chắc chắn muốn xóa kết nối Zalo này? Hành động này sẽ xóa lịch sử tin nhắn và hoạt động Zalo của người dùng này nhưng không ảnh hưởng đến hồ sơ chính."
-            confirmLabel="Xác nhận xóa"
-            variant="danger"
-        />
-    </>
-);
+            <ConfirmModal
+                isOpen={showDeleteConfirm}
+                onClose={() => setShowDeleteConfirm(false)}
+                onConfirm={handleDelete}
+                title="Xóa kết nối Zalo"
+                message="Bạn có chắc chắn muốn xóa kết nối Zalo này? Hành động này sẽ xóa lịch sử tin nhắn và hoạt động Zalo của người dùng này nhưng không ảnh hưởng đến hồ sơ chính."
+                confirmLabel="Xác nhận xóa"
+                variant="danger"
+                zIndex={40000}
+            />
+        </>
+    );
+
+    return createPortal(drawerContent, document.body);
 };
 
 /* --- Helpers & Sub-components --- */

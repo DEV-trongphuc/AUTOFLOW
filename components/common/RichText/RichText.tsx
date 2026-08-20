@@ -112,12 +112,15 @@ const RichText: React.FC<RichTextProps> = ({ value, onChange, className = "", bo
     };
 
     const exec = (command: string, val: string | undefined = undefined) => {
+        const isInsertionCmd = ['insertText', 'insertHTML', 'createLink', 'insertImage'].includes(command);
         const sel = window.getSelection();
-        if (sel && sel.isCollapsed && editorRef.current) {
-            const range = document.createRange();
-            range.selectNodeContents(editorRef.current);
-            sel.removeAllRanges();
-            sel.addRange(range);
+        if (!isInsertionCmd && ['justifyLeft', 'justifyCenter', 'justifyRight', 'justifyFull', 'formatBlock'].includes(command)) {
+            if (sel && sel.isCollapsed && editorRef.current) {
+                const range = document.createRange();
+                range.selectNodeContents(editorRef.current);
+                sel.removeAllRanges();
+                sel.addRange(range);
+            }
         }
 
         if (command === 'fontSize' || command === 'fontName' || command === 'foreColor' || command === 'hiliteColor') {

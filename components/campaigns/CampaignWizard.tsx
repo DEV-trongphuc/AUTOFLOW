@@ -22,6 +22,10 @@ import LaunchPreview from './LaunchPreview';
 import TestEmailModal from './TestEmailModal';
 import TabTransition from '../common/TabTransition';
 import EmailEditor from '../templates/EmailEditor/index';
+import PreSendReviewModal from './PreSendReviewModal';
+import ConfirmModal from '../common/ConfirmModal';
+import { interpolateMergeTags } from '@/utils/formatters';
+import VariableFallbackConfig from './VariableFallbackConfig';
 
 interface CampaignWizardProps {
     isOpen: boolean;
@@ -42,9 +46,14 @@ const MERGE_TAGS = [
     { label: 'Tên (First Name)', value: '{{first_name}}' },
     { label: 'Họ (Last Name)', value: '{{last_name}}' },
     { label: 'Email', value: '{{email}}' },
+    { label: 'Số điện thoại', value: '{{phone}}' },
     { label: 'Công ty', value: '{{company}}' },
     { label: 'Chức danh', value: '{{job_title}}' },
-    { label: 'Số điện thoại', value: '{{phone}}' },
+    { label: 'Mã chứng chỉ (Cert No)', value: '{{cert_no}}' },
+    { label: 'Link chứng chỉ (Cert Link)', value: '{{cert_link}}' },
+    { label: 'Ảnh chứng chỉ (Cert Image)', value: '{{cert_img}}' },
+    { label: 'Website', value: '{{website}}' },
+    { label: 'Ngày hôm nay', value: '{{current_date}}' },
     { label: 'Link Hủy đăng ký', value: '{{unsubscribe_url}}' },
 ];
 
@@ -187,9 +196,18 @@ const VariablePicker: React.FC<{ onSelect: (val: string) => void }> = ({ onSelec
     const vars = [
         { label: 'Họ tên đầy đủ', value: '{{full_name}}' },
         { label: 'Tên (First Name)', value: '{{first_name}}' },
+        { label: 'Họ (Last Name)', value: '{{last_name}}' },
         { label: 'Số điện thoại', value: '{{phone}}' },
         { label: 'Email', value: '{{email}}' },
+        { label: 'Tên công ty', value: '{{company}}' },
+        { label: 'Chức danh', value: '{{job_title}}' },
+        { label: 'Tỉnh / Thành phố', value: '{{city}}' },
+        { label: 'Địa chỉ', value: '{{address}}' },
+        { label: 'Ngày sinh nhật', value: '{{birthday}}' },
         { label: 'Ngày hiện tại', value: '{{current_date}}' },
+        { label: 'Năm hiện tại', value: '{{year}}' },
+        { label: 'Giờ hiện tại', value: '{{time}}' },
+        { label: 'Link Hủy Đăng ký', value: '{{unsubscribe_url}}' },
     ];
 
     return (
@@ -203,7 +221,7 @@ const VariablePicker: React.FC<{ onSelect: (val: string) => void }> = ({ onSelec
             </button>
 
             {isVisible && (
-                <div className={`absolute right-0 top-full mt-2 z-[100] w-48 bg-white border border-slate-100 rounded-xl shadow-2xl py-2 transform transition-all duration-200 ${animateIn ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 -translate-y-2'}`}>
+                <div className={`absolute right-0 top-full mt-2 z-[100] w-56 max-h-72 overflow-y-auto bg-white border border-slate-100 rounded-xl shadow-2xl py-2 custom-scrollbar transform transition-all duration-200 ${animateIn ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 -translate-y-2'}`}>
                     <p className="px-4 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-50 mb-1">Chọn biến...</p>
                     {vars.map(v => (
                         <button
@@ -253,12 +271,81 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
         setTimeout(_onClose, 500);
     };
 
+    const [showUnsavedConfirmModal, setShowUnsavedConfirmModal] = useState(false);
+
+    const hasUserMadeChanges = () => {
+        const hasCustomSubject = Boolean(formData.subject && formData.subject.trim().length > 0);
+        const hasTemplate = Boolean(formData.templateId && formData.templateId.trim().length > 0);
+        const hasContent = Boolean(formData.contentBody && formData.contentBody.trim().length > 0);
+        const hasTarget = Boolean(
+            (formData.target?.listIds?.length ?? 0) > 0 ||
+            (formData.target?.segmentIds?.length ?? 0) > 0 ||
+            (formData.target?.tagIds?.length ?? 0) > 0 ||
+            (formData.target?.individualIds?.length ?? 0) > 0
+        );
+        const hasAttachments = Boolean((formData.attachments?.length ?? 0) > 0);
+        return hasCustomSubject || hasTemplate || hasContent || hasTarget || hasAttachments;
+    };
+
     const handleIntentClose = () => {
-        if (formData.name || formData.subject || formData.templateId || (formData.target?.listIds && formData.target.listIds.length > 0)) {
-            onSaveDraft(formData).catch(err => console.error("Failed to auto-save draft", err));
+        if (hasUserMadeChanges()) {
+            setShowUnsavedConfirmModal(true);
+        } else {
+            onClose();
+        }
+    };
+
+    const handleConfirmSaveDraft = async () => {
+        setShowUnsavedConfirmModal(false);
+        try {
+            await onSaveDraft(formData);
+            toast.success("Đã lưu bản nháp chiến dịch thành công!");
+        } catch (err) {
+            console.error("Failed to save draft", err);
         }
         onClose();
     };
+
+    const handleDiscardAndClose = () => {
+        setShowUnsavedConfirmModal(false);
+        onClose();
+    };
+
+    // State for audience subscribers
+    const [allSubscribers, setAllSubscribers] = useState<Subscriber[]>([]);
+
+    const sampleSubscriber = React.useMemo(() => {
+        const first = allSubscribers?.[0];
+        if (first) {
+            return {
+                ...first,
+                fullName: `${first.firstName || ''} ${first.lastName || ''}`.trim() || first.fullName || 'Trần Trọng Phúc',
+                company: first.companyName || first.company || 'IDEAS Vietnam',
+                jobTitle: first.jobTitle || 'Học viên K2026',
+                cert_no: (first as any).cert_no || (first as any).custom_attributes?.cert_no || (first as any).custom_fields?.cert_no || 'CERT-2026-8899',
+                cert_link: (first as any).cert_link || (first as any).custom_attributes?.cert_link || (first as any).custom_fields?.cert_link || 'https://ideas.edu.vn/tra-cuu/CERT-2026-8899',
+                cert_img: (first as any).cert_img || (first as any).custom_attributes?.cert_img || (first as any).custom_fields?.cert_img || 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=600&auto=format&fit=crop'
+            };
+        }
+        return {
+            id: 'sample_01',
+            fullName: 'Trần Trọng Phúc',
+            full_name: 'Trần Trọng Phúc',
+            firstName: 'Phúc',
+            first_name: 'Phúc',
+            lastName: 'Trần Trọng',
+            last_name: 'Trần Trọng',
+            email: 'trongphuc@ideas.edu.vn',
+            phone: '0901234567',
+            company: 'IDEAS Vietnam',
+            companyName: 'IDEAS Vietnam',
+            jobTitle: 'Học viên K2026',
+            job_title: 'Học viên K2026',
+            cert_no: 'CERT-2026-8899',
+            cert_link: 'https://ideas.edu.vn/tra-cuu/CERT-2026-8899',
+            cert_img: 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=600&auto=format&fit=crop'
+        };
+    }, [allSubscribers]);
 
     const [step, setStep] = useState(1);
     const [formData, setFormData] = useState<Partial<Campaign>>(() => {
@@ -384,8 +471,6 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
     const [errors, setErrors] = useState<Record<string, string>>({});
     const publishLockRef = useRef(false);
 
-    // Fix: Add state for all subscribers to create the existingEmailsSet
-    const [allSubscribers, setAllSubscribers] = useState<Subscriber[]>([]);
     // Fix: Explicit state for Test Email ID to ensure modal gets it immediately
     const [testEmailCampaignId, setTestEmailCampaignId] = useState<string | null>(null);
 
@@ -666,15 +751,30 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
         }
 
         if (newSubs.length > 0 && finalListId) {
-            const subsPayload = newSubs.map(s => ({
-                ...s,
-                listIds: [finalListId],
-                tags: s.tags ? s.tags.split(',').map((t: string) => t.trim()) : ['Quick Import'], // Ensure tags are handled
-                joinedAt: new Date().toISOString(),
-                status: 'active',
-                stats: { emailsSent: 0, emailsOpened: 0, linksClicked: 0 },
-                customAttributes: {}
-            }));
+            const STANDARD_KEYS = [
+                'email', 'firstName', 'lastName', 'fullName', 'phoneNumber', 'jobTitle',
+                'companyName', 'city', 'country', 'gender', 'dateOfBirth',
+                'anniversaryDate', 'tags', 'source', 'salesperson', 'joinedAt'
+            ];
+
+            const subsPayload = newSubs.map(s => {
+                const customAttr: Record<string, any> = {};
+                Object.keys(s).forEach(k => {
+                    if (!STANDARD_KEYS.includes(k) && typeof s[k] !== 'function') {
+                        customAttr[k] = s[k];
+                    }
+                });
+
+                return {
+                    ...s,
+                    listIds: [finalListId],
+                    tags: s.tags ? (typeof s.tags === 'string' ? s.tags.split(',').map((t: string) => t.trim()) : s.tags) : ['Quick Import'],
+                    joinedAt: new Date().toISOString(),
+                    status: 'active',
+                    stats: { emailsSent: 0, emailsOpened: 0, linksClicked: 0 },
+                    customAttributes: customAttr
+                };
+            });
 
             await api.post('subscribers_bulk', subsPayload);
 
@@ -692,21 +792,20 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
         }
     };
 
+    const [showPreSendModal, setShowPreSendModal] = useState(false);
+
     const handlePublishClick = async () => {
         if (publishLockRef.current || isSubmitting) return;
-
-        // [INSTANT] Nurture Offer Logic: Show this first to provide immediate feedback
-        if (!connectFlow && !showNurtureOffer && !formData.scheduledAt) {
-            setShowNurtureOffer(true);
-            return;
-        }
 
         // Reset errors
         setErrors({});
         setAttemptedNext(true);
 
         // Required fields check
-        if (!formData.name?.trim()) return;
+        if (!formData.name?.trim()) {
+            toast.error("Vui lòng nhập tên chiến dịch");
+            return;
+        }
         if (!formData.target?.listIds?.length && !formData.target?.segmentIds?.length && !formData.target?.tagIds?.length && !formData.target?.individualIds?.length) {
             toast.error("Vui lòng chọn đối tượng nhận tin");
             return;
@@ -714,9 +813,18 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
 
         // Email specific validation
         if ((!formData.type || formData.type === 'email')) {
-            if (!formData.subject?.trim()) return;
-            if (!formData.senderEmail) return;
-            if (!formData.templateId && !formData.contentBody?.trim()) return;
+            if (!formData.subject?.trim()) {
+                toast.error("Vui lòng nhập tiêu đề email");
+                return;
+            }
+            if (!formData.senderEmail) {
+                toast.error("Vui lòng chọn email người gửi");
+                return;
+            }
+            if (!formData.templateId && !formData.contentBody?.trim()) {
+                toast.error("Vui lòng chọn mẫu email hoặc nhập nội dung HTML");
+                return;
+            }
         }
 
         // ZNS specific validation
@@ -744,8 +852,15 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
             }
         }
 
+        // Open comprehensive Pre-Send Review Modal with live sample preview!
+        setShowPreSendModal(true);
+    };
+
+    const handleConfirmPreSend = async () => {
+        if (publishLockRef.current || isSubmitting) return;
+
         // [VALIDATION] Server-side Fresh Check for Linked Flow Status
-        if (!formData.scheduledAt) {
+        if (!formData.scheduledAt && connectFlow) {
             try {
                 const fRes = await api.get<any>('flows');
                 if (fRes.success) {
@@ -754,17 +869,6 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                     let flowToCheck: Flow | undefined;
                     if (activateFlowId) {
                         flowToCheck = freshFlows.find(f => f.id === activateFlowId);
-                    } else {
-                        flowToCheck = freshFlows.find(f => {
-                            if (!f.steps) return false;
-                            let steps = f.steps;
-                            if (typeof steps === 'string') {
-                                try { steps = JSON.parse(steps); } catch (e) { return false; }
-                            }
-                            if (!Array.isArray(steps)) return false;
-                            const trigger = steps.find((s: any) => s.type === 'trigger');
-                            return trigger?.config?.type === 'campaign' && String(trigger.config.targetId) === String(formData.id);
-                        });
                     }
                     if (flowToCheck && flowToCheck.status !== 'active') {
                         toast.error(
@@ -782,21 +886,21 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
         // Start ACTUAL publishing
         publishLockRef.current = true;
         setIsSubmitting(true);
-        setShowNurtureOffer(false); // Close the offer modal if it was open
 
         try {
             const result = await onPublish(formData, { connectFlow, activateFlowId });
 
-            // Fix: Don't rely solely on status check, if result exists it means success
-            // Also handle case where result is null but operation was successful (e.g. "Already processed")
             if (result || result === null) {
-                // If result is null (already processed), manually set status to SENDING to keep UI consistent
                 const update = result || { status: CampaignStatus.SENDING };
                 setFormData(prev => ({ ...prev, ...update }));
 
-                // Close modal immediately as requested (Skip auto-save draft since it is successfully published)
+                // Close review modal & wizard
+                setShowPreSendModal(false);
                 onClose();
             }
+        } catch (err: any) {
+            console.error("Publish error:", err);
+            toast.error(err?.message || "Lỗi khi khởi chạy chiến dịch");
         } finally {
             publishLockRef.current = false;
             setIsSubmitting(false);
@@ -957,7 +1061,7 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
             `}</style>
             <div className="fixed inset-0 z-[150] flex justify-end">
                 <div
-                    className={`absolute inset-0 bg-slate-950/75 backdrop-blur-sm transition-opacity duration-500 ${animateWizardIn ? 'opacity-100' : 'opacity-0'}`}
+                    className={`absolute inset-0 bg-black/80 backdrop-blur-[2px] transition-opacity duration-500 ${animateWizardIn ? 'opacity-100' : 'opacity-0'}`}
                     onClick={handleIntentClose}
                 >
                     {/* Floating Back Button on Overlay (centered in the sidebar area on desktop) */}
@@ -975,7 +1079,7 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                     </div>
                 </div>
                 <div className={`campaign-wizard-drawer relative w-full bg-[#fdfdfd] shadow-2xl h-full flex flex-col border-l border-slate-100 transform transition-all duration-500 cubic-bezier(0.16, 1, 0.3, 1) ${animateWizardIn ? 'translate-x-0 opacity-100' : 'translate-x-full lg:translate-x-[100px] opacity-0'}`}>
-                    <div className="px-4 lg:px-8 py-4 lg:py-5 bg-white flex justify-between items-center shrink-0 border-b border-slate-100">
+                    <div className="px-4 py-3.5 bg-white flex justify-between items-center shrink-0 border-b border-slate-100">
                         <div className="flex items-center gap-3 lg:gap-4 flex-1 min-w-0 mr-4">
                             <div className="w-9 h-9 lg:w-10 lg:h-10 bg-violet-600 rounded-xl flex items-center justify-center shadow-md text-white shrink-0"><Wand2 className="w-5 h-5" /></div>
                             <div className="min-w-0"><h3 className="text-sm lg:text-lg font-bold text-slate-800 truncate">{formData.name || 'Chiến dịch mới'}</h3><p className="text-[9px] lg:text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Bước {step} / 5</p></div>
@@ -991,107 +1095,214 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                                         </div>
                                         {s.id < steps.length && <div className={`w-6 h-0.5 mx-2 transition-all ${done ? 'bg-emerald-500' : 'bg-slate-200'}`}></div>}
                                     </div>
-                            );
+                                );
                             })}
                         </div>
                         <button onClick={handleIntentClose} className="p-2 hover:bg-slate-100 rounded-xl transition-all text-slate-400 hover:text-slate-800"><X className="w-5 h-5" /></button>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto p-4 lg:p-10 custom-scrollbar bg-[#f8fafc]">
+                    <div className="flex-1 overflow-y-auto p-4 custom-scrollbar bg-[#f8fafc]">
                         {step === 1 && (
-                            <TabTransition className="space-y-6 max-w-4xl mx-auto py-4">
-                                <div className="text-center mb-6 lg:mb-8">
-                                    <h4 className="text-xl lg:text-3xl font-black text-slate-800 tracking-tight">Cấu hình chiến dịch</h4>
-                                    <p className="text-slate-500 text-xs lg:text-sm mt-2 font-medium">Chọn phương thức tiếp cận tối ưu nhất để bứt phá doanh số.</p>
-                                    <div className="mt-4 flex items-center justify-center gap-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                                        <span className="flex items-center gap-1.5"><ShieldCheck className="w-3 h-3 text-emerald-500" /> Server bảo mật</span>
-                                        <span className="w-1 h-1 bg-slate-200 rounded-full"></span>
-                                        <span className="flex items-center gap-1.5"><Zap className="w-3 h-3 text-[#ffa900]" /> Gửi tức thì</span>
+                            <TabTransition className="space-y-4 w-full mx-auto">
+                                {/* Step Header */}
+                                <div className="text-center space-y-2">
+                                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50/80 border border-blue-200/60 text-blue-600 text-[10px] font-black uppercase tracking-widest shadow-xs">
+                                        <Wand2 className="w-3 h-3 text-blue-500" /> Bước 1 / 5 · Khởi tạo chiến dịch
+                                    </div>
+                                    <h3 className="text-2xl md:text-3xl font-black text-slate-850 tracking-tight">Cấu hình Chiến dịch</h3>
+                                    <p className="text-slate-500 text-xs md:text-sm font-medium max-w-lg mx-auto leading-relaxed">
+                                        Chọn kênh tiếp cận tối ưu và thiết lập thông tin cơ bản cho chiến dịch của bạn.
+                                    </p>
+                                    <div className="pt-2 flex items-center justify-center gap-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest flex-wrap">
+                                        <span className="flex items-center gap-1.5"><ShieldCheck className="w-3.5 h-3.5 text-emerald-500" /> Hạ tầng AWS SES Bảo mật</span>
+                                        <span className="w-1 h-1 bg-slate-300 rounded-full hidden sm:block"></span>
+                                        <span className="flex items-center gap-1.5"><Zap className="w-3.5 h-3.5 text-[#ffa900]" /> Tốc độ gửi tức thì</span>
+                                        <span className="w-1 h-1 bg-slate-300 rounded-full hidden sm:block"></span>
+                                        <span className="flex items-center gap-1.5"><Sparkles className="w-3.5 h-3.5 text-blue-500" /> Cá nhân hóa biến Realtime</span>
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {/* Channel Selection Cards */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                    {/* Email Marketing Card */}
                                     <button
+                                        type="button"
                                         onClick={() => setFormData({ ...formData, type: 'email' })}
-                                        className={`group relative p-8 rounded-[32px] border-2 text-left transition-all duration-500 overflow-hidden ${(!formData.type || formData.type === 'email') ? 'border-blue-500 bg-blue-50/50 shadow-xl shadow-blue-100 ring-4 ring-blue-50' : 'border-slate-100 bg-white hover:border-slate-200 hover:shadow-lg'}`}
+                                        className={`group relative p-6 sm:p-7 rounded-2xl border-2 text-left transition-all duration-300 overflow-hidden flex flex-col justify-between cursor-pointer ${
+                                            (!formData.type || formData.type === 'email')
+                                                ? 'border-blue-600 bg-gradient-to-br from-blue-50/90 via-white to-indigo-50/40 shadow-xl shadow-blue-500/10 ring-4 ring-blue-500/10'
+                                                : 'border-slate-200/80 bg-white hover:border-blue-300 hover:shadow-lg hover:shadow-slate-100 hover:-translate-y-0.5'
+                                        }`}
                                     >
-                                        <div className={`absolute top-0 right-0 w-32 h-32 rounded-bl-[100px] transition-all duration-700 ${(!formData.type || formData.type === 'email') ? 'bg-blue-600/10' : 'bg-slate-50 opacity-0 group-hover:opacity-100'}`}></div>
-                                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-6 transition-all duration-500 ${(!formData.type || formData.type === 'email') ? 'bg-blue-600 text-white shadow-lg shadow-blue-200 scale-110' : 'bg-slate-100 text-slate-400 group-hover:bg-slate-200 group-hover:text-slate-600'}`}>
-                                            <Mail className="w-7 h-7" />
+                                        <div>
+                                            <div className="flex items-center justify-between w-full mb-4">
+                                                <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300 ${
+                                                    (!formData.type || formData.type === 'email')
+                                                        ? 'bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/25 scale-105'
+                                                        : 'bg-slate-100 text-slate-500 group-hover:bg-blue-50 group-hover:text-blue-600'
+                                                }`}>
+                                                    <Mail className="w-5 h-5" />
+                                                </div>
+
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-blue-100/80 text-blue-700 border border-blue-200/50">
+                                                        Phổ biến
+                                                    </span>
+                                                    {(!formData.type || formData.type === 'email') && (
+                                                        <div className="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-xs animate-in zoom-in-50 duration-200">
+                                                            <Check className="w-3 h-3 stroke-[3]" />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-1.5 mb-4">
+                                                <h5 className={`text-lg font-black tracking-tight transition-colors ${
+                                                    (!formData.type || formData.type === 'email') ? 'text-blue-950' : 'text-slate-800'
+                                                }`}>
+                                                    Email Marketing
+                                                </h5>
+                                                <p className="text-xs font-medium leading-relaxed text-slate-500">
+                                                    Gửi email hàng loạt với giao diện kéo thả trực quan, tối ưu inbox 99%, cá nhân hóa dữ liệu và báo cáo real-time.
+                                                </p>
+                                            </div>
                                         </div>
-                                        <h5 className={`text-xl font-black mb-2 transition-colors ${(!formData.type || formData.type === 'email') ? 'text-blue-900' : 'text-slate-800'}`}>Campaign Marketing</h5>
-                                        <p className={`text-sm font-medium leading-relaxed ${(!formData.type || formData.type === 'email') ? 'text-blue-700/80' : 'text-slate-500'}`}>
-                                            Gửi email hàng loạt với giao diện kéo thả trực quan, tỷ lệ vào inbox cao và Báo cáo chi tiết.
-                                        </p>
-                                        <div className={`mt-6 flex items-center gap-2 text-xs font-bold uppercase tracking-wider ${(!formData.type || formData.type === 'email') ? 'text-blue-600' : 'text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity'}`}>
-                                            <span>Chọn phương thức này</span>
-                                            <ArrowRight className="w-3.5 h-3.5" />
+
+                                        <div className="pt-3 border-t border-slate-100/80 grid grid-cols-2 gap-2 text-[11px] font-bold text-slate-600">
+                                            <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-blue-600 shrink-0" /> Kéo thả & Template</span>
+                                            <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-blue-600 shrink-0" /> Tracking Mở / Click</span>
                                         </div>
                                     </button>
 
+                                    {/* Zalo ZNS Card */}
                                     <button
+                                        type="button"
                                         onClick={() => setFormData({ ...formData, type: 'zalo_zns' })}
-                                        className={`group relative p-8 rounded-[32px] border-2 text-left transition-all duration-500 overflow-hidden ${formData.type === 'zalo_zns' ? 'border-[#0068ff] bg-blue-50/50 shadow-xl shadow-blue-100 ring-4 ring-blue-50' : 'border-slate-100 bg-white hover:border-slate-200 hover:shadow-lg'}`}
+                                        className={`group relative p-6 sm:p-7 rounded-2xl border-2 text-left transition-all duration-300 overflow-hidden flex flex-col justify-between cursor-pointer ${
+                                            formData.type === 'zalo_zns'
+                                                ? 'border-[#0068ff] bg-gradient-to-br from-blue-50/90 via-white to-sky-50/40 shadow-xl shadow-blue-500/10 ring-4 ring-blue-500/10'
+                                                : 'border-slate-200/80 bg-white hover:border-[#0068ff]/40 hover:shadow-lg hover:shadow-slate-100 hover:-translate-y-0.5'
+                                        }`}
                                     >
-                                        <div className={`absolute top-0 right-0 w-32 h-32 rounded-bl-[100px] transition-all duration-700 ${formData.type === 'zalo_zns' ? 'bg-[#0068ff]/10' : 'bg-slate-50 opacity-0 group-hover:opacity-100'}`}></div>
-                                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-6 transition-all duration-500 ${formData.type === 'zalo_zns' ? 'bg-[#0068ff] text-white shadow-lg shadow-blue-200 scale-110' : 'bg-slate-100 text-slate-400 group-hover:bg-slate-200 group-hover:text-slate-600'}`}>
-                                            <Zap className="w-7 h-7" />
+                                        <div>
+                                            <div className="flex items-center justify-between w-full mb-4">
+                                                <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300 ${
+                                                    formData.type === 'zalo_zns'
+                                                        ? 'bg-gradient-to-tr from-[#0068ff] to-sky-600 text-white shadow-md shadow-blue-500/25 scale-105'
+                                                        : 'bg-slate-100 text-slate-500 group-hover:bg-blue-50 group-hover:text-[#0068ff]'
+                                                }`}>
+                                                    <Zap className="w-5 h-5" />
+                                                </div>
+
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-sky-100/80 text-sky-700 border border-sky-200/50">
+                                                        Tức thì
+                                                    </span>
+                                                    {formData.type === 'zalo_zns' && (
+                                                        <div className="w-5 h-5 rounded-full bg-[#0068ff] text-white flex items-center justify-center shadow-xs animate-in zoom-in-50 duration-200">
+                                                            <Check className="w-3 h-3 stroke-[3]" />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-1.5 mb-4">
+                                                <h5 className={`text-lg font-black tracking-tight transition-colors ${
+                                                    formData.type === 'zalo_zns' ? 'text-blue-950' : 'text-slate-800'
+                                                }`}>
+                                                    Zalo ZNS
+                                                </h5>
+                                                <p className="text-xs font-medium leading-relaxed text-slate-500">
+                                                    Gửi thông báo tin nhắn OA trực tiếp đến số điện thoại người nhận. Tỷ lệ đọc tức thì trên 90% và chi phí tiết kiệm.
+                                                </p>
+                                            </div>
                                         </div>
-                                        <h5 className={`text-xl font-black mb-2 transition-colors ${formData.type === 'zalo_zns' ? 'text-[#0068ff]' : 'text-slate-800'}`}>Zalo ZNS</h5>
-                                        <p className={`text-sm font-medium leading-relaxed ${formData.type === 'zalo_zns' ? 'text-blue-700/80' : 'text-slate-500'}`}>
-                                            Gửi thông báo tin nhắn OA trực tiếp đến số điện thoại. Tăng tỷ lệ đọc tin và tương tác lập tức.
-                                        </p>
-                                        <div className={`mt-6 flex items-center gap-2 text-xs font-bold uppercase tracking-wider ${formData.type === 'zalo_zns' ? 'text-[#0068ff]' : 'text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity'}`}>
-                                            <span>Chọn phương thức này</span>
-                                            <ArrowRight className="w-3.5 h-3.5" />
+
+                                        <div className="pt-3 border-t border-slate-100/80 grid grid-cols-2 gap-2 text-[11px] font-bold text-slate-600">
+                                            <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-[#0068ff] shrink-0" /> OA Tích xanh duyệt</span>
+                                            <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-[#0068ff] shrink-0" /> Gửi theo Số ĐT</span>
                                         </div>
                                     </button>
                                 </div>
 
-
-                                <div className="bg-white p-8 border border-slate-200 rounded-[32px] shadow-sm space-y-6 mt-6">
-                                    <div className="space-y-4">
+                                {/* General Details Form Card */}
+                                <div className="bg-white p-6 sm:p-8 border border-slate-200/90 rounded-2xl shadow-xs space-y-6">
+                                    <div className="space-y-2.5">
                                         <Input
                                             label="Tên chiến dịch (Nội bộ)"
                                             required
-                                            placeholder="VD: Khuyến mãi Black Friday 2024"
+                                            placeholder="VD: [Tháng 8] - Khuyến mãi Tri Ân Khách Hàng"
                                             value={formData.name}
                                             onChange={e => setFormData({ ...formData, name: e.target.value })}
-                                            error={attemptedNext && !formData.name?.trim() ? 'Vui lòng nhập tên' : ''}
+                                            error={attemptedNext && !formData.name?.trim() ? 'Vui lòng nhập tên chiến dịch' : ''}
                                             maxLength={100}
                                         />
-                                        <p className="text-[10px] text-slate-400 font-medium px-1 flex items-center gap-1.5">
-                                            <Sparkles className="w-3 h-3 text-blue-500" />
-                                            Mẹo: Đặt tên theo cú pháp [Tháng] - [Sự kiện] để dễ dàng quản lý và báo cáo sau này.
+                                        <p className="text-[11px] text-slate-400 font-medium px-1 flex items-center gap-1.5">
+                                            <Sparkles className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                                            Gợi ý: Đặt tên theo cú pháp <span className="font-semibold text-slate-600">[Thời gian] - [Mục đích / Sự kiện]</span> để dễ dàng tìm kiếm và đối soát báo cáo.
                                         </p>
                                     </div>
 
                                     {(!formData.type || formData.type === 'email') && (
                                         <>
-                                            <div className="space-y-4 animate-in fade-in duration-500">
-                                                <label className="text-[11px] font-bold uppercase text-slate-500 ml-1 tracking-widest">Người gửi (Sender) <span className="text-rose-500">*</span></label>
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                                    {senderEmails.map((email, index) => (
-                                                        <button key={email} onClick={() => setFormData({ ...formData, senderEmail: email })} className={`p-4 rounded-xl border transition-all flex items-center justify-between group ${formData.senderEmail === email ? 'border-indigo-500 bg-indigo-50 shadow-md ring-1 ring-indigo-200' : 'border-slate-100 bg-white hover:border-slate-200'}`}>
-                                                            <div className="flex items-center gap-3 overflow-hidden">
-                                                                <ShieldCheck className={`w-4 h-4 ${formData.senderEmail === email ? 'text-indigo-600' : 'text-slate-400'}`} />
-                                                                <span className={`text-xs font-bold truncate flex items-center ${formData.senderEmail === email ? 'text-indigo-900' : 'text-slate-600'}`}>
-                                                                    {email}
-                                                                    {index === 0 && <span className="ml-2 text-[9px] text-blue-600 font-bold uppercase tracking-widest bg-blue-100/80 border border-blue-200/50 px-2 py-0.5 rounded-full shrink-0 mt-0.5">Mặc định</span>}
-                                                                </span>
-                                                            </div>
-                                                            {formData.senderEmail === email && <div className="w-5 h-5 bg-indigo-500 rounded-full flex items-center justify-center text-white"><Check className="w-3 h-3" /></div>}
-                                                        </button>
-                                                    ))}
+                                            <div className="space-y-3.5 pt-4 border-t border-slate-100 animate-in fade-in duration-300">
+                                                <label className="text-[11px] font-black uppercase text-slate-500 ml-1 tracking-widest flex items-center gap-2">
+                                                    <ShieldCheck className="w-4 h-4 text-indigo-500" />
+                                                    Người gửi (Sender Profile) <span className="text-rose-500">*</span>
+                                                </label>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                                                    {senderEmails.map((email, index) => {
+                                                        const isSelected = formData.senderEmail === email;
+                                                        return (
+                                                            <button
+                                                                key={email}
+                                                                type="button"
+                                                                onClick={() => setFormData({ ...formData, senderEmail: email })}
+                                                                className={`p-4 rounded-2xl border-2 transition-all flex items-center justify-between group cursor-pointer ${
+                                                                    isSelected
+                                                                        ? 'border-indigo-500 bg-indigo-50/60 shadow-md shadow-indigo-500/10 ring-2 ring-indigo-200/50'
+                                                                        : 'border-slate-100 bg-slate-50/50 hover:bg-white hover:border-slate-300'
+                                                                }`}
+                                                            >
+                                                                <div className="flex items-center gap-3 overflow-hidden">
+                                                                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold shrink-0 ${
+                                                                        isSelected ? 'bg-indigo-600 text-white' : 'bg-slate-200 text-slate-600'
+                                                                    }`}>
+                                                                        <Mail className="w-4 h-4" />
+                                                                    </div>
+                                                                    <div className="text-left min-w-0">
+                                                                        <div className="flex items-center gap-1.5">
+                                                                            <span className={`text-xs font-bold truncate ${isSelected ? 'text-indigo-900' : 'text-slate-700'}`}>
+                                                                                {email}
+                                                                            </span>
+                                                                            {index === 0 && (
+                                                                                <span className="text-[8px] font-black uppercase tracking-widest bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-md shrink-0">
+                                                                                    Mặc định
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
+                                                                        <span className="text-[10px] text-slate-400 font-medium block">Đã xác thực tên miền</span>
+                                                                    </div>
+                                                                </div>
+                                                                {isSelected ? (
+                                                                    <div className="w-5 h-5 bg-indigo-600 rounded-full flex items-center justify-center text-white shrink-0 shadow-xs">
+                                                                        <Check className="w-3 h-3 stroke-[3]" />
+                                                                    </div>
+                                                                ) : (
+                                                                    <div className="w-5 h-5 rounded-full border border-slate-300 shrink-0 group-hover:border-slate-400"></div>
+                                                                )}
+                                                            </button>
+                                                        );
+                                                    })}
                                                 </div>
                                             </div>
 
                                             {/* CC Configuration */}
-                                            <div className="pt-6 border-t border-slate-100 space-y-4 animate-in fade-in duration-500">
+                                            <div className="pt-6 border-t border-slate-100 space-y-4 animate-in fade-in duration-300">
                                                 <div className="flex items-center justify-between">
                                                     <div className="space-y-0.5">
-                                                        <label className="text-xs font-bold text-slate-700">Gửi kèm CC (Carbon Copy)</label>
-                                                        <p className="text-[10px] text-slate-400 font-medium">Gửi bản sao tự động đến các email giám sát khi chạy chiến dịch.</p>
+                                                        <label className="text-xs font-bold text-slate-750">Gửi kèm CC (Carbon Copy)</label>
+                                                        <p className="text-[11px] text-slate-400 font-medium">Gửi bản sao tự động đến các email giám sát khi chạy chiến dịch.</p>
                                                     </div>
                                                     <button
                                                         type="button"
@@ -1102,18 +1313,18 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                                                                 cc_enabled: !(prev.config?.cc_enabled)
                                                             }
                                                         }))}
-                                                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 focus:outline-none ${formData.config?.cc_enabled ? 'bg-indigo-600' : 'bg-slate-200'}`}
+                                                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 focus:outline-none cursor-pointer ${formData.config?.cc_enabled ? 'bg-indigo-600' : 'bg-slate-200'}`}
                                                     >
                                                         <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-300 ${formData.config?.cc_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
                                                     </button>
                                                 </div>
 
                                                 {formData.config?.cc_enabled && (
-                                                    <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
-                                                        <label className="text-[10px] font-bold uppercase text-slate-400">Danh sách email CC (Tối đa 3 email)</label>
+                                                    <div className="space-y-2 animate-in slide-in-from-top-2 duration-300 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                                                        <label className="text-[10px] font-bold uppercase text-slate-500 tracking-wider">Danh sách email CC (Tối đa 3 email)</label>
                                                         <input
                                                             type="text"
-                                                            placeholder="vi_du1@gmail.com, vi_du2@gmail.com"
+                                                            placeholder="giam_sat1@domain.com, giam_sat2@domain.com"
                                                             value={formData.config?.cc_emails || ''}
                                                             onChange={e => setFormData(prev => ({
                                                                 ...prev,
@@ -1122,23 +1333,23 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                                                                     cc_emails: e.target.value
                                                                 }
                                                             }))}
-                                                            className={`w-full px-4 py-3 bg-slate-50 border ${errors.ccEmails ? 'border-rose-500 focus:border-rose-500' : 'border-slate-200 focus:border-indigo-500'} rounded-2xl text-xs focus:outline-none transition-all placeholder:text-slate-300`}
+                                                            className={`w-full px-4 py-2.5 bg-white border ${errors.ccEmails ? 'border-rose-500 focus:border-rose-500' : 'border-slate-200 focus:border-indigo-500'} rounded-xl text-xs focus:outline-none transition-all placeholder:text-slate-300 font-medium`}
                                                         />
                                                         {errors.ccEmails ? (
                                                             <p className="text-[10px] font-semibold text-rose-500 px-1">{errors.ccEmails}</p>
                                                         ) : (
-                                                            <p className="text-[10px] text-slate-400 font-medium px-1">Các email cách nhau bằng dấu phẩy (,)</p>
+                                                            <p className="text-[10px] text-slate-400 font-medium px-1">Các email phân cách bằng dấu phẩy (,)</p>
                                                         )}
                                                     </div>
                                                 )}
                                             </div>
 
                                             {/* BCC Configuration */}
-                                            <div className="pt-6 border-t border-slate-100 space-y-4 animate-in fade-in duration-500">
+                                            <div className="pt-6 border-t border-slate-100 space-y-4 animate-in fade-in duration-300">
                                                 <div className="flex items-center justify-between">
                                                     <div className="space-y-0.5">
-                                                        <label className="text-xs font-bold text-slate-700">Gửi kèm BCC (Blind Carbon Copy)</label>
-                                                        <p className="text-[10px] text-slate-400 font-medium">Gửi bản sao ẩn danh tự động đến các email giám sát khi chạy chiến dịch.</p>
+                                                        <label className="text-xs font-bold text-slate-750">Gửi kèm BCC (Blind Carbon Copy)</label>
+                                                        <p className="text-[11px] text-slate-400 font-medium">Gửi bản sao ẩn danh tự động đến các email giám sát khi chạy chiến dịch.</p>
                                                     </div>
                                                     <button
                                                         type="button"
@@ -1149,18 +1360,18 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                                                                 bcc_enabled: !(prev.config?.bcc_enabled)
                                                             }
                                                         }))}
-                                                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 focus:outline-none ${formData.config?.bcc_enabled ? 'bg-indigo-600' : 'bg-slate-200'}`}
+                                                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 focus:outline-none cursor-pointer ${formData.config?.bcc_enabled ? 'bg-indigo-600' : 'bg-slate-200'}`}
                                                     >
                                                         <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-300 ${formData.config?.bcc_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
                                                     </button>
                                                 </div>
 
                                                 {formData.config?.bcc_enabled && (
-                                                    <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
-                                                        <label className="text-[10px] font-bold uppercase text-slate-400">Danh sách email BCC (Tối đa 3 email)</label>
+                                                    <div className="space-y-2 animate-in slide-in-from-top-2 duration-300 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                                                        <label className="text-[10px] font-bold uppercase text-slate-500 tracking-wider">Danh sách email BCC (Tối đa 3 email)</label>
                                                         <input
                                                             type="text"
-                                                            placeholder="vi_du1@gmail.com, vi_du2@gmail.com"
+                                                            placeholder="an_danh1@domain.com, an_danh2@domain.com"
                                                             value={formData.config?.bcc_emails || ''}
                                                             onChange={e => setFormData(prev => ({
                                                                 ...prev,
@@ -1169,12 +1380,12 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                                                                     bcc_emails: e.target.value
                                                                 }
                                                             }))}
-                                                            className={`w-full px-4 py-3 bg-slate-50 border ${errors.bccEmails ? 'border-rose-500 focus:border-rose-500' : 'border-slate-200 focus:border-indigo-500'} rounded-2xl text-xs focus:outline-none transition-all placeholder:text-slate-300`}
+                                                            className={`w-full px-4 py-2.5 bg-white border ${errors.bccEmails ? 'border-rose-500 focus:border-rose-500' : 'border-slate-200 focus:border-indigo-500'} rounded-xl text-xs focus:outline-none transition-all placeholder:text-slate-300 font-medium`}
                                                         />
                                                         {errors.bccEmails ? (
                                                             <p className="text-[10px] font-semibold text-rose-500 px-1">{errors.bccEmails}</p>
                                                         ) : (
-                                                            <p className="text-[10px] text-slate-400 font-medium px-1">Các email cách nhau bằng dấu phẩy (,)</p>
+                                                            <p className="text-[10px] text-slate-400 font-medium px-1">Các email phân cách bằng dấu phẩy (,)</p>
                                                         )}
                                                     </div>
                                                 )}
@@ -1186,8 +1397,7 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                         )}
 
                         {step === 2 && formData.type === 'zalo_zns' && (
-                            <TabTransition className="space-y-8 max-w-7xl mx-auto h-[calc(100vh-200px)]">
-                                <div className="text-center mb-2"><h4 className="text-2xl font-bold text-slate-800 tracking-tight">Cấu hình Nội dung ZNS</h4></div>
+                            <TabTransition className="space-y-4 w-full mx-auto">
                                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-full pb-10">
                                     {/* Left Column: Configuration - WIDENED TO 5/12 */}
                                     <div className="lg:col-span-5 space-y-6 h-full overflow-y-auto pr-2 custom-scrollbar">
@@ -1411,11 +1621,9 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                         )}
 
                         {step === 2 && (!formData.type || formData.type === 'email') && (
-                            <TabTransition className="space-y-8 max-w-5xl mx-auto">
-                                <div className="text-center"><h4 className="text-2xl font-bold text-slate-800 tracking-tight">Nội dung Email</h4></div>
-
-                                <div className="space-y-6">
-                                    <div className="bg-white p-6 rounded-[24px] border border-slate-200 shadow-sm space-y-6">
+                            <TabTransition className="space-y-4 w-full mx-auto">
+                                <div className="space-y-4">
+                                    <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200 shadow-xs space-y-3.5">
                                         <div className="relative">
                                             <Input
                                                 label="Tiêu đề hiển thị (Subject)"
@@ -1435,7 +1643,7 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                                                 />
                                             </div>
                                             <div className="flex justify-between items-center text-xs mt-1.5 px-1">
-                                                        <div className="flex items-center gap-2">
+                                                <div className="flex items-center gap-2">
                                                     <span className={`font-medium transition-colors ${(formData.subject?.length || 0) > 60 ? 'text-violet-600' : 'text-slate-400'}`}>
                                                         {formData.subject?.length || 0}/100 ký tự
                                                     </span>
@@ -1449,17 +1657,17 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                                             <div className="flex justify-between items-center mb-2">
                                                 <label className="text-[11px] font-bold uppercase text-slate-500 tracking-widest">Loại nội dung</label>
                                             </div>
-                                            <div className="flex gap-3 max-w-sm">
+                                            <div className="flex gap-2.5 max-w-sm">
                                                 <button
                                                     onClick={() => setFormData({ ...formData, templateId: '' })}
-                                                    className={`flex-1 py-3 border-2 rounded-xl flex items-center justify-center gap-2 transition-all ${formData.templateId !== 'custom-html' ? 'border-violet-600 bg-violet-50 text-violet-600 shadow-sm ring-2 ring-violet-100' : 'border-slate-100 hover:border-slate-300 text-slate-500'}`}
+                                                    className={`flex-1 py-2 border-2 rounded-xl flex items-center justify-center gap-2 transition-all ${formData.templateId !== 'custom-html' ? 'border-violet-600 bg-violet-50 text-violet-600 shadow-xs ring-2 ring-violet-100' : 'border-slate-100 hover:border-slate-300 text-slate-500'}`}
                                                 >
                                                     <Eye className="w-4 h-4" />
                                                     <span className="text-[10px] font-black uppercase">Chọn mẫu</span>
                                                 </button>
                                                 <button
                                                     onClick={() => setFormData({ ...formData, templateId: 'custom-html' })}
-                                                    className={`flex-1 py-3 border-2 rounded-xl flex items-center justify-center gap-2 transition-all ${formData.templateId === 'custom-html' ? 'border-violet-600 bg-violet-50 text-violet-600 shadow-sm ring-2 ring-violet-100' : 'border-slate-100 hover:border-slate-300 text-slate-500'}`}
+                                                    className={`flex-1 py-2 border-2 rounded-xl flex items-center justify-center gap-2 transition-all ${formData.templateId === 'custom-html' ? 'border-violet-600 bg-violet-50 text-violet-600 shadow-xs ring-2 ring-violet-100' : 'border-slate-100 hover:border-slate-300 text-slate-500'}`}
                                                 >
                                                     <Code className="w-4 h-4" />
                                                     <span className="text-[10px] font-black uppercase">Mã HTML</span>
@@ -1470,36 +1678,35 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
 
                                     <div className="w-full">
                                         {formData.templateId === 'custom-html' ? (
-                                            <div className="bg-slate-900 rounded-[24px] p-6 shadow-2xl border-b-8 border-slate-800 relative overflow-visible flex flex-col h-[600px]">
-                                                {/* Existing HTML Editor Logic */}
-                                                <div className="flex items-center justify-between mb-4 relative z-20 shrink-0">
-                                                    <div className="flex items-center gap-3"><FileCode className="w-5 h-5 text-indigo-400" /><h6 className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">HTML Editor Pro</h6></div>
+                                            <div className="bg-slate-900 rounded-2xl p-5 shadow-xl border-b-8 border-slate-800 relative overflow-visible flex flex-col h-[600px]">
+                                                <div className="flex items-center justify-between mb-3.5 relative z-20 shrink-0">
+                                                    <div className="flex items-center gap-2.5"><FileCode className="w-4 h-4 text-indigo-400" /><h6 className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">HTML Editor Pro</h6></div>
                                                     <div className="flex gap-2">
                                                         <div className="relative">
-                                                            <button onClick={() => setShowVarDropdown(!showVarDropdown)} className="px-3 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-2 border border-white/5"><Braces className="w-3.5 h-3.5 text-violet-400" />Biến động <ChevronDown className="w-3 h-3 opacity-50" /></button>
+                                                            <button onClick={() => setShowVarDropdown(!showVarDropdown)} className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 border border-white/5"><Braces className="w-3 h-3 text-violet-400" />Biến động <ChevronDown className="w-3 h-3 opacity-50" /></button>
                                                             {showVarDropdown && (
                                                                 <>
                                                                     <div className="fixed inset-0 z-30" onClick={() => setShowVarDropdown(false)}></div>
-                                                                    <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden z-40 animate-in fade-in zoom-in-95">
-                                                                        <div className="bg-slate-50 px-4 py-2 border-b border-slate-100"><p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Click để chèn</p></div>
+                                                                    <div className="absolute right-0 top-full mt-1.5 w-64 bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden z-40 animate-in fade-in zoom-in-95">
+                                                                        <div className="bg-slate-50 px-3.5 py-1.5 border-b border-slate-100"><p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Click để chèn</p></div>
                                                                         <div className="max-h-60 overflow-y-auto custom-scrollbar p-1">
                                                                             {MERGE_TAGS.map((tag) => (
-                                                                                <button key={tag.value} onClick={() => insertVariable(tag.value)} className="w-full text-left px-4 py-3 hover:bg-slate-50 flex items-center justify-between group transition-colors rounded-xl"><span className="text-xs font-bold text-slate-700">{tag.label}</span><code className="text-[10px] bg-slate-100 px-1.5 py-0.5 rounded text-slate-500 font-mono group-hover:text-violet-600 group-hover:bg-violet-50">{tag.value}</code></button>
+                                                                                <button key={tag.value} onClick={() => insertVariable(tag.value)} className="w-full text-left px-3 py-2.5 hover:bg-slate-50 flex items-center justify-between group transition-colors rounded-lg"><span className="text-xs font-bold text-slate-700">{tag.label}</span><code className="text-[10px] bg-slate-100 px-1.5 py-0.5 rounded text-slate-500 font-mono group-hover:text-violet-600 group-hover:bg-violet-50">{tag.value}</code></button>
                                                                             ))}
                                                                         </div>
                                                                     </div>
                                                                 </>
                                                             )}
                                                         </div>
-                                                        <button onClick={() => setIsHtmlPreview(!isHtmlPreview)} className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-2">{isHtmlPreview ? <Code className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}{isHtmlPreview ? 'Sửa Code' : 'Xem trước'}</button>
+                                                        <button onClick={() => setIsHtmlPreview(!isHtmlPreview)} className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1.5">{isHtmlPreview ? <Code className="w-3 h-3" /> : <Eye className="w-3 h-3" />}{isHtmlPreview ? 'Sửa Code' : 'Xem trước'}</button>
                                                     </div>
                                                 </div>
-                                                {isHtmlPreview ? <div className="flex-1 w-full bg-white rounded-2xl overflow-hidden shadow-inner relative z-10"><iframe className="w-full h-full" srcDoc={formData.contentBody} title="Preview" sandbox="allow-scripts allow-same-origin" /></div> : <textarea ref={textAreaRef} value={formData.contentBody} onChange={e => setFormData({ ...formData, contentBody: e.target.value })} className="flex-1 w-full bg-black/50 border border-white/10 rounded-2xl p-6 text-indigo-300 font-mono text-sm focus:border-indigo-500 outline-none transition-all resize-none shadow-inner custom-scrollbar relative z-10" placeholder="<html><body><h1>Nhập mã HTML tại đây...</h1></body></html>" spellCheck={false} />}
+                                                {isHtmlPreview ? <div className="flex-1 w-full bg-white rounded-xl overflow-hidden shadow-inner relative z-10"><iframe className="w-full h-full" srcDoc={formData.contentBody} title="Preview" sandbox="allow-scripts allow-same-origin" /></div> : <textarea ref={textAreaRef} value={formData.contentBody} onChange={e => setFormData({ ...formData, contentBody: e.target.value })} className="flex-1 w-full bg-black/50 border border-white/10 rounded-xl p-5 text-indigo-300 font-mono text-sm focus:border-indigo-500 outline-none transition-all resize-none shadow-inner custom-scrollbar relative z-10" placeholder="<html><body><h1>Nhập mã HTML tại đây...</h1></body></html>" spellCheck={false} />}
                                             </div>
                                         ) : (
-                                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
                                                 {/* Left: Template Selector */}
-                                                <div className="space-y-4 lg:col-span-5">
+                                                <div className="space-y-3.5 lg:col-span-6 bg-white p-4 sm:p-5 rounded-xl border border-slate-200 shadow-xs">
                                                     <div className="flex items-center justify-between px-1">
                                                         <label className="text-[11px] font-bold uppercase text-slate-500 tracking-widest">Chọn mẫu thư</label>
                                                         <span className="text-[10px] font-bold text-blue-500">Mới nhất</span>
@@ -1507,7 +1714,7 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                                                     <TemplateSelector
                                                         templates={allTemplates}
                                                         selectedId={formData.templateId}
-                                                        gridClassName="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-3 p-1 pb-8"
+                                                        gridClassName="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 p-1 pb-2"
                                                         onSelect={t => {
                                                             setFormData({ ...formData, templateId: t.id, subject: t.name });
                                                             fetchTemplatePreview(t.id);
@@ -1516,12 +1723,12 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                                                 </div>
 
                                                 {/* Right: Live Preview */}
-                                                <div className="bg-slate-100 rounded-[24px] p-4 border border-slate-200 shadow-sm sticky top-0 h-fit lg:col-span-7">
-                                                    <div className="mb-3">
-                                                        <div className="flex items-center justify-between mb-1.5 min-h-[40px]">
+                                                <div className="bg-slate-100 rounded-xl p-3 sm:p-3.5 border border-slate-200 shadow-xs sticky top-3 h-fit lg:col-span-6">
+                                                    <div className="mb-2.5">
+                                                        <div className="flex items-center justify-between mb-1.5 min-h-[36px]">
                                                             <div className="flex items-center gap-2">
-                                                                <Eye className="w-4 h-4 text-violet-500 shrink-0" />
-                                                                <h4 className="text-sm font-bold text-slate-700 shrink-0">Preview Email</h4>
+                                                                <Eye className="w-3.5 h-3.5 text-violet-500 shrink-0" />
+                                                                <h4 className="text-xs sm:text-sm font-bold text-slate-700 shrink-0">Preview Email</h4>
                                                             </div>
                                                             {formData.templateId && formData.templateId !== 'custom-html' && (
                                                                 <button
@@ -1529,35 +1736,35 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                                                                         setActiveEditTemplateId(formData.templateId || null);
                                                                         setIsEditingTemplate(true);
                                                                     }}
-                                                                    className="px-3 py-1.5 bg-white border border-slate-200 text-slate-600 rounded-full text-xs font-bold hover:text-violet-600 hover:border-violet-200 hover:bg-violet-50 transition-all flex items-center gap-1.5 shadow-sm"
+                                                                    className="px-2.5 py-1 bg-white border border-slate-200 text-slate-600 rounded-full text-[11px] font-bold hover:text-violet-600 hover:border-violet-200 hover:bg-violet-50 transition-all flex items-center gap-1 shadow-xs"
                                                                 >
-                                                                    <Edit3 className="w-3.5 h-3.5" /> Chỉnh sửa Email
+                                                                    <Edit3 className="w-3 h-3" /> Chỉnh sửa Email
                                                                 </button>
                                                             )}
                                                         </div>
                                                         {formData.templateId && (
-                                                            <div className="text-[13px] text-slate-600 font-bold bg-white p-2.5 rounded-xl border border-slate-200 shadow-sm leading-snug">
-                                                                <span className="text-slate-400 font-normal mr-2">Subject:</span>
-                                                                {formData.subject || allTemplates.find(t => t.id === formData.templateId)?.name}
+                                                            <div className="text-xs text-slate-700 font-bold bg-white p-2.5 rounded-lg border border-slate-200 shadow-xs leading-snug flex items-start gap-2">
+                                                                <span className="text-slate-400 font-bold text-[11px] shrink-0 mt-0.5">Subject:</span>
+                                                                <span className="text-slate-900 font-extrabold">{interpolateMergeTags(formData.subject || allTemplates.find(t => t.id === formData.templateId)?.name || '', sampleSubscriber, { variable_fallbacks: formData.config?.variable_fallbacks })}</span>
                                                             </div>
                                                         )}
                                                     </div>
 
-                                                    <div className={`rounded-xl overflow-hidden border border-slate-200 bg-white ${attemptedNext && !formData.templateId ? 'ring-2 ring-rose-300' : ''}`}>
+                                                    <div className={`rounded-lg overflow-hidden border border-slate-200 bg-white ${attemptedNext && !formData.templateId ? 'ring-2 ring-rose-300' : ''}`}>
                                                         {!formData.templateId ? (
-                                                            <div className="h-[600px] flex flex-col items-center justify-center text-slate-400">
-                                                                <Layout className="w-12 h-12 mb-3 opacity-30" />
-                                                                <p className="text-sm font-medium">Select a template to preview</p>
+                                                            <div className="h-[560px] flex flex-col items-center justify-center text-slate-400">
+                                                                <Layout className="w-10 h-10 mb-2 opacity-30" />
+                                                                <p className="text-xs font-medium">Select a template to preview</p>
                                                             </div>
                                                         ) : loadingPreview ? (
-                                                            <div className="h-[600px] flex flex-col items-center justify-center">
-                                                                <Loader2 className="w-8 h-8 animate-spin text-orange-500 mb-2" />
-                                                                <p className="text-xs text-slate-500">Loading preview...</p>
+                                                            <div className="h-[560px] flex flex-col items-center justify-center">
+                                                                <Loader2 className="w-6 h-6 animate-spin text-orange-500 mb-1.5" />
+                                                                <p className="text-[11px] text-slate-500">Đang tải preview...</p>
                                                             </div>
                                                         ) : (
-                                                            <div className="w-full h-[600px] bg-white relative overflow-hidden">
+                                                            <div className="w-full h-[560px] bg-white relative overflow-hidden">
                                                                 <iframe
-                                                                    srcDoc={templatePreviews[formData.templateId] || ''}
+                                                                    srcDoc={interpolateMergeTags(templatePreviews[formData.templateId] || '', sampleSubscriber, { variable_fallbacks: formData.config?.variable_fallbacks })}
                                                                     className="absolute top-0 left-0 w-[150%] h-[150%] border-none origin-top-left"
                                                                     style={{ transform: 'scale(0.666666)' }}
                                                                     title="Template Preview"
@@ -1570,33 +1777,47 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                                             </div>
                                         )}
                                     </div>
+
+                                    {/* Dynamic Variable Fallback Config */}
+                                    {(() => {
+                                        const activeEmailHtml = formData.templateId === 'custom-html'
+                                            ? (formData.contentBody || '')
+                                            : (templatePreviews[formData.templateId] || allTemplates.find(t => t.id === formData.templateId)?.htmlContent || '');
+                                        return activeEmailHtml ? (
+                                            <VariableFallbackConfig
+                                                htmlContent={activeEmailHtml}
+                                                fallbacks={formData.config?.variable_fallbacks || {}}
+                                                onChange={(fbs) => setFormData(prev => ({
+                                                    ...prev,
+                                                    config: {
+                                                        ...(prev.config || {}),
+                                                        variable_fallbacks: fbs
+                                                    }
+                                                }))}
+                                            />
+                                        ) : null;
+                                    })()}
                                 </div>
                             </TabTransition>
                         )}
 
                         {step === 3 && (
-                            <TabTransition className="space-y-6 max-w-5xl mx-auto">
-                                <div className="text-center mb-6">
-                                    <h4 className="text-2xl font-bold text-slate-800 tracking-tight">Đối tượng mục tiêu</h4>
-                                    <p className="text-slate-400 text-xs mt-1 font-medium italic">Việc chọn đúng tệp khách hàng giúp tăng 50% hiệu quả chuyển đổi.</p>
-                                </div>
+                            <TabTransition className="space-y-4 w-full mx-auto">
                                 <AudienceSelector
                                     allLists={allLists}
                                     allSegments={allSegments}
                                     allTags={allTags}
                                     selectedTarget={formData.target as any}
                                     onTargetChange={t => setFormData({ ...formData, target: { ...formData.target!, ...t } })}
-                                    // Fix: Pass existingEmails and onImport
                                     existingEmails={new Set(allSubscribers.map(s => s.email))}
-                                    onImport={handleQuickImport} // This is the new handleQuickImport which uses onImport's signature
+                                    onImport={handleQuickImport}
                                     campaignType={formData.type}
                                     error={!!errors.target}
                                 />
                             </TabTransition>
                         )}
                         {step === 4 && (
-                            <TabTransition className="space-y-6 max-w-4xl mx-auto">
-                                <div className="text-center mb-6"><h4 className="text-2xl font-bold text-slate-800 tracking-tight">Kịch bản Nhắc nhở</h4></div>
+                            <TabTransition className="space-y-4 w-full mx-auto">
                                 <ReminderManager
                                     reminders={formData.reminders || []}
                                     templates={allTemplates}
@@ -1614,7 +1835,7 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                             </TabTransition>
                         )}
                         {step === 5 && (
-                            <TabTransition>
+                            <TabTransition className="w-full mx-auto">
                                 <LaunchPreview
                                     formData={formData}
                                     allLists={allLists}
@@ -1636,7 +1857,7 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                     </div>
 
                     {/* STEP NAVIGATION FOOTER */}
-                    <div className="px-8 py-5 bg-white border-t border-slate-100 flex justify-between items-center shrink-0">
+                    <div className="px-4 py-3.5 bg-white border-t border-slate-100 flex justify-between items-center shrink-0">
                         <Button
                             variant="ghost"
                             onClick={step === 1 ? handleIntentClose : () => setStep(step - 1)}
@@ -1674,10 +1895,6 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                                             setIsSubmitting(true);
                                             try {
                                                 const savedPayload = await onSaveDraft({ ...formData, status: 'pending_approval' } as any);
-                                                // [FIX P13-C1] Replace hardcoded fetch('/api/approvals.php') with api.post().
-                                                // Old code used a hardcoded /api/ path — fails in production where API is
-                                                // at https://automation.ideas.edu.vn/mail_api (different origin/path).
-                                                // Also was not awaited and had no catch → approval request silently failed.
                                                 if (savedPayload) {
                                                     try {
                                                         await api.post<{ success: boolean }>('approvals?action=request', {
@@ -1689,16 +1906,26 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                                                     }
                                                 }
                                                 onClose();
+                                            } catch (e) {
+                                                toast.error('Không thể lưu chiến dịch');
                                             } finally {
                                                 setIsSubmitting(false);
                                             }
                                         }
                                     }}
-                                    disabled={isSubmitting || !!errors.schedule}
-                                    className={`${canSend ? 'bg-slate-900 hover:bg-black' : 'bg-emerald-600 hover:bg-emerald-700'} text-white px-10 py-3 rounded-xl shadow-xl hover:scale-105 transition-all font-black flex items-center gap-2`}
+                                    disabled={isSubmitting}
+                                    className={`${canSend ? 'bg-gradient-to-r from-blue-600 to-indigo-600 shadow-blue-500/25' : 'bg-gradient-to-r from-amber-500 to-orange-500 shadow-amber-500/25'} text-white px-8 py-3 rounded-xl shadow-lg hover:scale-105 transition-all font-bold group disabled:opacity-50 disabled:cursor-not-allowed`}
                                 >
                                     {isSubmitting ? (
-                                        <><Loader2 className="w-4 h-4 animate-spin" /> ĐANG XỬ LÝ...</>
+                                        <>
+                                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                            Đang xử lý...
+                                        </>
+                                    ) : canSend ? (
+                                        <>
+                                            XÁC NHẬN & GỬI
+                                            <Send className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                                        </>
                                     ) : (
                                         canSend
                                             ? (formData.scheduledAt ? 'LÊN LỊCH GỬI' : 'GỬI CHIẾN DỊCH NGAY')
@@ -1923,6 +2150,23 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                 campaignName={formData.name || ''}
                 campaignType={formData.type}
             />
+            <PreSendReviewModal
+                isOpen={showPreSendModal}
+                onClose={() => setShowPreSendModal(false)}
+                onConfirmSend={handleConfirmPreSend}
+                formData={formData}
+                allLists={allLists}
+                allSegments={allSegments}
+                allTags={allTags}
+                allTemplates={allTemplates}
+                znsTemplates={znsTemplates}
+                allFlows={allFlows}
+                isSubmitting={isSubmitting}
+                connectFlow={connectFlow}
+                setConnectFlow={setConnectFlow}
+                activateFlowId={activateFlowId}
+                setActivateFlowId={setActivateFlowId}
+            />
             {/* AI Email Editor Modal (Quick edit) */}
             {isEditingTemplate && activeEditTemplateId && (
                 <EmailEditor
@@ -1954,45 +2198,39 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({
                 />
             )}
             {/* Confirm modal when closing wizard with unsaved changes */}
-            {showCloseConfirm && (
-                <div className="fixed inset-0 z-[250] flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-slate-950/70" onClick={() => setShowCloseConfirm(false)}/>
-                    <div className="relative bg-white rounded-3xl shadow-2xl p-6 max-w-sm w-full animate-in zoom-in-95 duration-200">
+            {showUnsavedConfirmModal && (
+                <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 animate-in fade-in duration-200">
+                    <div className="absolute inset-0 bg-black/80 backdrop-blur-[2px]" onClick={() => setShowUnsavedConfirmModal(false)} />
+                    <div className="relative bg-white rounded-3xl shadow-2xl p-7 md:p-8 max-w-lg w-full animate-in zoom-in-95 duration-300 border border-slate-100">
                         <button
-                            onClick={() => setShowCloseConfirm(false)}
-                            className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors p-1"
+                            onClick={() => setShowUnsavedConfirmModal(false)}
+                            className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 transition-colors p-2 rounded-full hover:bg-slate-100 cursor-pointer"
+                            title="Đóng"
                         >
                             <X className="w-5 h-5" />
                         </button>
-                        <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 mb-4 mx-auto">
-                            <AlertCircle className="w-6 h-6" />
+                        <div className="w-14 h-14 rounded-2xl bg-amber-50 text-amber-500 border border-amber-200/80 flex items-center justify-center mb-4 mx-auto shadow-xs">
+                            <AlertCircle className="w-7 h-7" />
                         </div>
-                        <h3 className="text-xl font-bold text-slate-800 text-center mb-2">Chưa lưu chiến dịch</h3>
-                        <p className="text-sm text-slate-500 text-center mb-6">Bạn có muốn lưu thành bản nháp trước khi thoát không?</p>
-                        <div className="flex flex-col gap-3">
+                        <h3 className="text-xl font-black text-slate-800 text-center mb-2">Lưu bản nháp chiến dịch?</h3>
+                        <p className="text-sm text-slate-500 text-center mb-6 leading-relaxed max-w-sm mx-auto">
+                            Chiến dịch của bạn có các thay đổi chưa lưu. Bạn có muốn lưu lại thành bản nháp để tiếp tục sau, hay hủy bỏ không lưu?
+                        </p>
+                        <div className="grid grid-cols-2 gap-3.5 pt-2">
                             <button
-                                onClick={async () => {
-                                    setIsSubmitting(true);
-                                    try {
-                                        await onSaveDraft(formData);
-                                        setShowCloseConfirm(false);
-                                        onClose();
-                                    } finally {
-                                        setIsSubmitting(false);
-                                    }
-                                }}
-                                className="w-full py-3 bg-gradient-to-r from-[#683df2] to-violet-600 hover:from-[#561dd0] hover:to-violet-700 text-white rounded-xl font-bold transition-all active:scale-[0.98] shadow-md shadow-[#683df2]/15"
+                                onClick={handleDiscardAndClose}
+                                disabled={isSubmitting}
+                                className="w-full py-3.5 px-4 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl font-bold transition-colors text-xs uppercase tracking-wider cursor-pointer border border-rose-200/60"
                             >
-                                Lưu thành Bản nháp
+                                Hủy & Không lưu
                             </button>
                             <button
-                                onClick={() => {
-                                    setShowCloseConfirm(false);
-                                    onClose();
-                                }}
-                                className="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold transition-colors"
+                                onClick={handleConfirmSaveDraft}
+                                disabled={isSubmitting}
+                                className="w-full py-3.5 px-4 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-xl font-bold transition-all shadow-md shadow-blue-500/25 flex items-center justify-center gap-2 cursor-pointer text-xs uppercase tracking-wider"
                             >
-                                Bỏ qua & Thoát
+                                <Save className="w-4 h-4" />
+                                {isSubmitting ? 'Đang lưu...' : 'Lưu Bản nháp'}
                             </button>
                         </div>
                     </div>

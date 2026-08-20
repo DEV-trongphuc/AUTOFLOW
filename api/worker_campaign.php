@@ -566,10 +566,13 @@ if (!function_exists('runWorkerCampaign')) {
                                 }
                             }
 
+                            $campConfig = json_decode($campaign['config'] ?? '{}', true) ?: [];
                             $context = [
                                 'unsubscribe_url' => $apiUrl . "/webhook.php?type=unsubscribe&sid=$subId&cid=$cid",
                                 'campaign_name' => $cName,
-                                'vouchers_batch' => $vouchersBatch
+                                'vouchers_batch' => $vouchersBatch,
+                                'variable_fallbacks' => $campConfig['variable_fallbacks'] ?? [],
+                                'config' => $campConfig
                             ];
                             $personalHtml = replaceMergeTags($currentHtml, $sub, $context);
                             $personalSubject = replaceMergeTags($currentSubject, $sub, $context);
@@ -632,7 +635,7 @@ if (!function_exists('runWorkerCampaign')) {
                                     'invoice_id'   => 20,
                                 ];
                                 foreach ($mappedParams as $tKey => $subField) {
-                                    $val = replaceMergeTags($subField, $sub, []);
+                                    $val = replaceMergeTags($subField, $sub, $context);
                                     if ($val === '') {
                                         $missingParams[] = $tKey;
                                     }

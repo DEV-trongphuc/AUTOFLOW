@@ -192,23 +192,56 @@ const RichText: React.FC<RichTextProps> = ({ html, onChange, placeholder, classN
     const execLocalCommand = (command: string, value?: string) => {
         const el = elementRef.current;
         if (!el || disabled) return;
+
+        // Restore focus and selection if needed
         if (document.activeElement !== el) {
             el.focus();
             const range = savedRangeRef.current;
             const sel = window.getSelection();
-            if (range && sel) { sel.removeAllRanges(); sel.addRange(range); }
+            if (range && sel) {
+                sel.removeAllRanges();
+                sel.addRange(range);
+            }
         }
+
         const sel = window.getSelection();
-        if (sel && sel.isCollapsed) {
-            const r = document.createRange();
-            r.selectNodeContents(el);
-            sel.removeAllRanges();
-            sel.addRange(r);
+        const isInsertionCmd = ['insertText', 'insertHTML', 'createLink', 'insertImage'].includes(command);
+
+        // Only select all text if the command is a block formatting command (like alignment) AND nothing is selected.
+        // For inline insertion commands (insertText, insertHTML, etc.), NEVER select all!
+        if (!isInsertionCmd && ['justifyLeft', 'justifyCenter', 'justifyRight', 'justifyFull', 'formatBlock'].includes(command)) {
+            if (sel && sel.isCollapsed) {
+                const r = document.createRange();
+                r.selectNodeContents(el);
+                sel.removeAllRanges();
+                sel.addRange(r);
+            }
         }
-        if (['fontSize', 'fontName', 'foreColor'].includes(command)) {
+
+        if (['fontSize', 'fontName', 'foreColor', 'hiliteColor'].includes(command)) {
             document.execCommand('styleWithCSS', false, 'true');
         }
-        document.execCommand(command, false, value);
+
+        if (command === 'insertText' && value) {
+            const success = document.execCommand('insertText', false, value);
+            if (!success) {
+                const currentSel = window.getSelection();
+                if (currentSel && currentSel.rangeCount > 0) {
+                    const range = currentSel.getRangeAt(0);
+                    range.deleteContents();
+                    const textNode = document.createTextNode(value);
+                    range.insertNode(textNode);
+                    range.setStartAfter(textNode);
+                    range.setEndAfter(textNode);
+                    currentSel.removeAllRanges();
+                    currentSel.addRange(range);
+                }
+            }
+        } else {
+            document.execCommand(command, false, value);
+        }
+
+        saveRange();
         handleInput();
     };
 

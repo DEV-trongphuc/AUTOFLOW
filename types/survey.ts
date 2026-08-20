@@ -220,6 +220,7 @@ export interface SurveyAnswer {
   question_id: string;
   block_id: string;
   type: QuestionType;
+  label?: string;
   answer_text?: string;
   answer_num?: number;
   answer_json?: string[] | number[] | Record<string, any>;

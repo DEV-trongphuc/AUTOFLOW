@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
     CheckCircle2, Mail, Users, Calendar, Target, Layout, ShieldCheck, Send, GitMerge, AlertCircle, Clock, Loader2, List, Layers, Sparkles, ChevronDown, CalendarDays, Tag, Play, Monitor, Smartphone, ExternalLink, Paperclip, File as FileIcon, X, Filter, Plus, Info, HelpCircle, ToggleLeft, ToggleRight, AlertTriangle, ArrowRight, ArrowDown, FileCheck, Search, Link2
 } from 'lucide-react';
@@ -15,6 +15,7 @@ import ConfirmModal from '../common/ConfirmModal';
 import { MultiFileUploadModal } from './MultiFileUploadModal';
 import FileLibraryModal from '../common/FileLibraryModal';
 import { API_BASE_URL } from '@/utils/config';
+import { interpolateMergeTags } from '../../utils/formatters';
 
 
 
@@ -219,6 +220,7 @@ const LaunchPreview: React.FC<LaunchPreviewProps> = ({
     const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
     const [isLibraryOpen, setIsLibraryOpen] = useState(false);
     const [attachmentToDelete, setAttachmentToDelete] = useState<string | null>(null);
+    const [attachmentPage, setAttachmentPage] = useState(1);
 
     const executeRemoveAttachment = async () => {
         if (!attachmentToDelete) return;
@@ -285,6 +287,35 @@ const LaunchPreview: React.FC<LaunchPreviewProps> = ({
     }, [isZns, formData.id]);
 
     const contentToRender = formData.templateId === 'custom-html' ? formData.contentBody : (selectedTemplate?.htmlContent || '');
+
+    const interpolatedPreviewHtml = useMemo(() => {
+        if (!contentToRender) return '';
+        const sampleSub = {
+            firstName: 'Nguyễn',
+            lastName: 'Văn A',
+            fullName: 'Nguyễn Văn A',
+            name: 'Nguyễn Văn A',
+            email: formData.senderEmail || 'khachhang@example.com',
+            phone: '0901234567',
+            company: 'Công ty Cổ phần Mẫu',
+            companyName: 'Công ty Cổ phần Mẫu',
+            company_name: 'Công ty Cổ phần Mẫu',
+            jobTitle: 'Trưởng phòng Kinh doanh',
+            job_title: 'Trưởng phòng Kinh doanh',
+            city: 'TP. Hồ Chí Minh',
+            address: '123 Đường Nguyễn Huệ, Quận 1',
+            ...(formData.target?.sampleSubscriber || {})
+        };
+        const previewContext = {
+            campaign_name: formData.name || 'Chiến dịch Mẫu',
+            campaignName: formData.name || 'Chiến dịch Mẫu',
+            unsubscribe_url: `${API_BASE_URL}/webhook.php?type=unsubscribe&sid=preview_test&cid=${formData.id || ''}`,
+            unsubscribeLink: `${API_BASE_URL}/webhook.php?type=unsubscribe&sid=preview_test&cid=${formData.id || ''}`,
+            variable_fallbacks: formData.config?.variable_fallbacks || {},
+            fallbacks: formData.config?.variable_fallbacks || {}
+        };
+        return interpolateMergeTags(contentToRender, sampleSub, previewContext);
+    }, [contentToRender, formData.senderEmail, formData.name, formData.id, formData.config?.variable_fallbacks, formData.target?.sampleSubscriber]);
 
     return (
         <div className="space-y-8 animate-in zoom-in-95 duration-500 pb-10">
@@ -394,35 +425,35 @@ const LaunchPreview: React.FC<LaunchPreviewProps> = ({
             )}
 
             {/* Main Grid: 2 Columns */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 xl:gap-8 items-start">
 
-                {/* COLUMN 1: SUMMARY & AUDIENCE */}
-                <div className="space-y-6">
-                    <div className="bg-white border border-slate-100 rounded-[32px] overflow-hidden shadow-sm h-full flex flex-col">
+                {/* COLUMN 1: SUMMARY & AUDIENCE (7 Cols on XL) */}
+                <div className="space-y-4 xl:col-span-7">
+                    <div className="bg-white border border-slate-200/90 rounded-2xl overflow-hidden shadow-xs h-full flex flex-col">
                         {/* Summary Header */}
-                        <div className="p-8 border-b border-slate-100 relative overflow-hidden">
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-slate-50 rounded-bl-[60px] -mr-10 -mt-10"></div>
-                            <h5 className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-4 flex items-center gap-2"><Target className="w-3 h-3 text-orange-500" /> Tổng quan chiến dịch</h5>
+                        <div className="p-4 sm:p-5 border-b border-slate-100 relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-slate-50 rounded-bl-[60px] -mr-10 -mt-10 pointer-events-none"></div>
+                            <h5 className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2.5 flex items-center gap-2"><Target className="w-3.5 h-3.5 text-orange-500" /> Tổng quan chiến dịch</h5>
                             <div className="space-y-1 relative z-10">
-                                <p className="text-xl font-black text-slate-800 leading-tight truncate" title={formData.name}>{formData.name}</p>
-                                <p className="text-sm font-medium text-slate-500 truncate">{isZns ? selectedTemplate?.template_name : formData.subject}</p>
+                                <p className="text-lg sm:text-xl font-black text-slate-800 leading-tight truncate" title={formData.name}>{formData.name}</p>
+                                <p className="text-xs sm:text-sm font-medium text-slate-500 truncate">{isZns ? selectedTemplate?.template_name : formData.subject}</p>
                             </div>
-                            <div className="flex items-center gap-2 mt-4 relative z-10">
-                                <Badge variant="neutral" className="px-3 py-1 text-[10px]"><ShieldCheck className="w-3 h-3 mr-1" /> {isZns ? `ZNS Template: ${selectedTemplate?.template_id}` : formData.senderEmail}</Badge>
+                            <div className="flex items-center gap-2 mt-3 relative z-10">
+                                <Badge variant="neutral" className="px-2.5 py-1 text-[10px] font-bold"><ShieldCheck className="w-3 h-3 mr-1 text-emerald-600" /> {isZns ? `ZNS Template: ${selectedTemplate?.template_id}` : formData.senderEmail}</Badge>
                             </div>
                         </div>
 
                         {/* P1 FIX: Unsubscribe Link Preview */}
                         {!isZns && (
-                            <div className="px-8 pb-6">
-                                <div className="bg-blue-50 border border-blue-200 rounded-2xl p-5">
-                                    <div className="flex items-start gap-3">
-                                        <div className="p-2 bg-blue-100 rounded-xl">
-                                            <Link2 className="w-5 h-5 text-blue-600" />
+                            <div className="p-4 sm:p-5 pb-0">
+                                <div className="bg-blue-50/70 border border-blue-200/80 rounded-xl p-3.5">
+                                    <div className="flex items-start gap-2.5">
+                                        <div className="p-1.5 bg-blue-100 text-blue-600 rounded-lg shrink-0 mt-0.5">
+                                            <Link2 className="w-4 h-4" />
                                         </div>
                                         <div className="flex-1">
-                                            <h4 className="text-sm font-bold text-blue-900 mb-1">Unsubscribe Link (CAN-SPAM Compliance)</h4>
-                                            <p className="text-xs text-blue-700">Link Hủy đăng kýsẽ tự động được thêm vào cuối mỗi email bởi hệ thống.</p>
+                                            <h4 className="text-xs font-bold text-blue-900">Unsubscribe Link (CAN-SPAM Compliance)</h4>
+                                            <p className="text-[11px] text-blue-700 font-medium mt-0.5 leading-relaxed">Link Hủy đăng ký sẽ tự động được thêm vào cuối mỗi email bởi hệ thống.</p>
                                         </div>
                                     </div>
                                 </div>
@@ -430,68 +461,68 @@ const LaunchPreview: React.FC<LaunchPreviewProps> = ({
                         )}
 
                         {/* Audience Section */}
-                        <div className="p-8 bg-slate-50/50 flex-1 flex flex-col">
-                            <div className="flex justify-between items-end mb-6">
-                                <h5 className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2"><Users className="w-3 h-3 text-orange-500" /> Đối tượng nhận tin</h5>
+                        <div className="p-4 sm:p-5 bg-slate-50/40 flex-1 flex flex-col">
+                            <div className="flex justify-between items-center mb-3">
+                                <h5 className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2"><Users className="w-3.5 h-3.5 text-orange-500" /> Đối tượng nhận tin</h5>
                             </div>
 
-                            <div className="space-y-3 flex-1">
+                            <div className="space-y-2.5 flex-1">
                                 {/* Lists Rendering */}
                                 {formData.target?.listIds.map((id: string) => (
-                                    <div key={id} className="flex items-center justify-between px-4 py-3 bg-white border border-slate-200 rounded-2xl shadow-sm">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center border border-indigo-100"><List className="w-4 h-4" /></div>
+                                    <div key={id} className="flex items-center justify-between px-3.5 py-2.5 bg-white border border-slate-200/80 rounded-xl shadow-xs">
+                                        <div className="flex items-center gap-2.5">
+                                            <div className="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center border border-indigo-100 shrink-0"><List className="w-3.5 h-3.5" /></div>
                                             <div><p className="text-xs font-bold text-slate-800">{allLists.find(l => l.id === id)?.name}</p><p className="text-[9px] text-slate-400 font-bold uppercase tracking-wide">Static List</p></div>
                                         </div>
-                                        <span className="text-[10px] font-bold text-slate-600 bg-slate-100 px-3 py-1 rounded-full">{allLists.find(l => l.id === id)?.count || 0}</span>
+                                        <span className="text-[10px] font-bold text-slate-600 bg-slate-100 px-2.5 py-0.5 rounded-full">{allLists.find(l => l.id === id)?.count || 0}</span>
                                     </div>
                                 ))}
 
                                 {/* Segments Rendering */}
                                 {formData.target?.segmentIds.map((id: string) => (
-                                    <div key={id} className="flex items-center justify-between px-4 py-3 bg-white border border-slate-200 rounded-2xl shadow-sm">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-full bg-orange-50 text-[#ca7900] flex items-center justify-center border border-orange-100"><Layers className="w-4 h-4" /></div>
+                                    <div key={id} className="flex items-center justify-between px-3.5 py-2.5 bg-white border border-slate-200/80 rounded-xl shadow-xs">
+                                        <div className="flex items-center gap-2.5">
+                                            <div className="w-7 h-7 rounded-lg bg-orange-50 text-[#ca7900] flex items-center justify-center border border-orange-100 shrink-0"><Layers className="w-3.5 h-3.5" /></div>
                                             <div><p className="text-xs font-bold text-slate-800">{allSegments.find(s => s.id === id)?.name}</p><p className="text-[9px] text-slate-400 font-bold uppercase tracking-wide">Dynamic Segment</p></div>
                                         </div>
-                                        <span className="text-[10px] font-bold text-slate-600 bg-slate-100 px-3 py-1 rounded-full">{allSegments.find(s => s.id === id)?.count || 0}</span>
+                                        <span className="text-[10px] font-bold text-slate-600 bg-slate-100 px-2.5 py-0.5 rounded-full">{allSegments.find(s => s.id === id)?.count || 0}</span>
                                     </div>
                                 ))}
 
                                 {/* Tags Rendering */}
                                 {formData.target?.tagIds?.map((tagName: string) => (
-                                    <div key={tagName} className="flex items-center justify-between px-4 py-3 bg-white border border-slate-200 rounded-2xl shadow-sm">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100"><Tag className="w-4 h-4" /></div>
+                                    <div key={tagName} className="flex items-center justify-between px-3.5 py-2.5 bg-white border border-slate-200/80 rounded-xl shadow-xs">
+                                        <div className="flex items-center gap-2.5">
+                                            <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100 shrink-0"><Tag className="w-3.5 h-3.5" /></div>
                                             <div><p className="text-xs font-bold text-slate-800">{tagName}</p><p className="text-[9px] text-slate-400 font-bold uppercase tracking-wide">Tag Group</p></div>
                                         </div>
-                                        <span className="text-[10px] font-bold text-slate-600 bg-slate-100 px-3 py-1 rounded-full">{allTags.find(t => t.name === tagName)?.count || 0}</span>
+                                        <span className="text-[10px] font-bold text-slate-600 bg-slate-100 px-2.5 py-0.5 rounded-full">{allTags?.find(t => t.name === tagName)?.count || 0}</span>
                                     </div>
                                 ))}
 
-                                {(!formData.target?.listIds.length && !formData.target?.segmentIds.length && !formData.target?.tagIds?.length) && (
-                                    <div className="text-center py-8 text-slate-400 text-xs italic bg-slate-100/50 rounded-[24px] border-2 border-dashed border-slate-200">Chưa chọn đối tượng nào</div>
+                                {(!formData.target?.listIds?.length && !formData.target?.segmentIds?.length && !formData.target?.tagIds?.length) && (
+                                    <div className="text-center py-6 text-slate-400 text-xs italic bg-slate-100/50 rounded-xl border border-dashed border-slate-200">Chưa chọn đối tượng nào</div>
                                 )}
                             </div>
 
                             {/* Reach Estimate Styled like SUM at Bottom */}
-                            <div className="mt-6 pt-4 border-t border-slate-200 flex justify-end gap-4">
-                                <div className="flex items-center gap-4 bg-slate-100 px-6 py-3 rounded-2xl border border-slate-200 text-slate-600 min-w-[200px] justify-between">
-                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Tổng Reach</span>
-                                    <div className="flex items-center gap-2">
-                                        <Users className="w-4 h-4 text-slate-400" />
-                                        <span className="text-xl font-black leading-none">{estimatedReach.toLocaleString()}</span>
+                            <div className="mt-4 pt-3 border-t border-slate-200/80 flex flex-wrap justify-end gap-3">
+                                <div className="flex items-center gap-3 bg-white px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 min-w-[160px] justify-between shadow-xs">
+                                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Tổng Reach</span>
+                                    <div className="flex items-center gap-1.5">
+                                        <Users className="w-3.5 h-3.5 text-slate-400" />
+                                        <span className="text-base font-black leading-none">{estimatedReach.toLocaleString()}</span>
                                     </div>
                                 </div>
 
                                 {isZns && (() => {
                                     const znsPrice = selectedTemplate?.template_data?.detail?.price_uid || selectedTemplate?.template_data?.detail?.price || selectedTemplate?.template_data?.raw?.price || 300;
                                     return (
-                                        <div className="flex items-center gap-4 bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-3 rounded-2xl shadow-xl shadow-blue-200 text-white min-w-[200px] justify-between transition-all hover:scale-[1.02]">
-                                            <span className="text-[10px] font-bold text-blue-200 uppercase tracking-widest">Chi phí ước tính</span>
-                        <div className="flex items-center gap-2">
-                                                <Sparkles className="w-4 h-4 text-[#ffa900] animate-pulse" />
-                                                <span className="text-xl font-black leading-none">{(estimatedReach * znsPrice).toLocaleString()}<span className="text-[10px] ml-1 font-bold">đ</span></span>
+                                        <div className="flex items-center gap-3 bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-2.5 rounded-xl shadow-xs text-white min-w-[160px] justify-between transition-all">
+                                            <span className="text-[9px] font-bold text-blue-200 uppercase tracking-widest">Chi phí ước tính</span>
+                                            <div className="flex items-center gap-1.5">
+                                                <Sparkles className="w-3.5 h-3.5 text-[#ffa900] animate-pulse" />
+                                                <span className="text-base font-black leading-none">{(estimatedReach * znsPrice).toLocaleString()}<span className="text-[9px] ml-0.5 font-bold">đ</span></span>
                                             </div>
                                         </div>
                                     );
@@ -500,7 +531,6 @@ const LaunchPreview: React.FC<LaunchPreviewProps> = ({
 
                             {/* [BUG-13 FIX] SES Send-Time Estimate — show when email audience > 1,000 */}
                             {!isZns && estimatedReach > 1000 && (() => {
-                                // SES rate: 10 emails/s shared total (sesAcquireRateSlot global limiter)
                                 const SES_RATE = 10;
                                 const totalSeconds = Math.ceil(estimatedReach / SES_RATE);
                                 const minutes = Math.floor(totalSeconds / 60);
@@ -509,18 +539,18 @@ const LaunchPreview: React.FC<LaunchPreviewProps> = ({
                                     ? `${minutes} phút${seconds > 0 ? ` ${seconds} giây` : ''}`
                                     : `${seconds} giây`;
                                 return (
-                                    <div className="mt-3 p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-3 animate-in slide-in-from-bottom-2 duration-300">
-                                        <div className="p-1.5 bg-amber-400 text-white rounded-lg shrink-0 mt-0.5">
+                                    <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-2.5 animate-in slide-in-from-bottom-2 duration-300">
+                                        <div className="p-1 bg-amber-400 text-white rounded-md shrink-0 mt-0.5">
                                             <Clock className="w-3.5 h-3.5" />
                                         </div>
-                                        <div className="flex-1">
+                                        <div className="flex-1 space-y-0.5">
                                             <p className="text-[10px] font-black text-amber-800 uppercase tracking-widest">Thời gian gửi ước tính</p>
-                                            <p className="text-sm font-black text-amber-900 mt-0.5">
+                                            <p className="text-xs font-black text-amber-900">
                                                 ~{timeLabel}
                                                 <span className="text-[10px] font-bold text-amber-600 ml-2">({estimatedReach.toLocaleString()} emails × 10/s)</span>
                                             </p>
-                                            <p className="text-[10px] text-amber-700 font-medium mt-1">
-                                                Hệ thống giới hạn 10 email/giây để đảm bảo ổn định SES. Không cần giữ trình duyệt mở — worker chạy ngầm độc lập.
+                                            <p className="text-[10px] text-amber-700 font-medium leading-relaxed">
+                                                Hệ thống giới hạn 10 email/giây để đảm bảo ổn định SES. Worker chạy ngầm độc lập.
                                             </p>
                                         </div>
                                     </div>
@@ -531,30 +561,30 @@ const LaunchPreview: React.FC<LaunchPreviewProps> = ({
                     </div>
                 </div>
 
-                {/* COLUMN 2: ATTACHMENTS, TIMING & FLOW */}
-                <div className="space-y-6">
+                {/* COLUMN 2: ATTACHMENTS, TIMING & FLOW (5 Cols on XL) */}
+                <div className="space-y-4 xl:col-span-5">
 
                     {/* Automation Connection Logic */}
                     {linkedFlow ? (
-                        <div className={`p-6 rounded-[32px] border-2 transition-all group ${activeFlow.status === 'active' ? 'bg-emerald-50 border-emerald-200' : 'bg-amber-50 border-amber-200'}`}>
+                        <div className={`p-4 rounded-2xl border transition-all group ${activeFlow.status === 'active' ? 'bg-emerald-50/70 border-emerald-200' : 'bg-amber-50/70 border-amber-200'}`}>
                             <div className="flex items-start justify-between">
-                                <div className="flex items-center gap-4">
-                                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${activeFlow.status === 'active' ? 'bg-emerald-500 text-white' : 'bg-amber-600 text-white'}`}>
-                                        <GitMerge className="w-6 h-6" />
+                                <div className="flex items-center gap-3">
+                                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${activeFlow.status === 'active' ? 'bg-emerald-500 text-white shadow-xs' : 'bg-amber-600 text-white shadow-xs'}`}>
+                                        <GitMerge className="w-4.5 h-4.5" />
                                     </div>
                                     <div>
                                         <div className="flex items-center gap-2">
                                             <h4 className="text-sm font-bold text-slate-800">Đã kết nối Flow: {activeFlow.name}</h4>
-                                            <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-md ${activeFlow.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>{activeFlow.status}</span>
+                                            <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded ${activeFlow.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>{activeFlow.status}</span>
                                         </div>
-                                        <div className="mt-1 flex items-center gap-2 text-[11px] font-medium opacity-80">
-                                            {activeFlow.status === 'active' ? <span className="text-emerald-700 flex items-center gap-1"><Play className="w-3 h-3" /> Automation sẽ chạy ngay khi Campaign gửi.</span> : <span className="text-amber-700 flex items-center gap-1"><AlertCircle className="w-3 h-3" /> Automation đang tắt. Còn kích hoạt để chạy.</span>}
+                                        <div className="mt-0.5 flex items-center gap-1.5 text-xs font-medium opacity-80">
+                                            {activeFlow.status === 'active' ? <span className="text-emerald-700 flex items-center gap-1"><Play className="w-3 h-3" /> Automation sẽ chạy khi Campaign gửi.</span> : <span className="text-amber-700 flex items-center gap-1"><AlertCircle className="w-3 h-3" /> Automation đang tắt.</span>}
                                         </div>
                                     </div>
                                 </div>
                             </div>
                             {activeFlow.status !== 'active' && !isAlreadySent && (
-                                <div className="mt-4 pt-4 border-t border-amber-200/50 flex items-center gap-3">
+                                <div className="mt-3 pt-3 border-t border-amber-200/50 flex items-center gap-2">
                                     <Checkbox
                                         id="activate-flow"
                                         checked={activateLinkedFlow}
@@ -565,40 +595,42 @@ const LaunchPreview: React.FC<LaunchPreviewProps> = ({
                             )}
                         </div>
                     ) : (
-                        <Card className={`p-6 border-2 transition-all rounded-[32px] ${connectFlow ? 'bg-violet-50/50 border-violet-200' : 'bg-white border-slate-100'}`}>
+                        <div className={`p-4 border transition-all rounded-2xl ${connectFlow ? 'bg-violet-50/50 border-violet-200 shadow-xs' : 'bg-white border-slate-200/90 shadow-xs'}`}>
                             <div
                                 className={`flex items-center justify-between group ${isAlreadySent ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
                                 onClick={() => !isAlreadySent && setConnectFlow(!connectFlow)}
                             >
-                                <div className="flex items-center gap-4">
-                                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-colors ${connectFlow ? 'bg-violet-500 text-white' : 'bg-slate-100 text-slate-400'}`}><GitMerge className="w-6 h-6" /></div>
-                                    <div>
-                                        <h4 className={`text-sm font-bold transition-colors ${connectFlow ? 'text-violet-900' : 'text-slate-700'}`}>Kích hoạt chăm sóc sau chiến dịch?</h4>
-                                        <p className="text-[11px] text-slate-500 mt-0.5 font-medium max-w-sm">
-                                            {isAlreadySent ? "Không thể bật automation vì chiến dịch này đã bắt đầu chạy." : "Tự động gửi email chăm sóc khi Khách hàng nhận được chiến dịch này."}
+                                <div className="flex items-center gap-3">
+                                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors shrink-0 ${connectFlow ? 'bg-violet-500 text-white shadow-xs' : 'bg-slate-100 text-slate-400'}`}>
+                                        <GitMerge className="w-4.5 h-4.5" />
+                                    </div>
+                                    <div className="space-y-0.5">
+                                        <h4 className={`text-sm font-bold transition-colors ${connectFlow ? 'text-violet-900' : 'text-slate-800'}`}>Kích hoạt chăm sóc sau chiến dịch?</h4>
+                                        <p className="text-xs text-slate-500 font-medium max-w-sm leading-relaxed">
+                                            {isAlreadySent ? "Không thể bật automation vì chiến dịch đã gửi." : "Tự động gửi email chăm sóc khi Khách hàng nhận chiến dịch."}
                                         </p>
                                     </div>
                                 </div>
-                                <div className={`w-12 h-6 rounded-full p-1 border-opacity-30 transition-all duration-300 flex items-center shrink-0 ${connectFlow ? 'bg-violet-600 justify-end' : 'bg-slate-200 justify-start'}`}>
-                                    <div className="w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-300"></div>
+                                <div className={`w-11 h-6 rounded-full p-0.5 transition-all duration-300 flex items-center shrink-0 ml-3 ${connectFlow ? 'bg-violet-600 justify-end' : 'bg-slate-200 justify-start'}`}>
+                                    <div className="w-5 h-5 bg-white rounded-full shadow-xs"></div>
                                 </div>
                             </div>
 
                             {connectFlow && !isAlreadySent && (
-                                <div className="mt-6 pt-6 border-t border-violet-100 animate-in slide-in-from-top-2">
-                                    <label className="text-[10px] font-bold uppercase text-slate-400 mb-3 block">Chọn kịch bản muốn kết nối:</label>
+                                <div className="mt-3.5 pt-3.5 border-t border-violet-100 animate-in slide-in-from-top-2">
+                                    <label className="text-[10px] font-bold uppercase text-slate-400 mb-2 block">Chọn kịch bản muốn kết nối:</label>
                                     <div className="space-y-2">
                                         <button
                                             onClick={() => onActivateFlow && onActivateFlow('', true)}
-                                            className={`w-full p-4 rounded-2xl border-2 text-left flex items-center justify-between transition-all ${!activateFlowId ? 'border-violet-500 bg-white ring-2 ring-violet-50 shadow-sm' : 'border-slate-100 bg-white hover:border-slate-200'}`}
+                                            className={`w-full p-2.5 rounded-xl border-2 text-left flex items-center justify-between transition-all ${!activateFlowId ? 'border-violet-500 bg-white ring-2 ring-violet-50 shadow-xs' : 'border-slate-100 bg-white hover:border-slate-200'}`}
                                         >
-                                            <div className="flex items-center gap-3">
-                                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${!activateFlowId ? 'bg-violet-100 text-violet-600' : 'bg-slate-50 text-slate-400'}`}>
-                                                    <Plus className="w-4 h-4" />
+                                            <div className="flex items-center gap-2.5">
+                                                <div className={`w-6 h-6 rounded-lg flex items-center justify-center ${!activateFlowId ? 'bg-violet-100 text-violet-600' : 'bg-slate-50 text-slate-400'}`}>
+                                                    <Plus className="w-3.5 h-3.5" />
                                                 </div>
                                                 <div>
                                                     <p className="text-xs font-bold text-slate-800">Tạo Flow mới</p>
-                                                    <p className="text-[9px] text-slate-500 font-medium">Chọn mẫu Chăm sóc sau chiến dịch</p>
+                                                    <p className="text-[10px] text-slate-500 font-medium">Chọn mẫu Chăm sóc sau chiến dịch</p>
                                                 </div>
                                             </div>
                                             {!activateFlowId && <CheckCircle2 className="w-4 h-4 text-violet-500" />}
@@ -611,15 +643,15 @@ const LaunchPreview: React.FC<LaunchPreviewProps> = ({
                                             <button
                                                 key={flow.id}
                                                 onClick={() => onActivateFlow && onActivateFlow(flow.id, true)}
-                                                className={`w-full p-4 rounded-2xl border-2 text-left flex items-center justify-between transition-all ${activateFlowId === flow.id ? 'border-violet-500 bg-white ring-2 ring-violet-50 shadow-sm' : 'border-slate-100 bg-white hover:border-slate-200'}`}
+                                                className={`w-full p-2.5 rounded-xl border-2 text-left flex items-center justify-between transition-all ${activateFlowId === flow.id ? 'border-violet-500 bg-white ring-2 ring-violet-50 shadow-xs' : 'border-slate-100 bg-white hover:border-slate-200'}`}
                                             >
-                                                <div className="flex items-center gap-3">
-                                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${activateFlowId === flow.id ? 'bg-violet-100 text-violet-600' : 'bg-slate-50 text-slate-400'}`}>
-                                                        <GitMerge className="w-4 h-4" />
+                                                <div className="flex items-center gap-2.5">
+                                                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center ${activateFlowId === flow.id ? 'bg-violet-100 text-violet-600' : 'bg-slate-50 text-slate-400'}`}>
+                                                        <GitMerge className="w-3.5 h-3.5" />
                                                     </div>
                                                     <div>
                                                         <p className="text-xs font-bold text-slate-800 truncate max-w-[200px]">{flow.name}</p>
-                                                        <p className="text-[9px] text-slate-500 font-medium">Kịch bản chăm sóc sẵn có</p>
+                                                        <p className="text-[10px] text-slate-500 font-medium">Kịch bản chăm sóc sẵn có</p>
                                                     </div>
                                                 </div>
                                                 {activateFlowId === flow.id && <CheckCircle2 className="w-4 h-4 text-violet-500" />}
@@ -628,72 +660,59 @@ const LaunchPreview: React.FC<LaunchPreviewProps> = ({
                                     </div>
                                 </div>
                             )}
-                        </Card>
+                        </div>
                     )}
 
-                    {/* ATTACHMENTS SECTION - UPDATED */}
+                    {/* ATTACHMENTS SECTION */}
                     {!isZns && (
-                        <Card className="p-6 border-slate-100 bg-white rounded-[32px]">
-                            <div className="flex items-center justify-between mb-6">
-                                <div className="flex items-center gap-3">
-                                    <div className="p-2.5 rounded-xl bg-blue-50 text-blue-600"><Paperclip className="w-5 h-5" /></div>
+                        <div className="p-4 border border-slate-200/90 bg-white rounded-2xl shadow-xs space-y-3.5">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2.5">
+                                    <div className="p-1.5 rounded-lg bg-blue-50 text-blue-600"><Paperclip className="w-4 h-4" /></div>
                                     <div>
-                                        <h4 className="font-bold text-slate-800 text-sm">Tệp đính kèm</h4>
-                                        <p className="text-[10px] text-slate-400 font-medium">Hỗ trợ PDF, DOC, Excel, IMG (Max 10MB)</p>
+                                        <h4 className="font-bold text-slate-800 text-sm sm:text-base">Tệp đính kèm</h4>
+                                        <p className="text-xs text-slate-400 font-medium mt-0.5">Hỗ trợ PDF, DOC, Excel, IMG (Max 10MB)</p>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className={`mb-6 p-4 rounded-2xl border-2 transition-all flex items-center justify-between cursor-pointer ${isPersonalizedMode ? 'bg-blue-50/50 border-blue-200' : 'bg-slate-50 border-slate-100'}`} onClick={() => !isAlreadySent && setIsPersonalizedMode(!isPersonalizedMode)}>
-                                <div className="flex items-center gap-3">
-                                    <div className={`p-2 rounded-lg ${isPersonalizedMode ? 'bg-blue-100 text-blue-600' : 'bg-slate-200 text-slate-500'}`}>
-                                        {isPersonalizedMode ? <Filter className="w-4 h-4" /> : <Layers className="w-4 h-4" />}
+                            <div className={`p-2.5 px-3.5 rounded-xl border transition-all flex items-center justify-between cursor-pointer ${isPersonalizedMode ? 'bg-blue-50/60 border-blue-200 shadow-xs' : 'bg-slate-50 border-slate-100 hover:border-slate-200'}`} onClick={() => !isAlreadySent && setIsPersonalizedMode(!isPersonalizedMode)}>
+                                <div className="flex items-center gap-2.5">
+                                    <div className={`p-1.5 rounded-lg ${isPersonalizedMode ? 'bg-blue-100 text-blue-600' : 'bg-slate-200 text-slate-500'}`}>
+                                        {isPersonalizedMode ? <Filter className="w-3.5 h-3.5" /> : <Layers className="w-3.5 h-3.5" />}
                                     </div>
                                     <div>
-                                        <p className={`text-xs font-bold ${isPersonalizedMode ? 'text-blue-700' : 'text-slate-600'}`}>Bật đã gửi file khớp cá nhân</p>
-                                        {isPersonalizedMode && <p className="text-[9px] text-blue-500 font-medium mt-0.5">Tự động tìm file chứa Email Khách hàng</p>}
+                                        <p className={`text-xs sm:text-sm font-bold ${isPersonalizedMode ? 'text-blue-800' : 'text-slate-700'}`}>Bật gửi file khớp cá nhân</p>
+                                        {isPersonalizedMode && <p className="text-xs text-blue-600 font-medium mt-0.5">Tự động tìm file chứa Email Khách hàng</p>}
                                     </div>
                                 </div>
-                                <div className={`w-10 h-6 rounded-full p-1 transition-colors duration-300 flex items-center ${isPersonalizedMode ? 'bg-blue-600 justify-end' : 'bg-slate-300 justify-start'}`}>
-                                    <div className="w-4 h-4 bg-white rounded-full shadow-md"></div>
+                                <div className={`w-11 h-6 rounded-full p-0.5 transition-colors duration-300 flex items-center ml-3 shrink-0 ${isPersonalizedMode ? 'bg-blue-600 justify-end' : 'bg-slate-300 justify-start'}`}>
+                                    <div className="w-5 h-5 bg-white rounded-full shadow-xs"></div>
                                 </div>
                             </div>
 
                             {isPersonalizedMode && (
-                                <div className="mb-6 p-5 rounded-[24px] bg-slate-50 border border-slate-200 shadow-sm animate-in slide-in-from-top-2">
-                                    <h5 className="text-[11px] font-black uppercase text-slate-800 tracking-widest mb-4 flex items-center gap-2">
-                                        <Info className="w-4 h-4 text-blue-500" />
+                                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 shadow-xs space-y-3 animate-in slide-in-from-top-2">
+                                    <h5 className="text-[10px] font-black uppercase text-slate-700 tracking-wider flex items-center gap-2">
+                                        <Info className="w-3.5 h-3.5 text-blue-500" />
                                         Quy trình gửi tệp cá nhân hóa
                                     </h5>
-                                    <div className="space-y-5">
-                                        <div className="flex gap-4 items-start">
-                                            <div className="w-6 h-6 shrink-0 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-[10px] font-black shadow-sm">1</div>
-                                            <div>
-                                                <p className="text-xs font-bold text-slate-800 mb-1.5">Quy tắc đặt tên file nghiêm ngặt</p>
-                                                <p className="text-[11px] text-slate-600 leading-relaxed">
-                                                    Tên của mỗi tệp tin bắt buộc phải chứa dấu gạch dưới <code>_</code> nằm liền trước địa chỉ email của Khách hàng mục tiêu. Toàn bộ phần phía trước dấu gạch dưới là tùy chọn.
-                                                </p>
-                                                <div className="mt-2 bg-white px-3 py-2.5 rounded-xl border border-slate-200 text-[10px] shadow-sm font-mono flex flex-col gap-1.5">
-                                                    <div className="flex items-center gap-2"><span className="text-emerald-600 font-bold w-12 shrink-0">✅ ĐÚNG:</span> <span className="text-slate-500">BangDiem<span className="text-blue-600 font-black bg-blue-50 px-1 py-0.5 rounded">_nguyenvana@gmail.com</span>.pdf</span></div>
-                                                    <div className="flex items-center gap-2"><span className="text-rose-600 font-bold w-12 shrink-0">❌ SAI:</span> <span className="text-slate-400">BangDiem_nguyenvana.pdf (Thiếu đuôi email hợp lệ)</span></div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="flex gap-4 items-start">
-                                            <div className="w-6 h-6 shrink-0 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-[10px] font-black shadow-sm">2</div>
-                                            <div>
-                                                <p className="text-xs font-bold text-slate-800 mb-1.5">Hệ thống Mapping tự động</p>
-                                                <p className="text-[11px] text-slate-600 leading-relaxed">
-                                                    Khi tải lên danh sách multi-file ở nút bên dưới, tệp sẽ được tải vào bộ nhớ đệm. Trong quá trình gửi Email thực tế, DOMATION AI sẽ tự động phân tích và <strong>chỉ đính kèm tệp cho đúng người có email khớp.</strong> Bảo mật dữ liệu tuyệt đối. 
+                                    <div className="space-y-3">
+                                        <div className="flex gap-2.5 items-start">
+                                            <div className="w-5 h-5 shrink-0 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-[10px] font-bold shadow-xs mt-0.5">1</div>
+                                            <div className="space-y-0.5">
+                                                <p className="text-xs font-bold text-slate-800">Quy tắc đặt tên file nghiêm ngặt</p>
+                                                <p className="text-[11.5px] text-slate-600 leading-relaxed">
+                                                    Tên tệp phải chứa dấu gạch dưới <code>_</code> liền trước email: <code>BangDiem_user@gmail.com.pdf</code>
                                                 </p>
                                             </div>
                                         </div>
-                                        <div className="flex gap-4 items-start">
-                                            <div className="w-6 h-6 shrink-0 rounded-full bg-orange-100 text-[#ca7900] flex items-center justify-center text-[10px] font-black shadow-sm">3</div>
-                                            <div>
-                                                <p className="text-xs font-bold text-slate-800 mb-1.5">Khách hàng nhận tệp đã làm sạch tên</p>
-                                                <p className="text-[11px] text-slate-600 leading-relaxed">
-                                                    Trước khi gửi đến tay khách hàng, cấu trúc <code>_email@domain.com</code> sẽ tự động bị cắt đi. Khách hàng chỉ nhận được tệp File sạch sẽ với đúng tên ban đầu (VD: <strong>BangDiem.pdf</strong> thay vì BangDiem_nguyenvana@gmail.com.pdf).
+                                        <div className="flex gap-2.5 items-start">
+                                            <div className="w-5 h-5 shrink-0 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-[10px] font-bold shadow-xs mt-0.5">2</div>
+                                            <div className="space-y-0.5">
+                                                <p className="text-xs font-bold text-slate-800">Mapping tự động & bảo mật</p>
+                                                <p className="text-[11.5px] text-slate-600 leading-relaxed">
+                                                    Hệ thống chỉ gửi tệp tương ứng cho đúng email có tên khớp. Tên file gửi đi sẽ được làm sạch tự động.
                                                 </p>
                                             </div>
                                         </div>
@@ -701,33 +720,31 @@ const LaunchPreview: React.FC<LaunchPreviewProps> = ({
                                 </div>
                             )}
 
-                            <div className={`space-y-3 ${isAlreadySent ? 'opacity-50 pointer-events-none' : ''}`}>
+                            <div className={`space-y-2.5 ${isAlreadySent ? 'opacity-50 pointer-events-none' : ''}`}>
                                 {/* Row: Upload + Library */}
                                 <div className="flex gap-2">
-                                    {/* Upload new */}
                                     <div
                                         onClick={() => {
-                                            if (isAlreadySent) return;
+                                             if (isAlreadySent) return;
                                             if (isPersonalizedMode) setIsUploadModalOpen(true);
                                             else fileInputRef.current?.click();
                                         }}
-                                        className="flex-1 cursor-pointer py-3.5 border-2 border-dashed rounded-2xl flex items-center justify-center gap-2 text-slate-400 hover:text-blue-600 hover:border-blue-400 hover:bg-blue-50/30 transition-all"
+                                        className="flex-1 cursor-pointer py-2.5 px-3.5 border border-dashed border-slate-300 rounded-xl flex items-center justify-center gap-2 text-slate-600 hover:text-blue-600 hover:border-blue-400 hover:bg-blue-50/30 transition-all font-bold text-xs shadow-xs"
                                     >
-                                        {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-                                        <span className="text-[10px] font-bold uppercase">
+                                        {isUploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
+                                        <span className="uppercase tracking-wider">
                                             {isPersonalizedMode ? 'Upload (Email)' : 'Upload File'}
                                         </span>
                                         {!isPersonalizedMode && <input type="file" ref={fileInputRef} className="hidden" multiple onChange={handleFileUpload} disabled={isUploading || isAlreadySent} />}
                                     </div>
 
-                                    {/* Pick from library */}
                                     <button
                                         type="button"
                                         onClick={() => !isAlreadySent && setIsLibraryOpen(true)}
-                                        className="px-4 py-3.5 border-2 border-dashed border-violet-200 rounded-2xl flex items-center gap-1.5 text-violet-500 hover:text-violet-700 hover:border-violet-400 hover:bg-violet-50/40 transition-all text-[10px] font-bold uppercase shrink-0"
+                                        className="px-3.5 py-2.5 border border-dashed border-violet-200 rounded-xl flex items-center gap-1.5 text-violet-600 hover:text-violet-700 hover:border-violet-400 hover:bg-violet-50/40 transition-all text-xs font-bold uppercase tracking-wider shrink-0 shadow-xs"
                                         title="Chọn file từ thư viện đã upload"
                                     >
-                                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                             <path d="M3 7h18M3 12h18M3 17h18" strokeLinecap="round"/>
                                             <rect x="3" y="3" width="7" height="7" rx="1"/>
                                         </svg>
@@ -735,44 +752,79 @@ const LaunchPreview: React.FC<LaunchPreviewProps> = ({
                                     </button>
                                 </div>
 
-                                {attachments.length > 0 ? attachments.map((att) => (
-                                    <div key={att.id} className={`border rounded-2xl p-3 animate-in fade-in slide-in-from-bottom-2 transition-colors ${att.logic !== 'all' ? 'bg-blue-50/30 border-blue-100' : 'bg-white border-slate-100'}`}>
-                                        <div className="flex items-start justify-between gap-3">
-                                            <div className="flex items-center gap-3 overflow-hidden">
-                                                <a href={att.url || '#'} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 group flex-1 min-w-0" title="Bấm để xem tệp">
-                                                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 border transition-colors ${att.logic !== 'all' ? 'bg-blue-100 text-blue-600 border-blue-200 group-hover:bg-blue-500 group-hover:text-white' : 'bg-slate-50 text-slate-400 border-slate-100 group-hover:bg-blue-500 group-hover:text-white group-hover:border-blue-500'}`}>
-                                                        <FileIcon className="w-5 h-5" />
-                                                    </div>
-                                                    <div className="min-w-0 cursor-pointer">
-                                                        <p className="text-xs font-bold text-slate-700 truncate group-hover:text-blue-600 transition-colors" title={att.name}>{att.name}</p>
-                                                        <div className="flex items-center gap-2">
-                                                            <p className="text-[9px] text-slate-400 font-mono">{(att.size / 1024).toFixed(1)} KB</p>
-                                                            {att.logic !== 'all' && <span className="text-[8px] font-black text-blue-600 bg-blue-100 px-1.5 py-0.5 rounded uppercase">Personalized</span>}
-                                                        </div>
-                                                    </div>
-                                                </a>
-                                            </div>
-                                            <button onClick={() => !isAlreadySent && setAttachmentToDelete(att.id)} className="text-slate-300 hover:text-rose-500 p-1" disabled={isAlreadySent}><X className="w-4 h-4" /></button>
-                                        </div>
+                                {attachments.length > 0 && (() => {
+                                    const ATTACHMENTS_PER_PAGE = 20;
+                                    const totalAttachmentPages = Math.ceil(attachments.length / ATTACHMENTS_PER_PAGE);
+                                    const displayedAttachments = attachments.slice((attachmentPage - 1) * ATTACHMENTS_PER_PAGE, attachmentPage * ATTACHMENTS_PER_PAGE);
 
-                                        {att.logic === 'match_email' && (
-                                            <p className="text-[9px] text-blue-600 mt-2 px-1 flex items-center gap-1 font-medium bg-white/50 p-1 rounded-lg">
-                                                <Filter className="w-3 h-3" /> Chỉ gửi cho Email khớp trong tên file.
-                                            </p>
-                                        )}
-                                    </div>
-                                )) : null}
+                                    return (
+                                        <div className="space-y-1.5 pt-1">
+                                            <div className="space-y-1 max-h-[220px] overflow-y-auto custom-scrollbar pr-1">
+                                                {displayedAttachments.map((att) => (
+                                                    <div key={att.id} className={`border rounded-xl p-2 animate-in fade-in slide-in-from-bottom-2 transition-colors ${att.logic !== 'all' ? 'bg-blue-50/30 border-blue-100' : 'bg-white border-slate-100'}`}>
+                                                        <div className="flex items-start justify-between gap-2">
+                                                            <div className="flex items-center gap-2 overflow-hidden">
+                                                                <a href={att.url || '#'} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 group flex-1 min-w-0" title="Bấm để xem tệp">
+                                                                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 border transition-colors ${att.logic !== 'all' ? 'bg-blue-100 text-blue-600 border-blue-200 group-hover:bg-blue-500 group-hover:text-white' : 'bg-slate-50 text-slate-400 border-slate-100 group-hover:bg-blue-500 group-hover:text-white group-hover:border-blue-500'}`}>
+                                                                        <FileIcon className="w-3.5 h-3.5" />
+                                                                    </div>
+                                                                    <div className="min-w-0 cursor-pointer">
+                                                                        <p className="text-xs font-bold text-slate-700 truncate group-hover:text-blue-600 transition-colors" title={att.name}>{att.name}</p>
+                                                                        <div className="flex items-center gap-1.5 mt-0.5">
+                                                                            <p className="text-[10px] text-slate-400 font-mono">{(att.size / 1024).toFixed(1)} KB</p>
+                                                                            {att.logic !== 'all' && <span className="text-[8px] font-black text-blue-600 bg-blue-100 px-1.5 py-0.2 rounded uppercase">Personalized</span>}
+                                                                        </div>
+                                                                    </div>
+                                                                </a>
+                                                            </div>
+                                                            <button onClick={() => !isAlreadySent && setAttachmentToDelete(att.id)} className="text-slate-300 hover:text-rose-500 p-0.5" disabled={isAlreadySent}><X className="w-3.5 h-3.5" /></button>
+                                                        </div>
+
+                                                        {att.logic === 'match_email' && (
+                                                            <p className="text-[10px] text-blue-600 mt-0.5 px-1 flex items-center gap-1 font-medium bg-white/60 p-1 rounded-lg">
+                                                                <Filter className="w-3.5 h-3.5" /> Chỉ gửi cho Email khớp trong tên file.
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+
+                                            {totalAttachmentPages > 1 && (
+                                                <div className="flex items-center justify-between pt-1.5 border-t border-slate-100 text-xs font-bold text-slate-500">
+                                                    <button
+                                                        onClick={() => setAttachmentPage(p => Math.max(1, p - 1))}
+                                                        disabled={attachmentPage === 1}
+                                                        className="px-2 py-0.5 bg-slate-100 hover:bg-slate-200 disabled:opacity-40 rounded-lg transition-colors cursor-pointer text-[10px]"
+                                                    >
+                                                        ← Trước
+                                                    </button>
+                                                    <span className="text-[10px] text-slate-400">Trang {attachmentPage}/{totalAttachmentPages} ({attachments.length} tệp)</span>
+                                                    <button
+                                                        onClick={() => setAttachmentPage(p => Math.min(totalAttachmentPages, p + 1))}
+                                                        disabled={attachmentPage === totalAttachmentPages}
+                                                        className="px-2 py-0.5 bg-slate-100 hover:bg-slate-200 disabled:opacity-40 rounded-lg transition-colors cursor-pointer text-[10px]"
+                                                    >
+                                                        Sau →
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })()}
                             </div>
-                        </Card>
+                        </div>
                     )}
 
                     {/* Timing Card */}
-                    <Card className="p-8 border-slate-100 bg-white rounded-[32px]">
-                        <div className="flex items-center gap-3 mb-6">
-                            <div className={`p-2.5 rounded-xl transition-colors ${scheduleMode === 'now' ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600'}`}>
-                                <Clock className="w-6 h-6" />
+                    <div className="p-4 border border-slate-200/90 bg-white rounded-2xl shadow-xs space-y-3.5">
+                        <div className="flex items-center gap-2.5">
+                            <div className={`p-1.5 rounded-lg transition-colors ${scheduleMode === 'now' ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600'}`}>
+                                <Clock className="w-4 h-4" />
                             </div>
-                            <h4 className="font-bold text-slate-800">Thời điểm gửi</h4>
+                            <div>
+                                <h4 className="font-bold text-slate-800 text-sm sm:text-base">Thời điểm gửi</h4>
+                                <p className="text-xs text-slate-400 font-medium mt-0.5">Thiết lập thời gian khởi chạy chiến dịch</p>
+                            </div>
                         </div>
 
                         {isZns && (() => {
@@ -789,64 +841,59 @@ const LaunchPreview: React.FC<LaunchPreviewProps> = ({
                             if (!isTimeRestricted) return null;
 
                             return (
-                                <div className="mb-6 p-5 bg-rose-50 border border-rose-100 rounded-[24px] flex items-start gap-4 animate-in slide-in-from-top-2 duration-300">
-                                    <div className="p-2 bg-rose-500 text-white rounded-xl shadow-lg shadow-rose-200">
-                                        <AlertTriangle className="w-5 h-5" />
+                                <div className="p-3 bg-rose-50 border border-rose-100 rounded-xl flex items-start gap-2.5 animate-in slide-in-from-top-2 duration-300">
+                                    <div className="p-1 bg-rose-500 text-white rounded-md shadow-sm mt-0.5">
+                                        <AlertTriangle className="w-3.5 h-3.5" />
                                     </div>
-                                    <div className="flex-1">
-                                        <h5 className="text-[11px] font-black text-rose-900 uppercase tracking-tight">Ngoài khung giờ gửi ZNS quy định</h5>
-                                        <p className="text-xs text-rose-700 font-medium mt-1 leading-relaxed">
+                                    <div className="flex-1 space-y-0.5">
+                                        <h5 className="text-xs font-black text-rose-900 uppercase tracking-tight">Ngoài khung giờ gửi ZNS quy định</h5>
+                                        <p className="text-xs text-rose-700 font-medium leading-relaxed">
                                             Theo chính sách của Zalo, tin nhắn ZNS chỉ được phép gửi trong khung giờ từ <strong>06:00 đến 22:00</strong> hàng ngày.
-                                        </p>
-                                        <p className="text-[10px] text-rose-600/80 mt-2 font-bold italic">
-                                            {scheduleMode === 'now'
-                                                ? "⚠️ Hiện tại đã quá giờ gửi. Vui lòng chọn 'Lên lịch gửi' vào sáng mai để kích hoạt chiến dịch."
-                                                : "⚠️ Giờ bạn chọn nằm ngoài khung giờ cho phép. Vui lòng điều chỉnh lại Thời gian trong khoảng 06:00 - 21:00."}
                                         </p>
                                     </div>
                                 </div>
                             );
                         })()}
 
-                        <div className="flex gap-2 p-1.5 bg-slate-100 rounded-2xl mb-6">
+                        <div className="flex gap-1.5 p-1 bg-slate-100 rounded-xl">
                             <button
                                 onClick={() => !isAlreadySent && setScheduleMode('now')}
                                 disabled={isAlreadySent}
-                                className={`flex-1 py-3 rounded-xl text-xs font-bold uppercase transition-all flex items-center justify-center gap-2 ${scheduleMode === 'now' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-200' : 'text-slate-500 hover:text-slate-700'} ${isAlreadySent ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                className={`flex-1 py-2.5 rounded-lg text-xs font-bold uppercase transition-all flex items-center justify-center gap-2 ${scheduleMode === 'now' ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/20' : 'text-slate-600 hover:text-slate-900'} ${isAlreadySent ? 'opacity-50 cursor-not-allowed' : ''}`}
                             >
                                 <Send className="w-3.5 h-3.5" /> Gửi ngay lập tức
                             </button>
                             <button
                                 onClick={() => !isAlreadySent && setScheduleMode('later')}
                                 disabled={isAlreadySent}
-                                className={`flex-1 py-3 rounded-xl text-xs font-bold uppercase transition-all flex items-center justify-center gap-2 ${scheduleMode === 'later' ? 'bg-white shadow text-[#ca7900]' : 'text-slate-500 hover:text-slate-700'} ${isAlreadySent ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                className={`flex-1 py-2.5 rounded-lg text-xs font-bold uppercase transition-all flex items-center justify-center gap-2 ${scheduleMode === 'later' ? 'bg-white shadow-md text-[#ca7900]' : 'text-slate-600 hover:text-slate-900'} ${isAlreadySent ? 'opacity-50 cursor-not-allowed' : ''}`}
                             >
                                 <Calendar className="w-3.5 h-3.5" /> Lên lịch gửi
                             </button>
                         </div>
 
                         {scheduleMode === 'later' && !isAlreadySent && (
-                            <div className="animate-in slide-in-from-top-2 space-y-5">
+                            <div className="animate-in slide-in-from-top-2 space-y-3 pt-0.5">
                                 <div>
-                                    <label className="text-[10px] font-bold uppercase text-slate-400 mb-2 block ml-1">Chọn ngày</label>
-                                    <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2">
+                                    <label className="text-[10px] font-bold uppercase text-slate-400 mb-1.5 block ml-0.5">Chọn ngày</label>
+                                    <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-1">
                                         {nextDays.map((d, i) => {
                                             const isSelected = !isCustomDate && d.toDateString() === selectedDate.toDateString();
                                             return (
                                                 <button
                                                     key={i}
                                                     onClick={() => { setSelectedDate(d); setIsCustomDate(false); }}
-                                                    className={`flex flex-col items-center justify-center w-16 h-20 rounded-2xl border-2 transition-all flex-shrink-0 ${isSelected ? 'border-[#ffa900] bg-orange-50 text-[#ca7900]' : 'border-slate-100 bg-white text-slate-500 hover:border-slate-200'}`}
+                                                    className={`flex flex-col items-center justify-center w-14 h-16 rounded-xl border transition-all flex-shrink-0 ${isSelected ? 'border-[#ffa900] bg-orange-50 text-[#ca7900] shadow-sm' : 'border-slate-100 bg-white text-slate-500 hover:border-slate-200'}`}
                                                 >
-                                                    <span className="text-[10px] font-bold uppercase">{getDayLabel(d, i)}</span>
-                                                    <span className="text-xl font-black mt-1">{d.getDate()}</span>
-                                                    <span className="text-[9px] font-medium opacity-60">Thg {d.getMonth() + 1}</span>
+                                                    <span className="text-[9px] font-bold uppercase">{getDayLabel(d, i)}</span>
+                                                    <span className="text-lg font-black mt-0.5">{d.getDate()}</span>
+                                                    <span className="text-[8px] font-medium opacity-60">Thg {d.getMonth() + 1}</span>
                                                 </button>
                                             );
                                         })}
-                                        <button onClick={() => setIsCustomDate(true)} className={`flex flex-col items-center justify-center w-16 h-20 rounded-2xl border-2 transition-all flex-shrink-0 ${isCustomDate ? 'border-[#ffa900] bg-orange-50 text-[#ca7900]' : 'border-slate-100 bg-white text-slate-500 hover:border-slate-200'}`}>
-                                            <CalendarDays className="w-5 h-5 mb-1" />
-                                            <span className="text-[9px] font-bold uppercase text-center leading-tight">Ngày<br />khác</span>
+                                        <button onClick={() => setIsCustomDate(true)} className={`flex flex-col items-center justify-center w-14 h-16 rounded-xl border transition-all flex-shrink-0 ${isCustomDate ? 'border-[#ffa900] bg-orange-50 text-[#ca7900] shadow-sm' : 'border-slate-100 bg-white text-slate-500 hover:border-slate-200'}`}>
+                                            <CalendarDays className="w-3.5 h-3.5 mb-0.5" />
+                                            <span className="text-[8px] font-bold uppercase text-center leading-tight">Ngày<br />khác</span>
                                         </button>
                                     </div>
                                 </div>
@@ -862,8 +909,8 @@ const LaunchPreview: React.FC<LaunchPreviewProps> = ({
                                     </div>
                                 )}
                                 <div>
-                                    <label className="text-[10px] font-bold uppercase text-slate-400 mb-2 block ml-1">Giờ gửi (24h)</label>
-                                    <div className="flex gap-3">
+                                    <label className="text-[10px] font-bold uppercase text-slate-400 mb-1.5 block ml-0.5">Giờ gửi (24h)</label>
+                                    <div className="flex gap-2">
                                         <div className="flex-1">
                                             <Select
                                                 value={selectedHour}
@@ -883,11 +930,11 @@ const LaunchPreview: React.FC<LaunchPreviewProps> = ({
                                         </div>
                                     </div>
                                 </div>
-                                <div className="p-4 bg-blue-50 border border-blue-100 rounded-2xl flex items-center gap-3">
-                                    <Calendar className="w-5 h-5 text-blue-600" />
+                                <div className="p-3 bg-blue-50 border border-blue-100 rounded-xl flex items-center gap-2.5">
+                                    <Calendar className="w-4 h-4 text-blue-600 shrink-0" />
                                     <div>
-                                        <p className="text-[10px] font-bold text-blue-500 uppercase tracking-widest">Thời gian dự kiến</p>
-                                        <p className="text-sm font-black text-blue-900">
+                                        <p className="text-[9px] font-bold text-blue-500 uppercase tracking-widest">Thời gian dự kiến</p>
+                                        <p className="text-xs font-black text-blue-900 mt-0.5">
                                             {selectedHour}:{selectedMinute} - {(isCustomDate && customDateValue) ? new Date(customDateValue).toLocaleDateString('vi-VN') : selectedDate.toLocaleDateString('vi-VN')}
                                         </p>
                                     </div>
@@ -896,19 +943,19 @@ const LaunchPreview: React.FC<LaunchPreviewProps> = ({
                         )}
 
                         {isAlreadySent && (
-                            <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-center gap-3">
-                                <AlertCircle className="w-5 h-5 text-amber-600" />
+                            <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-center gap-2.5">
+                                <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
                                 <p className="text-xs font-bold text-amber-700">Chiến dịch này đã hoàn tất hoặc đang được gửi. Không thể thay đổi lịch trình.</p>
                             </div>
                         )}
 
                         {scheduleMode === 'now' && !isAlreadySent && (
-                            <div className="p-3 bg-emerald-50 border border-emerald-100 rounded-xl flex items-center gap-3 animate-in fade-in">
-                                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                                <p className="text-xs font-bold text-emerald-700">Hệ thống đã sẵn sàng gửi ngay.</p>
+                            <div className="p-3 bg-emerald-50 border border-emerald-100 rounded-xl flex items-center gap-2.5 animate-in fade-in">
+                                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                                <p className="text-xs font-bold text-emerald-800">Hệ thống đã sẵn sàng gửi ngay.</p>
                             </div>
                         )}
-                    </Card>
+                    </div>
                 </div>
             </div>
 
@@ -940,7 +987,7 @@ const LaunchPreview: React.FC<LaunchPreviewProps> = ({
                             />
                         ) : (
                             <iframe
-                                srcDoc={contentToRender || ''}
+                                srcDoc={interpolatedPreviewHtml || ''}
                                 className="w-full h-full border-none bg-white"
                                 title="Email Preview"
                                 sandbox="allow-same-origin allow-scripts"

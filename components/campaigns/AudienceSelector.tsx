@@ -7,6 +7,7 @@ import Input from '../common/Input';
 import Badge from '../common/Badge';
 import { isManualList, isSyncList } from '../../utils/listHelpers';
 import toast from 'react-hot-toast';
+import * as XLSX from 'xlsx';
 
 interface Option {
     value: string;
@@ -168,12 +169,32 @@ const AudienceSelector: React.FC<AudienceSelectorProps> = ({
         const file = e.target.files?.[0];
         if (!file) return;
         setFileName(file.name);
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            const text = event.target?.result as string;
-            setRawData(text);
-        };
-        reader.readAsText(file);
+
+        const fileExt = file.name.split('.').pop()?.toLowerCase();
+        if (fileExt === 'xlsx' || fileExt === 'xls') {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const data = new Uint8Array(event.target?.result as ArrayBuffer);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const csv = XLSX.utils.sheet_to_csv(worksheet);
+                    setRawData(csv);
+                } catch (error) {
+                    toast.error('Lỗi khi đọc file Excel. Vui lòng kiểm tra lại định dạng tệp.');
+                    setFileName('');
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        } else {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const text = event.target?.result as string;
+                setRawData(text);
+            };
+            reader.readAsText(file);
+        }
     };
 
     // Fix: existingEmails is a Set, no need for .has property, it's a direct method
@@ -361,7 +382,8 @@ const AudienceSelector: React.FC<AudienceSelectorProps> = ({
             const values = line.split(delimiter).map(v => v.trim().replace(/^["']|["']$/g, ''));
             const rowObj: any = {};
             headerRow.forEach((header, index) => {
-                let key = header.toLowerCase().trim();
+                const rawKey = header.trim();
+                let key = rawKey.toLowerCase();
                 // Smart auto-matching
                 if (key.includes('phone') || key.includes('sđt') || key.includes('số điện thoại') || key.includes('dien thoai')) key = 'phone';
                 else if (key.includes('mail')) key = 'email';
@@ -370,8 +392,14 @@ const AudienceSelector: React.FC<AudienceSelectorProps> = ({
                 else if (key.includes('last') || key.includes('họ')) key = 'lastName';
                 else if (key.includes('tag') || key.includes('nhãn')) key = 'tags';
                 else if (key.includes('date') || key.includes('ngày')) key = 'joinedAt';
+                else {
+                    key = rawKey;
+                }
 
                 rowObj[key] = values[index] || '';
+                if (key !== rawKey) {
+                    rowObj[rawKey] = values[index] || '';
+                }
             });
 
             // Tự động đặt tên nếu trống
@@ -433,7 +461,7 @@ const AudienceSelector: React.FC<AudienceSelectorProps> = ({
     };
 
     return (
-        <div className={`relative bg-white rounded-[24px] border shadow-sm overflow-hidden transition-all min-h-[400px] flex flex-col ${error ? 'border-rose-500 ring-4 ring-rose-50' : 'border-slate-200'}`}>
+        <div className={`relative bg-white rounded-[24px] border shadow-sm overflow-hidden transition-all min-h-[520px] flex flex-col ${error ? 'border-rose-500 ring-4 ring-rose-50' : 'border-slate-200'}`}>
             <div className="px-6 pt-6 pb-2 flex justify-between items-center border-b border-slate-100">
                 <div className="flex gap-6 overflow-x-auto scrollbar-hide">
                     <button onClick={() => setActiveTab('lists')} className={`pb-4 text-sm font-bold border-b-2 transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'lists' ? 'border-violet-600 text-slate-800' : 'border-transparent text-slate-400 hover:text-slate-600'}`}>
@@ -460,13 +488,13 @@ const AudienceSelector: React.FC<AudienceSelectorProps> = ({
                 </div>
             </div>
 
-            <div className="flex-1 p-4 bg-slate-50/50 relative">
-                <div className="relative mb-4">
+            <div className="flex-1 p-6 bg-slate-50/50 relative">
+                <div className="relative mb-5">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input value={search} onChange={e => setSearch(e.target.value)} placeholder={activeTab === 'lists' ? "Tìm danh sách..." : (activeTab === 'sheets' ? "Tìm nguồn đồng bộ..." : (activeTab === 'segments' ? "Tìm phân khúc..." : "Tìm nhãn..."))} className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-xs font-bold outline-none focus:border-violet-600 transition-all" />
                 </div>
 
-                <div className="space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar pr-1">
+                <div className="space-y-2.5 max-h-[480px] md:max-h-[520px] overflow-y-auto custom-scrollbar pr-1">
                     {activeTab === 'lists' && (
                         filteredLists.length > 0 ? filteredLists.map(l => (
                             <div key={l.id} onClick={() => toggle('list', l.id)} className={`group flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all ${selectedTarget.listIds?.includes(l.id) ? 'bg-violet-50/40 border-violet-200' : 'bg-white border-slate-100 hover:border-slate-300'}`}>

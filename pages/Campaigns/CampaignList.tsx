@@ -10,7 +10,196 @@ import Badge from '../../components/common/Badge';
 import { useNavigate } from 'react-router-dom';
 import EmptyState from '../../components/common/EmptyState';
 import Skeleton from '../../components/common/Skeleton';
-import { useVirtualizer } from '@tanstack/react-virtual';
+
+export interface PerformanceHealth {
+    tier: 'excellent' | 'good' | 'average' | 'poor' | 'sending' | 'zns';
+    barGradient: string;
+    textClass: string;
+    label: string;
+    glowShadow: string;
+    percentText: string;
+}
+
+export function getCampaignPerformanceHealth(
+    sentCount: number,
+    openedCount: number,
+    isSending: boolean,
+    totalTargetAudience?: number,
+    type?: string,
+    isFlow?: boolean
+): PerformanceHealth {
+    if (isSending) {
+        const pct = totalTargetAudience && totalTargetAudience > 0 ? Math.min(100, Math.round((sentCount / totalTargetAudience) * 100)) : 0;
+        return {
+            tier: 'sending',
+            barGradient: 'from-blue-500 via-indigo-500 to-cyan-400',
+            textClass: 'text-blue-600 dark:text-blue-400',
+            label: 'Tiến độ gửi',
+            glowShadow: 'shadow-[0_0_10px_rgba(59,130,246,0.35)]',
+            percentText: `${pct}%`
+        };
+    }
+
+    if (type === 'zalo_zns') {
+        return {
+            tier: 'zns',
+            barGradient: 'from-[#0068ff] via-sky-500 to-indigo-600',
+            textClass: 'text-[#0068ff] dark:text-sky-400',
+            label: 'Chi phí ZNS',
+            glowShadow: 'shadow-[0_0_10px_rgba(0,104,255,0.25)]',
+            percentText: `${(sentCount * 300).toLocaleString()}đ`
+        };
+    }
+
+    if (sentCount <= 0) {
+        return {
+            tier: 'poor',
+            barGradient: 'from-slate-300 to-slate-400',
+            textClass: 'text-slate-400',
+            label: 'Hiệu suất Open',
+            glowShadow: '',
+            percentText: '0%'
+        };
+    }
+
+    const openRate = Math.round((openedCount / sentCount) * 100);
+
+    // Smart Multi-Tier Open Performance Formula:
+    // Scale 1: Enterprise/Large Campaigns (sent >= 1,000)
+    // - >= 20%: Excellent (Emerald Green / Teal)
+    // - 12% - 19%: Good (Sky / Cyan / Blue)
+    // - 6% - 11%: Average / Normal (Amber / Orange)
+    // - < 6%: Low / Needs attention (Rose / Red)
+    //
+    // Scale 2: Mid-sized Campaigns (100 <= sent < 1,000)
+    // - >= 35%: Excellent (Emerald Green)
+    // - 20% - 34%: Good (Teal / Blue)
+    // - 10% - 19%: Average / Normal (Amber / Yellow)
+    // - < 10%: Low (Rose / Red)
+    //
+    // Scale 3: Small/Test/Direct Batches (sent < 100)
+    // - >= 65%: Excellent (Emerald Green)
+    // - 35% - 64%: Average / Normal (Amber / Yellow)
+    // - 10% - 34%: Fair (Orange)
+    // - < 10%: Low (Rose / Red)
+
+    if (sentCount >= 1000) {
+        if (openRate >= 20) {
+            return {
+                tier: 'excellent',
+                barGradient: 'from-emerald-500 via-teal-500 to-green-400',
+                textClass: 'text-emerald-600 dark:text-emerald-400',
+                label: 'Hiệu suất Open',
+                glowShadow: 'shadow-[0_0_10px_rgba(16,185,129,0.35)]',
+                percentText: `${openRate}%`
+            };
+        } else if (openRate >= 12) {
+            return {
+                tier: 'good',
+                barGradient: 'from-teal-500 via-cyan-500 to-blue-500',
+                textClass: 'text-teal-600 dark:text-teal-400',
+                label: 'Hiệu suất Open',
+                glowShadow: 'shadow-[0_0_10px_rgba(20,184,166,0.35)]',
+                percentText: `${openRate}%`
+            };
+        } else if (openRate >= 6) {
+            return {
+                tier: 'average',
+                barGradient: 'from-amber-400 via-orange-400 to-yellow-500',
+                textClass: 'text-amber-600 dark:text-amber-400',
+                label: 'Hiệu suất Open',
+                glowShadow: 'shadow-[0_0_10px_rgba(245,158,11,0.35)]',
+                percentText: `${openRate}%`
+            };
+        } else {
+            return {
+                tier: 'poor',
+                barGradient: 'from-rose-500 via-red-500 to-pink-500',
+                textClass: 'text-rose-600 dark:text-rose-400',
+                label: 'Hiệu suất Open',
+                glowShadow: 'shadow-[0_0_10px_rgba(244,63,94,0.35)]',
+                percentText: `${openRate}%`
+            };
+        }
+    } else if (sentCount >= 100) {
+        if (openRate >= 35) {
+            return {
+                tier: 'excellent',
+                barGradient: 'from-emerald-500 via-teal-500 to-green-400',
+                textClass: 'text-emerald-600 dark:text-emerald-400',
+                label: 'Hiệu suất Open',
+                glowShadow: 'shadow-[0_0_10px_rgba(16,185,129,0.35)]',
+                percentText: `${openRate}%`
+            };
+        } else if (openRate >= 20) {
+            return {
+                tier: 'good',
+                barGradient: 'from-teal-500 via-cyan-500 to-blue-500',
+                textClass: 'text-teal-600 dark:text-teal-400',
+                label: 'Hiệu suất Open',
+                glowShadow: 'shadow-[0_0_10px_rgba(20,184,166,0.35)]',
+                percentText: `${openRate}%`
+            };
+        } else if (openRate >= 10) {
+            return {
+                tier: 'average',
+                barGradient: 'from-amber-400 via-orange-400 to-yellow-500',
+                textClass: 'text-amber-600 dark:text-amber-400',
+                label: 'Hiệu suất Open',
+                glowShadow: 'shadow-[0_0_10px_rgba(245,158,11,0.35)]',
+                percentText: `${openRate}%`
+            };
+        } else {
+            return {
+                tier: 'poor',
+                barGradient: 'from-rose-500 via-red-500 to-pink-500',
+                textClass: 'text-rose-600 dark:text-rose-400',
+                label: 'Hiệu suất Open',
+                glowShadow: 'shadow-[0_0_10px_rgba(244,63,94,0.35)]',
+                percentText: `${openRate}%`
+            };
+        }
+    } else {
+        // Small Batches (< 100)
+        if (openRate >= 65) {
+            return {
+                tier: 'excellent',
+                barGradient: 'from-emerald-500 via-teal-500 to-green-400',
+                textClass: 'text-emerald-600 dark:text-emerald-400',
+                label: 'Hiệu suất Open',
+                glowShadow: 'shadow-[0_0_10px_rgba(16,185,129,0.35)]',
+                percentText: `${openRate}%`
+            };
+        } else if (openRate >= 35) {
+            return {
+                tier: 'average',
+                barGradient: 'from-amber-400 via-orange-400 to-yellow-500',
+                textClass: 'text-amber-600 dark:text-amber-400',
+                label: 'Hiệu suất Open',
+                glowShadow: 'shadow-[0_0_10px_rgba(245,158,11,0.35)]',
+                percentText: `${openRate}%`
+            };
+        } else if (openRate > 0) {
+            return {
+                tier: 'poor',
+                barGradient: 'from-rose-400 via-orange-400 to-amber-500',
+                textClass: 'text-rose-500 dark:text-rose-400',
+                label: 'Hiệu suất Open',
+                glowShadow: 'shadow-[0_0_10px_rgba(244,63,94,0.35)]',
+                percentText: `${openRate}%`
+            };
+        } else {
+            return {
+                tier: 'poor',
+                barGradient: 'from-rose-500 via-red-500 to-pink-500',
+                textClass: 'text-rose-600 dark:text-rose-400',
+                label: 'Hiệu suất Open',
+                glowShadow: 'shadow-[0_0_10px_rgba(244,63,94,0.35)]',
+                percentText: '0%'
+            };
+        }
+    }
+}
 
 interface CampaignListProps {
     campaigns: Campaign[];
@@ -41,19 +230,17 @@ const CampaignTableRow = React.memo(React.forwardRef<HTMLTableRowElement, Campai
     const isSent = c.status === CampaignStatus.SENT;
     const isWaiting = c.status === CampaignStatus.WAITING_FLOW;
     const isSending = c.status === CampaignStatus.SENDING;
-    // [FIX P7-C1] Paused = Circuit Breaker triggered — needs distinct orange badge, not neutral grey
     const isPaused = c.status === CampaignStatus.PAUSED;
     const sentCount = c.stats?.sent || 0;
     const linkedFlow = c.linkedFlow;
     const isFlow = !!linkedFlow;
     const showFlowStatus = isSent && linkedFlow;
-    // [UI-R1] Campaign has pending reminders → orange clock instead of green sent badge
     const hasReminders = (c.reminderCount ?? (c.reminders?.length ?? 0)) > 0;
     const showReminderBadge = isSent && hasReminders;
 
     const openRate = sentCount > 0 ? Math.round(((c.stats?.opened || 0) / sentCount) * 100) : 0;
+    const health = getCampaignPerformanceHealth(sentCount, c.stats?.opened || 0, isSending, c.totalTargetAudience, c.type, isFlow);
 
-    // Inline Rename State
     const [isEditingName, setIsEditingName] = useState(false);
     const [nameInput, setNameInput] = useState(c.name);
     const [isSavingName, setIsSavingName] = useState(false);
@@ -96,7 +283,11 @@ const CampaignTableRow = React.memo(React.forwardRef<HTMLTableRowElement, Campai
         <tr
             ref={ref}
             data-index={dataIndex}
-            className="hidden md:table-row group cursor-pointer"
+            className={`hidden md:table-row group cursor-pointer transition-all duration-300 ${
+                isSending
+                    ? 'bg-blue-50/40 dark:bg-blue-950/20 border-l-4 border-l-blue-500 shadow-sm'
+                    : ''
+            }`}
             onClick={() => {
                 if (isEditingName) return;
                 if (c.status === CampaignStatus.DRAFT || c.status === CampaignStatus.SCHEDULED) {
@@ -106,8 +297,8 @@ const CampaignTableRow = React.memo(React.forwardRef<HTMLTableRowElement, Campai
                 }
             }}
         >
-            <td className="px-8 py-5">
-                <div className="flex items-center gap-4">
+            <td className="px-6 py-5 w-[38%] max-w-0">
+                <div className="flex items-center gap-4 min-w-0">
                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-all shadow-sm border ${
                         c.type === 'zalo_zns' 
                             ? 'bg-white text-[#0068ff] border-[#0068ff]/20 shadow-[0_2px_8px_rgba(0,104,255,0.05)] p-2 group-hover:border-[#0068ff]/40' 
@@ -142,7 +333,6 @@ const CampaignTableRow = React.memo(React.forwardRef<HTMLTableRowElement, Campai
                                             (isSending ? <Loader2 className="w-5 h-5 animate-spin text-blue-600" /> :
                                                 (isPaused ? <PauseCircle className="w-5 h-5 text-orange-600" /> :
                                                     (c.status === CampaignStatus.SCHEDULED ? <CalendarClock className="w-5 h-5 text-indigo-600" /> : <FileText className="w-5 h-5" />)))))))}
-
                     </div>
                     <div className="min-w-0 flex-1">
                         {isEditingName ? (
@@ -178,9 +368,9 @@ const CampaignTableRow = React.memo(React.forwardRef<HTMLTableRowElement, Campai
                                 </button>
                             </div>
                         ) : (
-                            <div className="flex items-center gap-1.5 group/name mb-1">
+                            <div className="flex items-center gap-1.5 group/name mb-1 min-w-0">
                                 <p 
-                                    className="font-bold text-slate-800 dark:text-slate-200 text-sm leading-tight group-hover:text-amber-600 transition-colors truncate pr-1"
+                                    className="font-bold text-slate-800 dark:text-slate-200 text-sm leading-tight group-hover:text-amber-600 transition-colors truncate"
                                     title={c.name}
                                     onDoubleClick={handleStartEdit}
                                 >
@@ -196,7 +386,6 @@ const CampaignTableRow = React.memo(React.forwardRef<HTMLTableRowElement, Campai
                             </div>
                         )}
                         <div className="flex items-center gap-1.5 mt-0.5 min-w-0">
-                            {/* Creator Avatar & Name */}
                             <div className="flex items-center gap-1 shrink-0 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700/50 px-1.5 py-0.5 rounded-full">
                                 <img 
                                     src={(c.config as any)?.creator?.picture || "/imgs/ICON.png"} 
@@ -209,20 +398,24 @@ const CampaignTableRow = React.memo(React.forwardRef<HTMLTableRowElement, Campai
                                 </span>
                             </div>
                             <span className="text-slate-300 dark:text-slate-700 font-normal text-[10px]">|</span>
-                            <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium truncate max-w-[400px]">{c.subject || (c.type === 'zalo_zns' ? `Template: ${c.templateId}` : 'Bản nháp')}</span>
+                            <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium truncate flex-1 min-w-0">{c.subject || (c.type === 'zalo_zns' ? `Template: ${c.templateId}` : 'Bản nháp')}</span>
                         </div>
                     </div>
                 </div>
             </td>
 
-            <td className="px-6 py-5 text-center">
+            <td className="px-4 py-5 text-center w-[14%] whitespace-nowrap">
                 {isWaiting ? (
                     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-50 text-amber-700 border border-amber-100 text-[10px] font-black uppercase tracking-wide">
                         <GitMerge className="w-3 h-3" /> Waiting
                     </span>
                 ) : isSending ? (
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-100 text-[10px] font-black uppercase tracking-wide animate-pulse-subtle">
-                        <Loader2 className="w-3 h-3 animate-spin" /> Sending...
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-[10px] font-black uppercase tracking-wider shadow-md shadow-blue-500/25 animate-pulse">
+                        <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+                        </span>
+                        <Loader2 className="w-3 h-3 animate-spin" /> Đang gửi...
                     </span>
                 ) : showFlowStatus ? (
                     <button
@@ -241,7 +434,6 @@ const CampaignTableRow = React.memo(React.forwardRef<HTMLTableRowElement, Campai
                         <><CheckCircle2 className="w-3 h-3" /> Sent</>
                     </span>
                 ) : isPaused ? (
-                    // [FIX P7-C1] Dedicated orange badge for Circuit Breaker paused campaigns
                     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-orange-50 text-orange-700 border border-orange-200 text-[10px] font-black uppercase tracking-wide" title="Campaign bị tạm dừng bởi Circuit Breaker">
                         <PauseCircle className="w-3 h-3" /> PAUSED
                     </span>
@@ -256,17 +448,17 @@ const CampaignTableRow = React.memo(React.forwardRef<HTMLTableRowElement, Campai
                 )}
             </td>
 
-            <td className="px-6 py-5">
+            <td className="px-6 py-5 w-[20%]">
                 {isSent ? (
                     <div className="space-y-1">
-                        <div className="flex items-center gap-2 text-xs font-bold text-slate-700">
-                            <Send className="w-3.5 h-3.5 text-blue-500" />
-                            {sentCount.toLocaleString()} <span translate="no" className="text-[10px] text-slate-400 font-medium uppercase tracking-wider whitespace-nowrap">{c.type === 'zalo_zns' ? 'Tin nhắn' : 'Emails'}</span>
+                        <div className="flex items-center gap-2 text-xs font-bold text-slate-700 truncate">
+                            <Send className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                            <span>{sentCount.toLocaleString()}</span> <span translate="no" className="text-[10px] text-slate-400 font-medium uppercase tracking-wider whitespace-nowrap">{c.type === 'zalo_zns' ? 'Tin nhắn' : 'Emails'}</span>
                         </div>
                         {c.sentAt && (
                             <div className="flex flex-col gap-0.5">
-                                <span className="text-[10px] text-slate-500 font-bold flex items-center gap-1.5">
-                                    <Calendar className="w-3 h-3 text-slate-400" />
+                                <span className="text-[10px] text-slate-500 font-bold flex items-center gap-1.5 truncate">
+                                    <Calendar className="w-3 h-3 text-slate-400 shrink-0" />
                                     {new Date(c.sentAt).toLocaleDateString('vi-VN')}   {new Date(c.sentAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
                                 </span>
                             </div>
@@ -274,14 +466,14 @@ const CampaignTableRow = React.memo(React.forwardRef<HTMLTableRowElement, Campai
                     </div>
                 ) : isSending ? (
                     <div className="space-y-1">
-                        <div className="flex items-center gap-2 text-xs font-bold text-slate-700">
-                            <Loader2 className="w-3.5 h-3.5 text-blue-500 animate-spin" />
-                            {sentCount.toLocaleString()} / {(c.totalTargetAudience || 0).toLocaleString()} <span translate="no" className="text-[10px] text-slate-400 font-medium uppercase tracking-wider whitespace-nowrap">{c.type === 'zalo_zns' ? 'Tin nhắn' : 'Emails'}</span>
+                        <div className="flex items-center gap-2 text-xs font-bold text-slate-700 truncate">
+                            <Loader2 className="w-3.5 h-3.5 text-blue-500 animate-spin shrink-0" />
+                            <span>{sentCount.toLocaleString()} / {(c.totalTargetAudience || 0).toLocaleString()}</span> <span translate="no" className="text-[10px] text-slate-400 font-medium uppercase tracking-wider whitespace-nowrap">{c.type === 'zalo_zns' ? 'Tin nhắn' : 'Emails'}</span>
                         </div>
                         {c.scheduledAt && (
                             <div className="flex flex-col gap-0.5">
-                                <span className="text-[10px] text-slate-500 font-bold flex items-center gap-1.5">
-                                    <Calendar className="w-3 h-3 text-slate-400" />
+                                <span className="text-[10px] text-slate-500 font-bold flex items-center gap-1.5 truncate">
+                                    <Calendar className="w-3 h-3 text-slate-400 shrink-0" />
                                     Bắt đầu: {new Date(c.scheduledAt).toLocaleDateString('vi-VN')}   {new Date(c.scheduledAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
                                 </span>
                             </div>
@@ -289,13 +481,13 @@ const CampaignTableRow = React.memo(React.forwardRef<HTMLTableRowElement, Campai
                     </div>
                 ) : (
                     <div className="flex flex-col gap-0.5">
-                        <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                            <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                        <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5 truncate">
+                            <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                             {c.scheduledAt ? new Date(c.scheduledAt).toLocaleDateString('vi-VN') : 'Chưa đặt lịch'}
                         </span>
                         {c.scheduledAt && (
-                            <span className="text-[10px] text-slate-400 font-medium flex items-center gap-1.5">
-                                <Clock className="w-3.5 h-3.5 text-slate-300" />
+                            <span className="text-[10px] text-slate-400 font-medium flex items-center gap-1.5 truncate">
+                                <Clock className="w-3.5 h-3.5 text-slate-300 shrink-0" />
                                 {new Date(c.scheduledAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
                             </span>
                         )}
@@ -303,32 +495,40 @@ const CampaignTableRow = React.memo(React.forwardRef<HTMLTableRowElement, Campai
                 )}
             </td>
 
-            <td className="px-6 py-5">
+            <td className="px-6 py-5 w-[20%]">
                 {(isSent || isSending) ? (
-                    <div className="w-full min-w-[160px] max-w-[180px] space-y-2">
+                    <div className="w-full space-y-2">
                         <div>
                             <div className="flex justify-between items-end mb-1 gap-2 flex-nowrap">
-                                <span translate="no" className="text-[9px] font-bold text-slate-400 uppercase whitespace-nowrap">
-                                    {isSending ? 'Tiến độ' : (c.type === 'zalo_zns' ? 'Tổng tiền' : 'Hiệu suất Open')}
+                                <span translate="no" className={`text-[9px] font-black uppercase whitespace-nowrap flex items-center gap-1 ${health.textClass}`}>
+                                    {isSending && <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-ping"></span>}
+                                    {health.label}
                                 </span>
-                                <div className="flex items-center gap-1">
-                                    <span className="text-[9px] font-medium text-slate-400">
+                                <div className="flex items-center gap-1 shrink-0">
+                                    <span className="text-[10px] font-bold text-slate-700 dark:text-slate-200">
                                         {isSending
                                             ? `${sentCount.toLocaleString()} / ${(c.totalTargetAudience || 0).toLocaleString()}`
                                             : (c.type === 'zalo_zns' ? `${(sentCount * 300).toLocaleString()}đ` : `${(c.stats?.opened || 0).toLocaleString()}/${sentCount.toLocaleString()}`)
                                         }
                                     </span>
-                                    {isSending && (
-                                        <span className={`text-[9px] font-black ${isFlow ? 'text-violet-500' : 'text-blue-500'}`}>
-                                            ({c.totalTargetAudience ? Math.round((sentCount / c.totalTargetAudience) * 100) : 0}%)
+                                    {!isSending && c.type !== 'zalo_zns' && (
+                                        <span className={`text-[9px] font-black ${health.textClass}`}>
+                                            ({health.percentText})
                                         </span>
                                     )}
-                                    {!isSending && c.type !== 'zalo_zns' && <span className={`text-[9px] font-black ${openRate > 0 ? (isFlow ? 'text-violet-500' : 'text-blue-500') : 'text-slate-300'}`}>({openRate}%)</span>}
+                                    {isSending && (
+                                        <span className="text-[10px] font-black text-blue-600 dark:text-blue-400">
+                                            ({health.percentText})
+                                        </span>
+                                    )}
                                 </div>
                             </div>
-                            <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden relative">
-                                <div className={`h-full bg-gradient-to-r ${isFlow ? 'from-violet-500 to-purple-600 shadow-[0_0_10px_rgba(139,92,246,0.35)]' : (c.type === 'zalo_zns' ? 'from-blue-500 to-blue-700 shadow-[0_0_10px_rgba(0,104,255,0.2)]' : 'from-blue-500 to-blue-600 shadow-[0_0_10px_rgba(59,130,246,0.35)]')} rounded-full transition-all duration-1000 relative overflow-hidden`} style={{ width: `${isSending ? (c.totalTargetAudience ? Math.min((sentCount / c.totalTargetAudience) * 100, 100) : 0) : (c.type === 'zalo_zns' ? 100 : Math.min(openRate, 100))}%` }}>
-                                    {(isSending) && (
+                            <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden relative border border-slate-200/50 dark:border-slate-700/50">
+                                <div
+                                    className={`h-full bg-gradient-to-r ${health.barGradient} ${health.glowShadow} rounded-full transition-all duration-700 relative overflow-hidden`}
+                                    style={{ width: `${isSending ? (c.totalTargetAudience ? Math.min((sentCount / c.totalTargetAudience) * 100, 100) : 0) : (c.type === 'zalo_zns' ? 100 : Math.min(openRate, 100))}%` }}
+                                >
+                                    {isSending && (
                                         <div className="absolute inset-0 animate-sending-shimmer"></div>
                                     )}
                                 </div>
@@ -340,8 +540,8 @@ const CampaignTableRow = React.memo(React.forwardRef<HTMLTableRowElement, Campai
                 )}
             </td>
 
-            <td className="px-8 py-5 text-right" onClick={(e) => e.stopPropagation()}>
-                <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all translate-x-2 group-hover:translate-x-0 duration-300">
+            <td className="px-6 py-5 text-right w-[8%] whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                <div className="flex justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-all translate-x-2 group-hover:translate-x-0 duration-300">
                     {isSending && onPause && (
                         <button
                             onClick={(e) => { e.stopPropagation(); onPause(c.id); }}
@@ -410,6 +610,7 @@ const CampaignMobileCard = React.memo<CampaignRowProps>(({ c, onSelect, onEdit, 
     const showReminderBadge = isSent && hasReminders;
 
     const openRate = sentCount > 0 ? Math.round(((c.stats?.opened || 0) / sentCount) * 100) : 0;
+    const health = getCampaignPerformanceHealth(sentCount, c.stats?.opened || 0, isSending, c.totalTargetAudience, c.type, isFlow);
 
     const [isEditingName, setIsEditingName] = useState(false);
     const [nameInput, setNameInput] = useState(c.name);
@@ -451,7 +652,7 @@ const CampaignMobileCard = React.memo<CampaignRowProps>(({ c, onSelect, onEdit, 
 
     return (
         <div
-            className="md:hidden bg-white p-3.5 rounded-2xl border border-slate-100 shadow-sm flex flex-col gap-3 active:scale-[0.98] transition-all hover-lift"
+            className={`md:hidden bg-white p-3.5 rounded-2xl border shadow-sm flex flex-col gap-3 active:scale-[0.98] transition-all hover-lift ${isSending ? 'border-blue-200' : 'border-slate-100'}`}
             onClick={() => {
                 if (isEditingName) return;
                 if (c.status === CampaignStatus.DRAFT || c.status === CampaignStatus.SCHEDULED) {
@@ -571,12 +772,12 @@ const CampaignMobileCard = React.memo<CampaignRowProps>(({ c, onSelect, onEdit, 
                                 WAITING
                             </span>
                         ) : isSending ? (
-                            <span className="inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-100 text-[8px] font-black uppercase tracking-wide animate-pulse-subtle">
+                            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-[8px] font-black uppercase tracking-wide shadow-sm shadow-blue-500/20 animate-pulse">
+                                <span className="relative flex h-1.5 w-1.5">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-white"></span>
+                                </span>
                                 SENDING
-                            </span>
-                        ) : showFlowStatus ? (
-                            <span className="inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-md bg-violet-50 text-violet-700 border border-violet-100 text-[8px] font-black uppercase tracking-wide">
-                                FLOW
                             </span>
                         ) : showReminderBadge ? (
                             <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-orange-50 text-orange-600 border border-orange-200 text-[8px] font-black uppercase tracking-wide">
@@ -631,8 +832,8 @@ const CampaignMobileCard = React.memo<CampaignRowProps>(({ c, onSelect, onEdit, 
             {(isSent || isSending) && (
                 <div className="pt-2 border-t border-slate-50 space-y-1">
                     <div className="flex justify-between items-center text-[9px]">
-                        <span className="font-bold text-slate-400 uppercase">
-                            {isSending ? 'Tiến độ gửi' : (c.type === 'zalo_zns' ? 'Chi phí' : 'Hiệu suất Open')}
+                        <span className={`font-bold uppercase ${health.textClass}`}>
+                            {health.label}
                         </span>
                         <div className="flex items-center gap-1 font-bold">
                             <span className="text-slate-600">
@@ -642,16 +843,16 @@ const CampaignMobileCard = React.memo<CampaignRowProps>(({ c, onSelect, onEdit, 
                                 }
                             </span>
                         </div>
-                        <span translate="no" className={`text-[9px] font-black whitespace-nowrap ${isFlow ? 'text-violet-500' : 'text-blue-500'}`}>
+                        <span translate="no" className={`text-[9px] font-black whitespace-nowrap ${health.textClass}`}>
                             {isSending
-                                ? `${c.totalTargetAudience ? Math.round((sentCount / c.totalTargetAudience) * 100) : 0}% Tiến độ`
-                                : `${openRate}% ${c.type === 'zalo_zns' ? '' : 'Open'}`
+                                ? `${health.percentText} Tiến độ`
+                                : `${health.percentText} ${c.type === 'zalo_zns' ? '' : 'Open'}`
                             }
                         </span>
                     </div>
                     <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden border border-slate-200 relative">
                         <div
-                            className={`h-full bg-gradient-to-r ${isFlow ? 'from-violet-500 to-purple-600 shadow-[0_0_8px_rgba(139,92,246,0.3)]' : (c.type === 'zalo_zns' ? 'from-blue-500 to-blue-700 shadow-[0_0_8px_rgba(0,104,255,0.2)]' : 'from-blue-500 to-blue-600 shadow-[0_0_8px_rgba(59,130,246,0.3)]')} transition-all relative overflow-hidden`}
+                            className={`h-full bg-gradient-to-r ${health.barGradient} ${health.glowShadow} transition-all relative overflow-hidden`}
                             style={{ width: `${isSending ? (c.totalTargetAudience ? Math.min((sentCount / c.totalTargetAudience) * 100, 100) : 0) : (c.type === 'zalo_zns' ? 100 : Math.min(openRate, 100))}%` }}
                         >
                             {(isSending) && (
@@ -667,24 +868,24 @@ const CampaignMobileCard = React.memo<CampaignRowProps>(({ c, onSelect, onEdit, 
 
 const CampaignSkeleton = () => (
     <tr className="hidden md:table-row">
-        <td className="px-8 py-5">
+        <td className="px-6 py-5 w-[38%]">
             <div className="flex items-center gap-4">
-                <Skeleton variant="rounded" width={44} height={44} className="rounded-2xl" />
-                <div className="space-y-2 flex-1">
+                <Skeleton variant="rounded" width={40} height={40} className="rounded-xl" />
+                <div className="space-y-2 flex-1 min-w-0">
                     <Skeleton variant="text" width="60%" />
                     <Skeleton variant="text" width="40%" />
                 </div>
             </div>
         </td>
-        <td className="px-6 py-5"><div className="flex justify-center"><Skeleton variant="rounded" width={80} height={24} /></div></td>
-        <td className="px-6 py-5"><Skeleton variant="text" width="80%" /></td>
-        <td className="px-6 py-5">
+        <td className="px-4 py-5 w-[14%]"><div className="flex justify-center"><Skeleton variant="rounded" width={80} height={24} /></div></td>
+        <td className="px-6 py-5 w-[20%]"><Skeleton variant="text" width="80%" /></td>
+        <td className="px-6 py-5 w-[20%]">
             <div className="space-y-2">
                 <Skeleton variant="text" width="50%" />
                 <Skeleton variant="rectangular" height={4} className="rounded-full mt-1" />
             </div>
         </td>
-        <td className="px-8 py-5 text-right"><Skeleton variant="circular" width={32} height={32} className="ml-auto" /></td>
+        <td className="px-6 py-5 w-[8%] text-right"><Skeleton variant="circular" width={32} height={32} className="ml-auto" /></td>
     </tr>
 );
 
@@ -715,15 +916,6 @@ const CampaignList: React.FC<CampaignListProps> = ({ campaigns, loading, onSelec
     const handleResume = React.useCallback((id: string) => onResume?.(id), [onResume]);
     const handleRename = React.useCallback((id: string, newName: string) => onRename?.(id, newName), [onRename]);
 
-    const parentRef = React.useRef<HTMLDivElement>(null);
-    const rowVirtualizer = useVirtualizer({
-        count: campaigns.length,
-        getScrollElement: () => parentRef.current,
-        estimateSize: () => 84, // Approximate row height
-        overscan: 5,
-    });
-    const virtualItems = rowVirtualizer.getVirtualItems();
-
     return (
         <div className="min-h-[300px]">
             <style>{`
@@ -746,11 +938,17 @@ const CampaignList: React.FC<CampaignListProps> = ({ campaigns, loading, onSelec
                     animation: progressBarStripes 1s linear infinite;
                 }
                 
-                /* Floating Card Row Table styling */
+                /* Floating Card Row Table styling with Fixed Layout to prevent horizontal jitter */
                 .campaign-table {
                     border-collapse: separate !important;
                     border-spacing: 0 10px !important;
-                    width: 100%;
+                    width: 100% !important;
+                    table-layout: fixed !important;
+                }
+                .campaign-table th,
+                .campaign-table td {
+                    box-sizing: border-box !important;
+                    vertical-align: middle;
                 }
                 .campaign-table tbody tr {
                     background: transparent !important;
@@ -796,44 +994,42 @@ const CampaignList: React.FC<CampaignListProps> = ({ campaigns, loading, onSelec
                 }
             `}</style>
             {/* Desktop Table View */}
-            <div ref={parentRef} className="hidden md:block overflow-x-auto overflow-y-auto max-h-[580px] px-2">
-                <table className="campaign-table relative">
+            <div className="hidden md:block overflow-x-auto overflow-y-auto max-h-[600px] px-1 custom-scrollbar" style={{ scrollbarGutter: 'stable' }}>
+                <table className="campaign-table relative w-full">
+                    <colgroup>
+                        <col className="w-[38%]" style={{ width: '38%' }} />
+                        <col className="w-[14%]" style={{ width: '14%' }} />
+                        <col className="w-[20%]" style={{ width: '20%' }} />
+                        <col className="w-[20%]" style={{ width: '20%' }} />
+                        <col className="w-[8%]" style={{ width: '8%' }} />
+                    </colgroup>
                     <thead className="text-left sticky top-0 z-20 bg-[#F6F6FA] dark:bg-[#0b0f19]">
                         <tr className="border-none">
-                            <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest pl-8 w-[35%]">Chiến dịch</th>
-                            <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center w-[15%]">Trạng thái</th>
-                            <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest w-[20%]">Lịch trình</th>
-                            <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest w-[20%]">Hiệu quả</th>
-                            <th className="px-8 py-5 text-right w-[10%]"></th>
+                            <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest pl-6 w-[38%] bg-[#F6F6FA] dark:bg-[#0b0f19]">Chiến dịch</th>
+                            <th className="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center w-[14%] bg-[#F6F6FA] dark:bg-[#0b0f19]">Trạng thái</th>
+                            <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-[20%] bg-[#F6F6FA] dark:bg-[#0b0f19]">Lịch trình</th>
+                            <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-[20%] bg-[#F6F6FA] dark:bg-[#0b0f19]">Hiệu quả</th>
+                            <th className="px-6 py-4 text-right w-[8%] bg-[#F6F6FA] dark:bg-[#0b0f19]"></th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-50 bg-white">
+                    <tbody className="bg-transparent">
                         {loading ? (
                             Array.from({ length: 5 }).map((_, i) => <CampaignSkeleton key={i} />)
                         ) : (
-                            <>
-                                {virtualItems.length > 0 && <tr style={{ height: virtualItems[0].start }} />}
-                                {virtualItems.map((virtualRow) => {
-                                    const c = campaigns[virtualRow.index];
-                                    return (
-                                        <CampaignTableRow
-                                            key={c.id}
-                                            c={c}
-                                            onSelect={handleSelect}
-                                            onEdit={handleEdit}
-                                            onDelete={handleDelete}
-                                            onPlayFlow={handlePlayFlow}
-                                            onPause={handlePause}
-                                            onResume={handleResume}
-                                            onRename={handleRename}
-                                            navigate={navigate}
-                                            ref={rowVirtualizer.measureElement}
-                                            data-index={virtualRow.index}
-                                        />
-                                    );
-                                })}
-                                {virtualItems.length > 0 && <tr style={{ height: rowVirtualizer.getTotalSize() - virtualItems[virtualItems.length - 1].end }} />}
-                            </>
+                            campaigns.map((c) => (
+                                <CampaignTableRow
+                                    key={c.id}
+                                    c={c}
+                                    onSelect={handleSelect}
+                                    onEdit={handleEdit}
+                                    onDelete={handleDelete}
+                                    onPlayFlow={handlePlayFlow}
+                                    onPause={handlePause}
+                                    onResume={handleResume}
+                                    onRename={handleRename}
+                                    navigate={navigate}
+                                />
+                            ))
                         )}
                     </tbody>
                 </table>

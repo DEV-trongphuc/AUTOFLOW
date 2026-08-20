@@ -25,6 +25,7 @@ import LinkClicksTab from '../common/LinkClicksTab';
 import TechStatsTab from './TechStatsTab';
 import ConfirmModal from '../common/ConfirmModal';
 import Pagination from '../common/Pagination';
+import { interpolateMergeTags } from '@/utils/formatters';
 
 interface CampaignDetailDrawerProps {
     campaign: Campaign | null;
@@ -102,11 +103,70 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
     const [nameInput, setNameInput] = useState('');
     const [isSavingName, setIsSavingName] = useState(false);
 
+    // Attachment Management & Clear State
+    const [attachmentPage, setAttachmentPage] = useState(1);
+    const [showClearAttachmentsModal, setShowClearAttachmentsModal] = useState(false);
+    const [clearingAttachments, setClearingAttachments] = useState(false);
+
+    const handleClearAttachments = async () => {
+        if (!localCampaign?.id) return;
+        setClearingAttachments(true);
+        try {
+            const res = await api.post<any>('campaigns?route=clear_attachments', { id: localCampaign.id });
+            if (res.success) {
+                toast.success(res.message || "Đã làm sạch tệp đính kèm trên máy chủ thành công!");
+                setLocalCampaign(prev => prev ? { ...prev, attachments: [] } : null);
+                setShowClearAttachmentsModal(false);
+            } else {
+                toast.error(res.message || "Không thể dọn dẹp tệp đính kèm");
+            }
+        } catch (err: any) {
+            toast.error(err?.message || "Lỗi khi dọn dẹp tệp đính kèm");
+        } finally {
+            setClearingAttachments(false);
+        }
+    };
+
+    const sampleSubscriber = React.useMemo(() => ({
+        id: 'sample_01',
+        fullName: 'Trần Trọng Phúc',
+        full_name: 'Trần Trọng Phúc',
+        firstName: 'Phúc',
+        first_name: 'Phúc',
+        lastName: 'Trần Trọng',
+        last_name: 'Trần Trọng',
+        email: 'trongphuc@ideas.edu.vn',
+        phone: '0901234567',
+        company: 'IDEAS Vietnam',
+        companyName: 'IDEAS Vietnam',
+        jobTitle: 'Học viên K2026',
+        job_title: 'Học viên K2026'
+    }), []);
+
     useEffect(() => {
         if (localCampaign?.name) {
             setNameInput(localCampaign.name);
         }
     }, [localCampaign?.name]);
+
+    // Live Auto-poll while campaign is actively sending
+    useEffect(() => {
+        let pollTimer: ReturnType<typeof setInterval> | null = null;
+        if (isOpen && localCampaign?.id && localCampaign?.status === 'sending') {
+            pollTimer = setInterval(async () => {
+                const res = await api.get<any>(`campaigns?id=${localCampaign.id}`);
+                if (res.success && res.data) {
+                    setLocalCampaign(prev => ({ ...prev, ...res.data }));
+                    if (res.data.status !== 'sending') {
+                        if (pollTimer) clearInterval(pollTimer);
+                    }
+                }
+            }, 2000);
+        }
+        return () => {
+            if (pollTimer) clearInterval(pollTimer);
+        };
+    }, [isOpen, localCampaign?.id, localCampaign?.status]);
 
     const handleSaveName = async () => {
         const trimmed = nameInput.trim();
@@ -533,7 +593,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
 
     return ReactDOM.createPortal(
         <div className={`fixed inset-0 z-[9999] flex justify-end ${isVisible ? 'pointer-events-auto' : 'pointer-events-none'}`}>
-            <div className={`absolute inset-0 bg-slate-950/70 transition-opacity duration-500 ${animateIn ? 'opacity-100' : 'opacity-0'}`} onClick={onClose} />
+            <div className={`absolute inset-0 bg-black/80 backdrop-blur-[2px] transition-opacity duration-500 ${animateIn ? 'opacity-100' : 'opacity-0'}`} onClick={onClose} />
             
             {/* Floating Back Button on Backdrop */}
             <div 
@@ -557,22 +617,26 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                 <div className="bg-white border-b border-slate-100 px-4 md:px-8 py-4 md:py-5 flex flex-col sm:flex-row justify-between items-start gap-4 shrink-0 shadow-sm z-30">
                     <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-1.5">
-                            {/* [FIX P8-C3] Paused badge: orange to match CampaignList PauseCircle badge */}
-                            <Badge variant={
-                                localCampaign.status === 'sent' ? 'success' :
-                                    localCampaign.status === 'sending' ? 'info' :
-                                        localCampaign.status === 'scheduled' ? 'warning' : 'neutral'
-                            } className={`px-2 py-0.5 md:px-3 md:py-1 text-[9px] md:text-xs ${
-                                localCampaign.status === 'paused' ? '!bg-orange-50 !text-orange-700 !border-orange-200' : ''
-                            }`}>
-                                {localCampaign.status === 'sending' && <RefreshCw className="w-2.5 h-2.5 animate-spin" />}
-                                {localCampaign.status === 'paused' && <PauseCircle className="w-2.5 h-2.5" />}
-                                {(localCampaign.status || 'DRAFT').toUpperCase()}
-                            </Badge>
-                            {localCampaign.status === 'sending' && localCampaign.totalTargetAudience > 0 && (
-                                <span className="text-[10px] md:text-xs font-black text-slate-400">
-                                    <span className="text-blue-600">{(localCampaign.stats?.sent || 0).toLocaleString()}</span>/{(localCampaign.totalTargetAudience || 0).toLocaleString()}
+                            {/* Status badge with animated live indicators */}
+                            {localCampaign.status === 'sending' ? (
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-full text-xs font-black uppercase tracking-wider shadow-md shadow-blue-500/30 animate-pulse">
+                                    <span className="relative flex h-2 w-2">
+                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                                        <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+                                    </span>
+                                    <RefreshCw className="w-3 h-3 animate-spin" />
+                                    ĐANG GỬI ({Math.min(100, Math.round(((localCampaign.stats?.sent || 0) / Math.max(1, localCampaign.totalTargetAudience || 1)) * 100))}%)
                                 </span>
+                            ) : (
+                                <Badge variant={
+                                    localCampaign.status === 'sent' ? 'success' :
+                                        localCampaign.status === 'scheduled' ? 'warning' : 'neutral'
+                                } className={`px-2 py-0.5 md:px-3 md:py-1 text-[9px] md:text-xs ${
+                                    localCampaign.status === 'paused' ? '!bg-orange-50 !text-orange-700 !border-orange-200' : ''
+                                }`}>
+                                    {localCampaign.status === 'paused' && <PauseCircle className="w-2.5 h-2.5" />}
+                                    {(localCampaign.status || 'DRAFT').toUpperCase()}
+                                </Badge>
                             )}
                             <span className="text-[9px] md:text-[11px] font-bold text-slate-400 flex items-center gap-1">
                                 <Calendar className="w-3 h-3 md:w-3.5 md:h-3.5" />
@@ -704,56 +768,85 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                     {activeTab === 'overview' && (
                         <div className="animate-in fade-in slide-in-from-right-4 duration-300 space-y-8">
                             {localCampaign.status === 'sending' && (
-                                <div className="p-1 bg-slate-100 rounded-[28px] overflow-hidden">
-                                    <div className="bg-white p-6 rounded-[24px] border border-slate-200 shadow-sm flex flex-col gap-4">
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center animate-pulse-subtle">
-                                                    <Send className="w-5 h-5" />
+                                <div className="p-1 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 rounded-[28px] shadow-xl shadow-blue-500/20 overflow-hidden text-white relative">
+                                    <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-400 opacity-10 rounded-full blur-[50px] pointer-events-none" />
+                                    <div className="bg-slate-900/40 backdrop-blur-md p-6 rounded-[24px] border border-white/10 flex flex-col gap-4">
+                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                            <div className="flex items-center gap-3.5">
+                                                <div className="w-12 h-12 bg-blue-500/20 text-cyan-300 border border-cyan-400/30 rounded-2xl flex items-center justify-center shadow-inner relative">
+                                                    <Send className="w-6 h-6 animate-pulse" />
+                                                    <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">
+                                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+                                                        <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-cyan-400"></span>
+                                                    </span>
                                                 </div>
                                                 <div>
-                                                    <h5 className="text-sm font-black text-slate-800 uppercase tracking-tight">Chiến dịch đang được xử lý</h5>
-                                                    <p className="text-[11px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Vui lòng không đóng trình duyệt để theo dõi sát sao</p>
+                                                    <div className="flex items-center gap-2">
+                                                        <h5 className="text-sm md:text-base font-black text-white uppercase tracking-tight">
+                                                            Chiến dịch đang được gửi trực tiếp (Live Sending)
+                                                        </h5>
+                                                        <span className="px-2 py-0.5 bg-cyan-400/20 border border-cyan-300/30 text-cyan-300 text-[10px] font-black rounded-full uppercase tracking-wider animate-pulse">
+                                                            Đang truyền tin...
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-[11px] text-blue-200/80 font-bold uppercase tracking-widest mt-0.5">
+                                                        Tiến trình gửi SMTP đang hoạt động liên tục và tự động cập nhật
+                                                    </p>
                                                 </div>
                                             </div>
-                                            <div className="text-right">
-                                                <p className="text-2xl font-black text-blue-600 tracking-tight">
-                                                    {Math.min(100, Math.round(((localCampaign.stats?.sent || 0) / (localCampaign.totalTargetAudience || 1)) * 100))}%
+                                            <div className="text-left sm:text-right">
+                                                <p className="text-3xl font-black text-cyan-300 tracking-tight drop-shadow-sm font-mono">
+                                                    {Math.min(100, Math.round(((localCampaign.stats?.sent || 0) / Math.max(1, localCampaign.totalTargetAudience || 1)) * 100))}%
                                                 </p>
+                                                <p className="text-[10px] text-blue-200 font-bold uppercase tracking-wider">Tiến độ hoàn thành</p>
                                             </div>
                                         </div>
-                                        <div className="w-full h-3 bg-slate-50 border border-slate-100 rounded-full overflow-hidden">
+
+                                        {/* Progress bar with animated stripes */}
+                                        <div className="w-full h-4 bg-black/40 border border-white/10 rounded-full overflow-hidden p-0.5 relative">
                                             <div
-                                                className="h-full bg-gradient-to-r from-blue-500 to-indigo-600 transition-all duration-1000 ease-out shadow-lg shadow-blue-500/20"
-                                                style={{ width: `${Math.min(100, ((localCampaign.stats?.sent || 0) / (localCampaign.totalTargetAudience || 1)) * 100)}%` }}
-                                            />
+                                                className="h-full bg-gradient-to-r from-cyan-400 via-blue-400 to-emerald-400 rounded-full transition-all duration-700 ease-out shadow-lg shadow-cyan-500/50 relative overflow-hidden"
+                                                style={{ width: `${Math.min(100, Math.max(2, ((localCampaign.stats?.sent || 0) / Math.max(1, localCampaign.totalTargetAudience || 1)) * 100))}%` }}
+                                            >
+                                                <div className="absolute inset-0 bg-[linear-gradient(45deg,rgba(255,255,255,0.3)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.3)_50%,rgba(255,255,255,0.3)_75%,transparent_75%,transparent)] bg-[length:20px_20px] animate-sending-shimmer" />
+                                            </div>
                                         </div>
-                                        <div className="flex justify-between text-[11px] font-bold">
-                                            <div className="flex gap-4">
-                                                <span className="text-slate-500 uppercase tracking-wider">Đã gửi: <span className="text-blue-600 font-black">{(localCampaign.stats?.sent || 0).toLocaleString()}</span></span>
+
+                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-[11px] font-bold text-blue-100">
+                                            <div className="flex flex-wrap items-center gap-4">
+                                                <span className="uppercase tracking-wider">
+                                                    Đã gửi: <span className="text-cyan-300 font-black text-sm">{(localCampaign.stats?.sent || 0).toLocaleString()}</span>
+                                                </span>
+                                                <span className="uppercase tracking-wider">
+                                                    Còn lại: <span className="text-white font-black text-sm">{Math.max(0, (localCampaign.totalTargetAudience || 0) - (localCampaign.stats?.sent || 0)).toLocaleString()}</span>
+                                                </span>
                                                 {(localCampaign.stats?.failed || 0) > 0 && (
-                                                    <span className="text-rose-500 uppercase tracking-wider">Thất bại: <span className="font-black">{(localCampaign.stats?.failed || 0).toLocaleString()}</span></span>
+                                                    <span className="text-rose-300 uppercase tracking-wider">
+                                                        Thất bại: <span className="font-black text-sm">{(localCampaign.stats?.failed || 0).toLocaleString()}</span>
+                                                    </span>
                                                 )}
                                             </div>
                                             <div className="flex items-center gap-2">
-                                                <span className="text-slate-400 uppercase tracking-widest">Mục tiêu: {localCampaign.totalTargetAudience?.toLocaleString() || '...'}</span>
+                                                <span className="text-blue-200/80 uppercase tracking-widest text-[10px]">
+                                                    Mục tiêu: {(localCampaign.totalTargetAudience || 0).toLocaleString()} liên hệ
+                                                </span>
                                                 <button
                                                     onClick={handlePauseCampaign}
                                                     disabled={pauseLoading}
-                                                    className="ml-2 px-3 py-1 bg-rose-50 border border-rose-200 text-rose-600 text-[10px] font-black uppercase rounded-lg hover:bg-rose-600 hover:text-white transition-all flex items-center gap-1.5 shadow-sm"
+                                                    className="ml-2 px-3 py-1.5 bg-rose-500/80 hover:bg-rose-600 text-white text-[10px] font-black uppercase rounded-xl transition-all flex items-center gap-1.5 shadow-md shadow-rose-900/30 cursor-pointer"
                                                     title="Tạm dừng gửi chiến dịch ngay lập tức"
                                                 >
                                                     {pauseLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <PauseCircle className="w-3.5 h-3.5" />}
-                                                    Tạm dừng gửi
+                                                    Tạm dừng
                                                 </button>
                                                 <button
                                                     onClick={handleTriggerRefresh}
                                                     disabled={refreshLoading}
-                                                    className="px-3 py-1 bg-slate-900 text-white text-[10px] font-black uppercase rounded-lg hover:bg-black transition-all flex items-center gap-1.5 shadow-sm"
+                                                    className="px-3 py-1.5 bg-white/20 hover:bg-white/30 text-white text-[10px] font-black uppercase rounded-xl transition-all flex items-center gap-1.5 shadow-md cursor-pointer"
                                                     title="Nếu tiến độ bị kẹt, nhấn để kích hoạt lại tiến trình gửi"
                                                 >
-                                                    {refreshLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Zap className="w-3 h-3 text-orange-400" />}
-                                                    Kích hoạt lại
+                                                    {refreshLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Zap className="w-3.5 h-3.5 text-cyan-300" />}
+                                                    Đẩy gửi tiếp
                                                 </button>
                                             </div>
                                         </div>
@@ -1104,7 +1197,9 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                         <div className="mb-4 pb-4 border-b border-slate-50 flex justify-between items-center">
                                             <div>
                                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Tiêu đề bản tin</p>
-                                                <h4 className="text-sm font-bold text-slate-700">{previewContent.loading ? '...' : previewContent.subject}</h4>
+                                                <h4 className="text-base font-black text-slate-800 tracking-tight">
+                                                    {previewContent.loading ? '...' : (interpolateMergeTags(previewContent.subject || localCampaign.subject || '', sampleSubscriber))}
+                                                </h4>
                                             </div>
                                             <div className="flex bg-slate-100 p-1 rounded-xl">
                                                 <button
@@ -1143,7 +1238,7 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                                             </>
                                                         )}
                                                         <iframe
-                                                            srcDoc={previewContent.html}
+                                                            srcDoc={interpolateMergeTags(previewContent.html || '', sampleSubscriber)}
                                                             className={`w-full border-none bg-white ${previewMode === 'mobile' ? 'h-[calc(100%-20px)] mt-5' : 'h-full'}`}
                                                             title="Email Content Preview"
                                                         />
@@ -1202,43 +1297,85 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                         </div>
                                     )}
 
-                                    {/* Attachments Section */}
-                                    {parsedAttachments && parsedAttachments.length > 0 && (
-                                        <div className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm flex flex-col">
-                                            <div className="flex items-center justify-between mb-4">
-                                                <h4 className="text-xs font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">
-                                                    <Paperclip className="w-4 h-4 text-blue-500" />
-                                                    Tệp đính kèm ({parsedAttachments.length})
-                                                </h4>
-                                            </div>
-                                            <div className="space-y-3">
-                                                {parsedAttachments.map((file: any, i: number) => (
-                                                    <a 
-                                                        key={file.id || i} 
-                                                        href={file.url || '#'} 
-                                                        target="_blank" 
-                                                        rel="noopener noreferrer"
-                                                        className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100 hover:border-blue-300 hover:bg-blue-50/50 hover:shadow-sm transition-all group"
-                                                    >
-                                                        <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center shrink-0 group-hover:bg-blue-500 group-hover:text-white transition-colors">
-                                                            <FileIcon className="w-4 h-4" />
-                                                        </div>
-                                                        <div className="min-w-0 flex-1">
-                                                            <p className="text-xs font-bold text-slate-700 truncate group-hover:text-blue-700 transition-colors">{file.name}</p>
-                                                            <div className="flex items-center gap-2 mt-0.5">
-                                                                <span className="text-[10px] text-slate-400 font-medium">{file.type?.toUpperCase() || 'FILE'}</span>
-                                                                <span className="text-slate-300">•</span>
-                                                                <span className="text-[10px] text-slate-400 font-medium">={(file.size / 1024 / 1024).toFixed(2)} MB</span>
+                                    {/* Attachments Section with Pagination & Server Clean */}
+                                    {parsedAttachments && parsedAttachments.length > 0 && (() => {
+                                        const ATTACHMENTS_PER_PAGE = 20;
+                                        const totalAttachmentPages = Math.ceil(parsedAttachments.length / ATTACHMENTS_PER_PAGE);
+                                        const displayedAttachments = parsedAttachments.slice((attachmentPage - 1) * ATTACHMENTS_PER_PAGE, attachmentPage * ATTACHMENTS_PER_PAGE);
+
+                                        return (
+                                            <div className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm flex flex-col">
+                                                <div className="flex items-center justify-between mb-4">
+                                                    <h4 className="text-xs font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">
+                                                        <Paperclip className="w-4 h-4 text-blue-500" />
+                                                        Tệp đính kèm ({parsedAttachments.length})
+                                                    </h4>
+                                                    {totalAttachmentPages > 1 && (
+                                                        <span className="text-[10px] font-bold text-slate-400">Trang {attachmentPage}/{totalAttachmentPages}</span>
+                                                    )}
+                                                </div>
+                                                <div className="space-y-2.5 max-h-[420px] overflow-y-auto custom-scrollbar pr-1">
+                                                    {displayedAttachments.map((file: any, i: number) => (
+                                                        <a 
+                                                            key={file.id || i} 
+                                                            href={file.url || '#'} 
+                                                            target="_blank" 
+                                                            rel="noopener noreferrer"
+                                                            className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100 hover:border-blue-300 hover:bg-blue-50/50 hover:shadow-sm transition-all group"
+                                                        >
+                                                            <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center shrink-0 group-hover:bg-blue-500 group-hover:text-white transition-colors">
+                                                                <FileIcon className="w-4 h-4" />
                                                             </div>
-                                                        </div>
-                                                        <Badge variant={file.logic === 'match_email' ? 'warning' : 'neutral'} className="text-[9px]">
-                                                            {file.logic === 'match_email' ? 'Cá nhân hóa' : 'Gửi chung'}
-                                                        </Badge>
-                                                    </a>
-                                                ))}
+                                                            <div className="min-w-0 flex-1">
+                                                                <p className="text-xs font-bold text-slate-700 truncate group-hover:text-blue-700 transition-colors">{file.name}</p>
+                                                                <div className="flex items-center gap-2 mt-0.5">
+                                                                    <span className="text-[10px] text-slate-400 font-medium">{file.type?.toUpperCase() || 'FILE'}</span>
+                                                                    <span className="text-slate-300">•</span>
+                                                                    <span className="text-[10px] text-slate-400 font-medium">={(file.size / 1024 / 1024).toFixed(2)} MB</span>
+                                                                </div>
+                                                            </div>
+                                                            <Badge variant={file.logic === 'match_email' ? 'warning' : 'neutral'} className="text-[9px]">
+                                                                {file.logic === 'match_email' ? 'Cá nhân hóa' : 'Gửi chung'}
+                                                            </Badge>
+                                                        </a>
+                                                    ))}
+                                                </div>
+
+                                                {/* Pagination Controls */}
+                                                {totalAttachmentPages > 1 && (
+                                                    <div className="flex items-center justify-between pt-3 mt-3 border-t border-slate-100 text-xs font-bold text-slate-500">
+                                                        <button
+                                                            onClick={() => setAttachmentPage(p => Math.max(1, p - 1))}
+                                                            disabled={attachmentPage === 1}
+                                                            className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 disabled:opacity-40 rounded-lg transition-colors cursor-pointer text-[11px]"
+                                                        >
+                                                            ← Trước
+                                                        </button>
+                                                        <span className="text-[10px] text-slate-400">Hiển thị {displayedAttachments.length}/{parsedAttachments.length} tệp</span>
+                                                        <button
+                                                            onClick={() => setAttachmentPage(p => Math.min(totalAttachmentPages, p + 1))}
+                                                            disabled={attachmentPage === totalAttachmentPages}
+                                                            className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 disabled:opacity-40 rounded-lg transition-colors cursor-pointer text-[11px]"
+                                                        >
+                                                            Sau →
+                                                        </button>
+                                                    </div>
+                                                )}
+
+                                                {/* Clean Server Attachments Button for Sent Campaigns */}
+                                                {localCampaign.status === 'sent' && (
+                                                    <button
+                                                        onClick={() => setShowClearAttachmentsModal(true)}
+                                                        className="mt-4 w-full py-2.5 px-3 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+                                                        title="Chiến dịch đã gửi xong. Xóa các tệp đính kèm khỏi máy chủ để giải phóng bộ nhớ."
+                                                    >
+                                                        <Trash2 className="w-3.5 h-3.5" />
+                                                        Làm sạch tệp trên Server ({parsedAttachments.length} tệp)
+                                                    </button>
+                                                )}
                                             </div>
-                                        </div>
-                                    )}
+                                        );
+                                    })()}
 
                                     {/* Link Summary Card */}
                                     {previewType === 'main' && uniqueLinks.length > 0 && (
@@ -1447,15 +1584,15 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                                 </div>
                             </div>
 
-                            <Card noPadding className="border border-slate-100 shadow-sm overflow-hidden min-h-[400px]">
-                                <div className="overflow-x-auto">
+                            <Card noPadding className="border border-slate-100 shadow-sm overflow-hidden min-h-[300px]">
+                                <div className="overflow-x-auto overflow-y-auto max-h-[400px] custom-scrollbar">
                                     <table className="w-full text-left">
-                                        <thead className="bg-slate-50 border-b border-slate-100">
+                                        <thead className="bg-slate-50/95 border-b border-slate-100 sticky top-0 z-10 backdrop-blur-sm">
                                             <tr>
-                                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Khách hàng</th>
-                                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Hành động</th>
-                                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Chi tiết</th>
-                                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Thời gian</th>
+                                                <th className="px-6 py-3.5 text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50/95">Khách hàng</th>
+                                                <th className="px-6 py-3.5 text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50/95">Hành động</th>
+                                                <th className="px-6 py-3.5 text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50/95">Chi tiết</th>
+                                                <th className="px-6 py-3.5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right bg-slate-50/95">Thời gian</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-50">
@@ -1636,6 +1773,25 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                     }
                     variant="danger"
                     confirmLabel={deleteModal.loading ? "ĐANG XÓA..." : "XÓA VĨNH VIỄN"}
+                />
+
+                <ConfirmModal
+                    isOpen={showClearAttachmentsModal}
+                    onClose={() => !clearingAttachments && setShowClearAttachmentsModal(false)}
+                    onConfirm={handleClearAttachments}
+                    title="Dọn dẹp tệp đính kèm trên Server"
+                    message={
+                        <div className="space-y-3">
+                            <p className="text-sm text-slate-600">
+                                Chiến dịch này đã gửi xong tới toàn bộ danh sách liên hệ mục tiêu.
+                            </p>
+                            <p className="text-xs text-rose-600 font-bold bg-rose-50 p-3 rounded-xl border border-rose-200">
+                                Thao tác này sẽ xóa vĩnh viễn toàn bộ tệp đính kèm vật lý trên máy chủ để giải phóng dung lượng bộ nhớ.
+                            </p>
+                        </div>
+                    }
+                    variant="danger"
+                    confirmLabel={clearingAttachments ? "ĐANG XÓA..." : "LÀM SẠCH SERVER"}
                 />
                 <style>{`
                   @media (min-width: 1024px) {

@@ -143,37 +143,45 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
                 max-width: 100% !important;
                 min-width: 100% !important;
                 margin: 0 auto !important;
+                padding-left: 0 !important;
+                padding-right: 0 !important;
             }
             .section-wrapper { 
                 width: 100% !important;
                 max-width: 100% !important;
                 box-sizing: border-box !important;
-                padding-top: 10px; 
-                padding-bottom: 10px; 
+                padding-top: 4px !important; 
+                padding-bottom: 4px !important; 
+                padding-left: 4px !important;
+                padding-right: 4px !important;
             }
             .section-content {
                 width: 100% !important;
                 max-width: 100% !important;
                 margin: 0 auto !important;
                 box-sizing: border-box !important;
+                padding-left: 0 !important;
+                padding-right: 0 !important;
             }
             .row-resp { 
                 display: table !important; 
                 width: 100% !important; 
-                max-width: 100% !important;
+                max-width: 100% !important; 
                 margin: 0 auto !important;
                 box-sizing: border-box !important;
             }
             .col-resp { 
                 display: block !important; 
                 width: 100% !important; 
-                min-width: 100% !important;
-                max-width: 100% !important;
-                /* Default safety padding for stacked columns on mobile */
-                padding-left: 10px; 
-                padding-right: 10px; 
-                margin-bottom: 20px; 
-                margin-left: auto !important;
+                min-width: 100% !important; 
+                max-width: 100% !important; 
+                /* Compact safety padding for stacked columns on mobile */
+                padding-left: 4px !important; 
+                padding-right: 4px !important; 
+                padding-top: 2px !important;
+                padding-bottom: 2px !important;
+                margin-bottom: 10px !important; 
+                margin-left: auto !important; 
                 margin-right: auto !important;
                 box-sizing: border-box !important;
                 clear: both !important;
@@ -183,19 +191,19 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
                 box-sizing: border-box !important;
             }
             .timeline-date {
-                width: 60px !important;
-                padding-right: 10px !important;
+                width: 50px !important;
+                padding-right: 6px !important;
                 font-size: 11px !important;
             }
             .btn-nostack { 
                 font-size: 10px !important; 
             }
             .btn-nostack a {
-                padding: 8px 12px !important;
+                padding: 6px 10px !important;
                 font-size: 10px !important;
             }
-            h1 { font-size: 26px !important; }
-            h2 { font-size: 22px !important; }
+            h1 { font-size: 24px !important; }
+            h2 { font-size: 20px !important; }
             
             .image-block img {
                 height: auto !important;
@@ -210,18 +218,20 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
                 height: auto !important;
             }
             .text-block, .quote-block {
-                padding-left: 10px !important;
-                padding-right: 10px !important;
+                padding-left: 4px !important;
+                padding-right: 4px !important;
+                padding-top: 4px !important;
+                padding-bottom: 4px !important;
             }
             .image-block {
                 padding-left: 0 !important;
                 padding-right: 0 !important;
-                padding-top: 10px !important;
-                padding-bottom: 10px !important;
+                padding-top: 4px !important;
+                padding-bottom: 4px !important;
             }
             .mobile-padding-y {
-                padding-top: 10px !important;
-                padding-bottom: 10px !important;
+                padding-top: 4px !important;
+                padding-bottom: 4px !important;
             }
             .center-on-narrow {
                 text-align: center !important;
@@ -653,7 +663,7 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
                     <td class="mobile-padding-y ${customClassName}" style="${paddingCss} ${getBackgroundStyle(s)} border-radius: ${sanitizeRadius(s.borderRadius || '0')}; ${getBorderStyle(s)} ${hideOnDesktopCss} overflow: hidden;">
                         <table role="presentation" border="0" cellspacing="0" cellpadding="0" width="100%" style="${maxW}">
                         <tbody><tr><td style="text-align: ${s.textAlign || 'left'};">
-                        ${showTitle ? `<h3 class="${customClassName}" style="margin: 0 0 15px; font-family: ${titleFont}; font-size: ${titleSize}; font-weight: bold; color: ${titleColor}; text-align: ${s.textAlign || 'left'};">${title}</h3>` : ''}
+                        ${showTitle ? `<h3 class="${customClassName}" style="margin: 0 0 15px; font-family: ${titleFont}; font-size: ${titleSize}; font-weight: bold; color: ${titleColor}; text-align: ${s.textAlign || 'left'};">${sanitizeHtmlLineHeight(title)}</h3>` : ''}
                         <table role="presentation" border="0" cellspacing="0" cellpadding="0" width="100%">
                             ${items.map(item => {
                 const showItemTitle = s.showItemTitle !== false;
@@ -691,8 +701,8 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
                                             </table>
                                         </td>
                                         <td valign="${vAlignGlobal}" class="${customClassName}" style="padding: ${textPaddingTop} 0 12px 10px; font-family: ${fontFamily}; text-align: left;">
-                                            ${showItemTitle ? `<div class="${customClassName}" style="font-size: ${itemSize}; font-weight: bold; color: ${itemColor}; margin-bottom: ${showItemDesc ? '2' : '0'}px;">${item.title}</div>` : ''}
-                                            ${showItemDesc ? `<div class="${customClassName}" style="font-size: ${descSize}; color: ${descColor}; line-height: 1.4;">${item.description}</div>` : ''}
+                                            ${showItemTitle ? `<div class="${customClassName}" style="font-size: ${itemSize}; font-weight: bold; color: ${itemColor}; margin-bottom: ${showItemDesc ? '2' : '0'}px;">${sanitizeHtmlLineHeight(item.title || '')}</div>` : ''}
+                                            ${showItemDesc ? `<div class="${customClassName}" style="font-size: ${descSize}; color: ${descColor}; line-height: 1.4;">${sanitizeHtmlLineHeight(item.description || '')}</div>` : ''}
                                         </td>
                                     </tr>
                                 `;
