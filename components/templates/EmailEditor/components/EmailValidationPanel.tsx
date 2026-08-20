@@ -4,7 +4,7 @@ import { ShieldCheck, AlertTriangle, Image, MousePointer2, CheckCircle2, X, Chev
 
 export interface ValidationIssue {
     blockId: string;
-    type: 'spam_words' | 'button_no_link' | 'image_no_link' | 'image_no_alt' | 'duplicate_link' | 'missing_unsubscribe' | 'wrong_unsubscribe_url';
+    type: 'spam_words' | 'button_no_link' | 'image_no_link' | 'image_no_alt' | 'duplicate_link' | 'missing_unsubscribe' | 'wrong_unsubscribe_url' | 'missing_fallback_url' | 'missing_fallback_image';
     label: string;
     preview?: string;
     // For duplicate_link: the group of blockIds sharing the same URL
@@ -26,6 +26,20 @@ interface EmailValidationPanelProps {
 }
 
 const ISSUE_META: Record<ValidationIssue['type'], { icon: React.ElementType; color: string; bg: string; border: string; title: string }> = {
+    missing_fallback_url: {
+        icon: AlertTriangle,
+        color: 'text-rose-600',
+        bg: 'bg-rose-50',
+        border: 'border-rose-200',
+        title: 'Thiếu link dự phòng (Bắt buộc)',
+    },
+    missing_fallback_image: {
+        icon: Image,
+        color: 'text-rose-600',
+        bg: 'bg-rose-50',
+        border: 'border-rose-200',
+        title: 'Thiếu ảnh dự phòng (Bắt buộc)',
+    },
     // [NEW] Spam words detection
     spam_words: {
         icon: AlertTriangle,

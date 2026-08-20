@@ -100,6 +100,17 @@ const scanBlocks = (blocks: EmailBlock[]): ValidationIssue[] => {
 
     const scan = (list: EmailBlock[]) => {
         for (const block of list) {
+            // ── Mandatory Fallback Check for dynamic variables in URL ──
+            const isVarInUrl = /(?:{{\s*([^{}%]+?)\s*}}|%7B%7B\s*([^{}%]+?)\s*%7D%7D)/i.test(block.url || '');
+            if (isVarInUrl && (!block.fallbackUrl || !block.fallbackUrl.trim() || block.fallbackUrl === '#')) {
+                issues.push({
+                    blockId: block.id,
+                    type: 'missing_fallback_url',
+                    label: `Biến link "${block.url}" chưa có đường dẫn dự phòng (bắt buộc)`,
+                    preview: stripHtml(block.content || '') || block.content?.slice(0, 40) || 'Nút / Link',
+                });
+            }
+
             if (block.type === 'button') {
                 if (isInvalidUrl(block.url)) {
                     issues.push({
@@ -112,6 +123,17 @@ const scanBlocks = (blocks: EmailBlock[]): ValidationIssue[] => {
                     });
                 }
             } else if (block.type === 'image') {
+                // ── Mandatory Fallback Check for dynamic image src ──
+                const isVarInSrc = /(?:{{\s*([^{}%]+?)\s*}}|%7B%7B\s*([^{}%]+?)\s*%7D%7D)/i.test(block.content || '');
+                if (isVarInSrc && (!block.fallbackContent || !block.fallbackContent.trim())) {
+                    issues.push({
+                        blockId: block.id,
+                        type: 'missing_fallback_image',
+                        label: `Biến ảnh "${block.content}" chưa có ảnh dự phòng (bắt buộc)`,
+                        preview: block.altText || 'Hình ảnh',
+                    });
+                }
+
                 const noLink = isInvalidUrl(block.url);
                 const noAlt = !block.altText || block.altText.trim() === '';
                 if (noLink) {
