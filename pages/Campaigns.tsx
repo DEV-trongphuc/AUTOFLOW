@@ -83,6 +83,7 @@ const Campaigns: React.FC = () => {
     const [isSavingDraft, setIsSavingDraft] = useState(false);
     const [isPublishing, setIsPublishing] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
+    const isDeletingRef = React.useRef(false);
 
     // Modals
     const [confirmModal, setConfirmModal] = useState<{
@@ -484,11 +485,13 @@ const Campaigns: React.FC = () => {
     }, [isPublishing, allFlows, navigate]);
 
     const executeDelete = async (id: string, deleteFlowMode: number) => {
-        if (isDeleting) return; // [GUARD] Prevent double-submit
+        if (isDeletingRef.current) return; // [GUARD] Prevent double-submit
+        isDeletingRef.current = true;
         setIsDeleting(true);
         const snapshot = campaigns.slice(); // Save snapshot for rollback
         // [OPTIMISTIC UI] Remove from list immediately before API call
         setCampaigns(prev => prev.filter(c => c.id !== id));
+        setPagination(prev => ({ ...prev, total: Math.max(0, prev.total - 1) }));
         setConfirmModal(prev => ({ ...prev, isOpen: false }));
         setAdvancedDeleteModal(prev => ({ ...prev, isOpen: false }));
         try {
@@ -497,6 +500,7 @@ const Campaigns: React.FC = () => {
                 showToast('Đã xóa chiến dịch thành công!');
                 const deletedCamp = snapshot.find(c => c.id === id);
                 logAction("Xóa chiến dịch", `Đã xóa chiến dịch: ${deletedCamp ? deletedCamp.name : id}`);
+                api.clearCache('campaigns');
                 // Refresh flows list if flows were deleted too
                 if (deleteFlowMode === 1) {
                     api.get<any>('flows').then(r => { if (r.success) { const raw = r.data as any; setAllFlows(Array.isArray(raw) ? raw : (raw?.data || [])); } });
@@ -505,11 +509,14 @@ const Campaigns: React.FC = () => {
                 // [ROLLBACK] Restore snapshot on failure
                 showToast(res.message || 'Lỗi khi xóa chiến dịch', 'error');
                 setCampaigns(snapshot);
+                setPagination(prev => ({ ...prev, total: snapshot.length }));
             }
         } catch (error) {
             showToast('Đã xảy ra lỗi hệ thống khi xóa chiến dịch', 'error');
             setCampaigns(snapshot); // [ROLLBACK]
+            setPagination(prev => ({ ...prev, total: snapshot.length }));
         } finally {
+            isDeletingRef.current = false;
             setIsDeleting(false); // [GUARD] Always unlock
         }
     };
