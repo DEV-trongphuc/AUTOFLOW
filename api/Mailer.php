@@ -301,16 +301,6 @@ class Mailer {
         return $success ? true : $error;
     }
 
-    public function getCleanUntrackedHtml($html)
-    {
-        if (empty($html)) return '';
-        // Strip any tracking pixel if already present
-        $clean = preg_replace('/<img[^>]+src=["\'][^"\']*webhook\.php\?type=open[^"\']*["\'][^>]*>/i', '', $html);
-        // Replace unsub placeholder if present
-        $clean = str_replace(["{{unsub_url_placeholder}}", "{{unsubscribe_url}}", "{{unsubscribeLink}}"], $this->baseUrl, $clean);
-        return $clean;
-    }
-
     // Explicitly close SMTP connection when batch is done
     public function closeConnection()
     {

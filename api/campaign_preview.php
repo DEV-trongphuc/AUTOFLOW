@@ -31,10 +31,12 @@ if ($method === 'GET') {
     jsonResponse(false, null, 'Method not allowed');
 }
 
-$campaignId = $data['campaign_id'] ?? null;
-$templateId = $data['template_id'] ?? null;
-$email = $data['email'] ?? null;
-$reminderId = $data['reminder_id'] ?? null;
+$campaignId   = $data['campaign_id'] ?? null;
+$templateId   = $data['template_id'] ?? null;
+$subscriberId = $data['subscriber_id'] ?? null;
+$email        = $data['email'] ?? null;
+$listId       = $data['list_id'] ?? null;
+$reminderId   = $data['reminder_id'] ?? null;
 
 // Require either campaign_id or template_id
 if (!$campaignId && !$templateId) {
@@ -43,42 +45,85 @@ if (!$campaignId && !$templateId) {
 
 try {
     $workspace_id = get_current_workspace_id();
-    // 1. Fetch Subscriber for live personalization
+    
+    // 1. Fetch REAL Subscriber for live personalization
     $subscriber = [
-        'first_name' => 'Phúc',
-        'last_name' => 'Trần Trọng',
-        'full_name' => 'Trần Trọng Phúc',
-        'email' => 'trongphuc@ideas.edu.vn',
-        'phone' => '0901234567',
+        'first_name'   => 'Khách',
+        'last_name'    => 'Hàng',
+        'full_name'    => 'Khách Hàng',
+        'email'        => 'khachhang@example.com',
+        'phone'        => '0901234567',
         'company_name' => 'IDEAS Vietnam',
-        'job_title' => 'Học viên K2026'
+        'job_title'    => 'Học viên'
     ];
 
-    if ($email) {
+    $fetchedSub = null;
+
+    if ($subscriberId) {
+        $stmtSub = $pdo->prepare("SELECT * FROM subscribers WHERE id = ? AND workspace_id = ? LIMIT 1");
+        $stmtSub->execute([$subscriberId, $workspace_id]);
+        $fetchedSub = $stmtSub->fetch(PDO::FETCH_ASSOC);
+    } elseif ($email) {
         $stmtSub = $pdo->prepare("SELECT * FROM subscribers WHERE email = ? AND workspace_id = ? LIMIT 1");
         $stmtSub->execute([$email, $workspace_id]);
         $fetchedSub = $stmtSub->fetch(PDO::FETCH_ASSOC);
-        if ($fetchedSub) {
-            $subscriber = $fetchedSub;
-        }
+    } elseif ($listId) {
+        // Try finding a real subscriber from this list
+        $stmtListSub = $pdo->prepare("
+            SELECT s.* FROM subscribers s 
+            JOIN subscriber_lists sl ON s.id = sl.subscriber_id 
+            WHERE sl.list_id = ? AND s.workspace_id = ? 
+            ORDER BY s.id DESC LIMIT 1
+        ");
+        $stmtListSub->execute([$listId, $workspace_id]);
+        $fetchedSub = $stmtListSub->fetch(PDO::FETCH_ASSOC);
     } elseif ($campaignId) {
         // Try finding a real subscriber from this campaign's target lists or past delivery
         $stmtAud = $pdo->prepare("SELECT s.* FROM subscribers s JOIN mail_delivery_logs mdl ON s.id = mdl.subscriber_id WHERE mdl.campaign_id = ? AND s.workspace_id = ? LIMIT 1");
         $stmtAud->execute([$campaignId, $workspace_id]);
         $fetchedSub = $stmtAud->fetch(PDO::FETCH_ASSOC);
+        
         if (!$fetchedSub) {
-            $stmtAud2 = $pdo->prepare("SELECT * FROM subscribers WHERE workspace_id = ? AND status = 'subscribed' ORDER BY id DESC LIMIT 1");
-            $stmtAud2->execute([$workspace_id]);
-            $fetchedSub = $stmtAud2->fetch(PDO::FETCH_ASSOC);
+            // Check campaign target lists
+            $stmtCampTarget = $pdo->prepare("SELECT target_list_ids FROM campaigns WHERE id = ? AND workspace_id = ? LIMIT 1");
+            $stmtCampTarget->execute([$campaignId, $workspace_id]);
+            $rawLists = $stmtCampTarget->fetchColumn();
+            $targetLists = $rawLists ? (json_decode($rawLists, true) ?: explode(',', $rawLists)) : [];
+            if (!empty($targetLists)) {
+                $targetListId = is_array($targetLists) ? ($targetLists[0] ?? null) : $targetLists;
+                if ($targetListId) {
+                    $stmtListSub = $pdo->prepare("
+                        SELECT s.* FROM subscribers s 
+                        JOIN subscriber_lists sl ON s.id = sl.subscriber_id 
+                        WHERE sl.list_id = ? AND s.workspace_id = ? 
+                        ORDER BY s.id DESC LIMIT 1
+                    ");
+                    $stmtListSub->execute([$targetListId, $workspace_id]);
+                    $fetchedSub = $stmtListSub->fetch(PDO::FETCH_ASSOC);
+                }
+            }
         }
-        if ($fetchedSub) {
-            $subscriber = $fetchedSub;
+    }
+
+    // If still not found, fetch the latest active subscriber in the current workspace
+    if (!$fetchedSub) {
+        $stmtAud2 = $pdo->prepare("SELECT * FROM subscribers WHERE workspace_id = ? ORDER BY id DESC LIMIT 1");
+        $stmtAud2->execute([$workspace_id]);
+        $fetchedSub = $stmtAud2->fetch(PDO::FETCH_ASSOC);
+    }
+
+    if ($fetchedSub) {
+        $subscriber = $fetchedSub;
+        // Normalize name fields if needed
+        if (empty($subscriber['full_name']) && (!empty($subscriber['first_name']) || !empty($subscriber['last_name']))) {
+            $subscriber['full_name'] = trim(($subscriber['last_name'] ?? '') . ' ' . ($subscriber['first_name'] ?? ''));
         }
     }
 
     // 2. Fetch Content
     $htmlContent = '';
     $subject = '';
+    $campaign = [];
 
     if ($reminderId) {
         // Fetch Reminder Content - Join with campaigns to verify ownership
@@ -87,21 +132,21 @@ try {
         $reminder = $stmtRem->fetch(PDO::FETCH_ASSOC);
 
         if ($reminder) {
-            $subject = $reminder['subject'];
-            $htmlContent = resolveEmailContent($pdo, $reminder['template_id'], '', '');
+            $subject = $reminder['subject'] ?? '';
+            $htmlContent = resolveEmailContent($pdo, $reminder['template_id'] ?? '', '', '');
         }
     } elseif ($templateId && !$campaignId) {
-        // NEW: Direct template preview (for template selection step)
-        $subject = 'Template Preview';
+        // Direct template preview (for template selection step)
+        $subject = 'Xem trước Mẫu Thư';
         $htmlContent = resolveEmailContent($pdo, $templateId, '', '');
     } else {
         // Fetch Main Campaign Content
         $stmtCamp = $pdo->prepare("SELECT * FROM campaigns WHERE id = ? AND workspace_id = ? LIMIT 1");
         $stmtCamp->execute([$campaignId, $workspace_id]);
-        $campaign = $stmtCamp->fetch(PDO::FETCH_ASSOC);
+        $campaign = $stmtCamp->fetch(PDO::FETCH_ASSOC) ?: [];
 
         if ($campaign) {
-            $subject = $campaign['subject'];
+            $subject = $campaign['subject'] ?? '';
 
             // Handle ZNS Type
             if (($campaign['type'] ?? 'email') === 'zalo_zns' && !empty($campaign['template_id'])) {
@@ -115,10 +160,8 @@ try {
                     $previewUrl = $tplData['detail']['previewUrl'] ?? '';
 
                     if ($previewUrl) {
-                        // Embed Zalo Preview URL
                         $htmlContent = '<html><body style="margin:0;padding:0;"><iframe src="' . htmlspecialchars($previewUrl) . '" style="width:100%; height:100vh; border:none;"></iframe></body></html>';
                     } else {
-                        // Fallback: Display Params
                         $htmlContent = '<div style="font-family:sans-serif; padding:20px;"><h3>' . htmlspecialchars($tpl['template_name']) . '</h3><p>Template ID: ' . htmlspecialchars($campaign['template_id']) . '</p>';
                         $htmlContent .= '<p>Preview URL not available. Please sync template details.</p></div>';
                     }
@@ -128,7 +171,7 @@ try {
                 }
             } else {
                 // Standard Email
-                $htmlContent = resolveEmailContent($pdo, $campaign['template_id'], $campaign['custom_html'] ?? '', $campaign['content_body']);
+                $htmlContent = resolveEmailContent($pdo, $campaign['template_id'] ?? '', $campaign['custom_html'] ?? '', $campaign['content_body'] ?? '');
             }
         }
     }
@@ -138,10 +181,10 @@ try {
     }
 
     // 3. Personalize
-    $campConfig = json_decode($campaign['config'] ?? '{}', true) ?: [];
+    $campConfig = !empty($campaign['config']) ? (json_decode($campaign['config'], true) ?: []) : [];
     $context = [
         'unsubscribe_url' => '#unsubscribe',
-        'campaign_name' => $campaign['name'] ?? '',
+        'campaign_name' => $campaign['name'] ?? 'Chiến dịch',
         'variable_fallbacks' => $campConfig['variable_fallbacks'] ?? [],
         'config' => $campConfig
     ];
@@ -150,9 +193,20 @@ try {
 
     jsonResponse(true, [
         'subject' => $finalSubject,
-        'html' => $finalHtml
+        'html' => $finalHtml,
+        'subscriber' => [
+            'id' => $subscriber['id'] ?? null,
+            'firstName' => $subscriber['first_name'] ?? '',
+            'lastName' => $subscriber['last_name'] ?? '',
+            'fullName' => $subscriber['full_name'] ?? trim(($subscriber['last_name'] ?? '') . ' ' . ($subscriber['first_name'] ?? '')),
+            'email' => $subscriber['email'] ?? '',
+            'phone' => $subscriber['phone_number'] ?? ($subscriber['phone'] ?? ''),
+            'companyName' => $subscriber['company_name'] ?? '',
+            'jobTitle' => $subscriber['job_title'] ?? ''
+        ]
     ]);
 
-} catch (Exception $e) {
-    jsonResponse(false, null, 'Lỗi hệ thống, vui lòng thử lại.');
+} catch (Throwable $e) {
+    error_log("Campaign Preview Error: " . $e->getMessage());
+    jsonResponse(false, null, 'Lỗi hệ thống khi tải preview: ' . $e->getMessage());
 }

@@ -70,7 +70,8 @@ if (!function_exists('runWorkerCampaign')) {
         $skipLockedClause = isDatabaseSkipLockedSupported($pdo) ? 'SKIP LOCKED' : '';
 
         // Check for valid request (from Cron or Direct Trigger)
-        $manualCampaignId = $campaignId ?? $_GET['campaign_id'] ?? null;
+        $cliCampaignId = isset($argv[1]) ? $argv[1] : null;
+        $manualCampaignId = $campaignId ?? $_GET['campaign_id'] ?? $cliCampaignId;
         // [INFINITE LOOP GUARD] Track how many consecutive "continuous mode" retries have been made.
         // Passed via ?retry_count=N in the async trigger URL. If count exceeds MAX, auto-pause.
         // [SECURITY FIX] Cap retry_count to MAX_RETRIES+1 to prevent circuit-breaker bypass
@@ -1066,5 +1067,6 @@ if (!function_exists('runWorkerCampaign')) {
 
 // When run as standalone script (cron/direct), execute immediately
 if (basename(__FILE__) === basename($_SERVER['SCRIPT_FILENAME'] ?? '')) {
-    runWorkerCampaign($pdo, $_GET['campaign_id'] ?? null);
+    $cliCampaignId = isset($argv[1]) ? $argv[1] : null;
+    runWorkerCampaign($pdo, $_GET['campaign_id'] ?? $cliCampaignId);
 }

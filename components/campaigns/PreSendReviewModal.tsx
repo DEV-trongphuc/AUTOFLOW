@@ -111,24 +111,62 @@ export const PreSendReviewModal: React.FC<PreSendReviewModalProps> = ({
         const fetchSubscribers = async () => {
             setLoadingSamples(true);
             try {
-                let targetListId = formData.target?.listIds?.[0];
-                let url = targetListId ? `subscribers?list_id=${targetListId}&limit=10` : 'subscribers?limit=10';
+                const targetListId = formData.target?.listIds?.[0] || (formData as any).target_list_ids?.[0];
+                const targetSegmentId = formData.target?.segmentIds?.[0];
+                const targetTagId = formData.target?.tagIds?.[0];
+
+                let url = 'subscribers?limit=10';
+                if (targetListId) {
+                    url = `subscribers?list_id=${targetListId}&limit=10`;
+                } else if (targetSegmentId) {
+                    url = `subscribers?segment_id=${targetSegmentId}&limit=10`;
+                } else if (targetTagId) {
+                    url = `subscribers?tag=${targetTagId}&limit=10`;
+                }
                 
-                const res = await api.get<Subscriber[]>(url);
-                if (isMounted && res.success && Array.isArray(res.data) && res.data.length > 0) {
-                    const mapped = res.data.map((sub, idx) => ({
-                        id: sub.id || `sub-${idx}`,
-                        firstName: sub.firstName || (sub.name ? sub.name.split(' ').slice(-1)[0] : 'Khách'),
-                        lastName: sub.lastName || (sub.name ? sub.name.split(' ').slice(0, -1).join(' ') : 'Hàng'),
-                        fullName: (sub.name || `${sub.lastName || ''} ${sub.firstName || ''}`.trim()) || sub.email?.split('@')[0] || 'Khách hàng',
-                        email: sub.email || '',
-                        phone: sub.phoneNumber || sub.phone || '',
-                        companyName: sub.companyName || sub.company || 'Công ty TNHH Mẫu',
-                        jobTitle: sub.jobTitle || 'Quý Khách',
-                        city: sub.city || 'Việt Nam',
-                        website: sub.website || 'https://ideas.edu.vn',
-                        ...(sub.customAttributes || {})
-                    }));
+                let res = await api.get<Subscriber[]>(url);
+                let list = (res.success && Array.isArray(res.data) && res.data.length > 0) ? res.data : [];
+
+                // If specific target returned empty, fallback to active workspace subscribers
+                if (list.length === 0 && url !== 'subscribers?limit=10') {
+                    const fallbackRes = await api.get<Subscriber[]>('subscribers?limit=10');
+                    if (fallbackRes.success && Array.isArray(fallbackRes.data) && fallbackRes.data.length > 0) {
+                        list = fallbackRes.data;
+                    }
+                }
+
+                if (isMounted && list.length > 0) {
+                    const mapped = list.map((sub: any, idx: number) => {
+                        const fName = sub.firstName || sub.first_name || (sub.name ? sub.name.split(' ').slice(-1)[0] : '');
+                        const lName = sub.lastName || sub.last_name || (sub.name ? sub.name.split(' ').slice(0, -1).join(' ') : '');
+                        const full = sub.name || sub.fullName || [lName, fName].filter(Boolean).join(' ').trim() || sub.email?.split('@')[0] || 'Khách hàng';
+                        const cAttrs = typeof sub.customAttributes === 'object' && sub.customAttributes 
+                            ? sub.customAttributes 
+                            : (typeof sub.custom_attributes === 'object' && sub.custom_attributes ? sub.custom_attributes : {});
+
+                        return {
+                            id: sub.id || `sub-${idx}`,
+                            firstName: fName || 'Khách',
+                            lastName: lName || '',
+                            first_name: fName || 'Khách',
+                            last_name: lName || '',
+                            fullName: full,
+                            name: full,
+                            customer_name: full,
+                            customerName: full,
+                            email: sub.email || '',
+                            phone: sub.phoneNumber || sub.phone_number || sub.phone || '',
+                            phoneNumber: sub.phoneNumber || sub.phone_number || sub.phone || '',
+                            companyName: sub.companyName || sub.company_name || sub.company || '',
+                            company_name: sub.companyName || sub.company_name || sub.company || '',
+                            jobTitle: sub.jobTitle || sub.job_title || 'Khách hàng',
+                            job_title: sub.jobTitle || sub.job_title || 'Khách hàng',
+                            city: sub.city || 'Việt Nam',
+                            address: sub.address || sub.city || '',
+                            website: sub.website || 'https://ideas.edu.vn',
+                            ...cAttrs
+                        };
+                    });
                     setSampleSubscribers(mapped);
                     setSelectedSampleIndex(0);
                 } else if (isMounted) {
@@ -147,7 +185,7 @@ export const PreSendReviewModal: React.FC<PreSendReviewModalProps> = ({
 
         fetchSubscribers();
         return () => { isMounted = false; };
-    }, [isOpen, formData.target?.listIds]);
+    }, [isOpen, formData.target?.listIds, formData.target?.segmentIds, formData.target?.tagIds]);
 
     const currentSubscriber = sampleSubscribers[selectedSampleIndex] || DEFAULT_SAMPLE_SUBSCRIBERS[0];
 

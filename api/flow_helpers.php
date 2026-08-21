@@ -707,6 +707,30 @@ function getHtmlContextAtOffset($html, $offset)
 }
 
 /**
+ * Canonicalize variable keys for fuzzy matching (case/dash/underscore/Vietnamese-accent insensitive)
+ * e.g. "Mã chứng chỉ", "cert_no", "certNo", "CERT_NO", "cert-no" -> "machungchi", "certno"
+ */
+if (!function_exists('canonicalizeVarKey')) {
+    function canonicalizeVarKey($str)
+    {
+        if (!is_string($str) || $str === '') return '';
+        $unicode = [
+            'a' => 'á|à|ả|ã|ạ|ă|ắ|ặ|ằ|ẳ|ẵ|â|ấ|ầ|ẩ|ẫ|ậ|Á|À|Ả|Ã|Ạ|Ă|Ắ|Ặ|Ằ|Ẳ|Ẵ|Â|Ấ|Ầ|Ẩ|Ẫ|Ậ',
+            'd' => 'đ|Đ',
+            'e' => 'é|è|ẻ|ẽ|ẹ|ê|ế|ề|ể|ễ|ệ|É|È|Ẻ|Ẽ|Ẹ|Ê|Ế|Ề|Ể|Ễ|Ệ',
+            'i' => 'í|ì|ỉ|ĩ|ị|Í|Ì|Ỉ|Ĩ|Ị',
+            'o' => 'ó|ò|ỏ|õ|ọ|ô|ố|ồ|ổ|ỗ|ộ|ơ|ớ|ờ|ở|ỡ|ợ|Ó|Ò|Ỏ|Õ|Ọ|Ô|Ố|Ồ|Ổ|Ỗ|Ộ|Ơ|Ớ|Ờ|Ở|Ỡ|Ợ',
+            'u' => 'ú|ù|ủ|ũ|ụ|ư|ứ|ừ|ử|ữ|ự|Ú|Ù|Ủ|Ũ|Ụ|Ư|Ứ|Ừ|Ử|Ữ|Ự',
+            'y' => 'ý|ỳ|ỷ|ỹ|ỵ|Ý|Ỳ|Ỷ|Ỹ|Ỵ',
+        ];
+        foreach ($unicode as $nonAccent => $accent) {
+            $str = preg_replace("/($accent)/u", $nonAccent, $str);
+        }
+        return preg_replace('/[^a-z0-9]/', '', strtolower($str));
+    }
+}
+
+/**
  * Replace merge tags in content
  */
 function replaceMergeTags($html, $subscriber, $context = [])
@@ -943,27 +967,7 @@ function replaceMergeTags($html, $subscriber, $context = [])
         }, $html);
     }
 
-/**
- * Canonicalize variable keys for fuzzy matching (case/dash/underscore/Vietnamese-accent insensitive)
- * e.g. "Mã chứng chỉ", "cert_no", "certNo", "CERT_NO", "cert-no" -> "machungchi", "certno"
- */
-function canonicalizeVarKey($str)
-{
-    if (!is_string($str) || $str === '') return '';
-    $unicode = [
-        'a' => 'á|à|ả|ã|ạ|ă|ắ|ặ|ằ|ẳ|ẵ|â|ấ|ầ|ẩ|ẫ|ậ|Á|À|Ả|Ã|Ạ|Ă|Ắ|Ặ|Ằ|Ẳ|Ẵ|Â|Ấ|Ầ|Ẩ|Ẫ|Ậ',
-        'd' => 'đ|Đ',
-        'e' => 'é|è|ẻ|ẽ|ẹ|ê|ế|ề|ể|ễ|ệ|É|È|Ẻ|Ẽ|Ẹ|Ê|Ế|Ề|Ể|Ễ|Ệ',
-        'i' => 'í|ì|ỉ|ĩ|ị|Í|Ì|Ỉ|Ĩ|Ị',
-        'o' => 'ó|ò|ỏ|õ|ọ|ô|ố|ồ|ổ|ỗ|ộ|ơ|ớ|ờ|ở|ỡ|ợ|Ó|Ò|Ỏ|Õ|Ọ|Ô|Ố|Ồ|Ổ|Ỗ|Ộ|Ơ|Ớ|Ờ|Ở|Ỡ|Ợ',
-        'u' => 'ú|ù|ủ|ũ|ụ|ư|ứ|ừ|ử|ữ|ự|Ú|Ù|Ủ|Ũ|Ụ|Ư|Ứ|Ừ|Ử|Ữ|Ự',
-        'y' => 'ý|ỳ|ỷ|ỹ|ỵ|Ý|Ỳ|Ỷ|Ỹ|Ỵ',
-    ];
-    foreach ($unicode as $nonAccent => $accent) {
-        $str = preg_replace("/($accent)/u", $nonAccent, $str);
-    }
-    return preg_replace('/[^a-z0-9]/', '', strtolower($str));
-}
+    // Build Canonical Map & Collect Fallbacks
 
     // Build Canonical Map & Collect Fallbacks
     $canonicalMap = [];

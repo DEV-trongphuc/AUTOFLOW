@@ -768,87 +768,85 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
                     {activeTab === 'overview' && (
                         <div className="animate-in fade-in slide-in-from-right-4 duration-300 space-y-8">
                             {localCampaign.status === 'sending' && (
-                                <div className="p-1 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 rounded-[28px] shadow-xl shadow-blue-500/20 overflow-hidden text-white relative">
-                                    <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-400 opacity-10 rounded-full blur-[50px] pointer-events-none" />
-                                    <div className="bg-slate-900/40 backdrop-blur-md p-6 rounded-[24px] border border-white/10 flex flex-col gap-4">
-                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                                            <div className="flex items-center gap-3.5">
-                                                <div className="w-12 h-12 bg-blue-500/20 text-cyan-300 border border-cyan-400/30 rounded-2xl flex items-center justify-center shadow-inner relative">
-                                                    <Send className="w-6 h-6 animate-pulse" />
-                                                    <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">
-                                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
-                                                        <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-cyan-400"></span>
+                                <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 rounded-2xl border border-blue-500/30 p-6 shadow-xl shadow-blue-950/20 text-white relative overflow-hidden flex flex-col gap-4">
+                                    <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-400/10 rounded-full blur-[60px] pointer-events-none" />
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
+                                        <div className="flex items-center gap-3.5">
+                                            <div className="w-12 h-12 bg-blue-500/20 text-cyan-300 border border-cyan-400/30 rounded-2xl flex items-center justify-center shadow-inner relative">
+                                                <Send className="w-6 h-6 animate-pulse" />
+                                                <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">
+                                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+                                                    <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-cyan-400"></span>
+                                                </span>
+                                            </div>
+                                            <div>
+                                                <div className="flex items-center gap-2">
+                                                    <h5 className="text-sm md:text-base font-black text-white uppercase tracking-tight">
+                                                        Chiến dịch đang được gửi trực tiếp (Live Sending)
+                                                    </h5>
+                                                    <span className="px-2 py-0.5 bg-cyan-400/20 border border-cyan-300/30 text-cyan-300 text-[10px] font-black rounded-full uppercase tracking-wider animate-pulse">
+                                                        Đang truyền tin...
                                                     </span>
                                                 </div>
-                                                <div>
-                                                    <div className="flex items-center gap-2">
-                                                        <h5 className="text-sm md:text-base font-black text-white uppercase tracking-tight">
-                                                            Chiến dịch đang được gửi trực tiếp (Live Sending)
-                                                        </h5>
-                                                        <span className="px-2 py-0.5 bg-cyan-400/20 border border-cyan-300/30 text-cyan-300 text-[10px] font-black rounded-full uppercase tracking-wider animate-pulse">
-                                                            Đang truyền tin...
-                                                        </span>
-                                                    </div>
-                                                    <p className="text-[11px] text-blue-200/80 font-bold uppercase tracking-widest mt-0.5">
-                                                        Tiến trình gửi SMTP đang hoạt động liên tục và tự động cập nhật
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            <div className="text-left sm:text-right">
-                                                <p className="text-3xl font-black text-cyan-300 tracking-tight drop-shadow-sm font-mono">
-                                                    {Math.min(100, Math.round(((localCampaign.stats?.sent || 0) / Math.max(1, localCampaign.totalTargetAudience || 1)) * 100))}%
+                                                <p className="text-[11px] text-blue-200/80 font-bold uppercase tracking-widest mt-0.5">
+                                                    Tiến trình gửi SMTP đang hoạt động liên tục và tự động cập nhật
                                                 </p>
-                                                <p className="text-[10px] text-blue-200 font-bold uppercase tracking-wider">Tiến độ hoàn thành</p>
                                             </div>
                                         </div>
+                                        <div className="text-left sm:text-right">
+                                            <p className="text-3xl font-black text-cyan-300 tracking-tight drop-shadow-sm font-mono">
+                                                {Math.min(100, Math.round(((localCampaign.stats?.sent || 0) / Math.max(1, localCampaign.totalTargetAudience || 1)) * 100))}%
+                                            </p>
+                                            <p className="text-[10px] text-blue-200 font-bold uppercase tracking-wider">Tiến độ hoàn thành</p>
+                                        </div>
+                                    </div>
 
-                                        {/* Progress bar with animated stripes */}
-                                        <div className="w-full h-4 bg-black/40 border border-white/10 rounded-full overflow-hidden p-0.5 relative">
-                                            <div
-                                                className="h-full bg-gradient-to-r from-cyan-400 via-blue-400 to-emerald-400 rounded-full transition-all duration-700 ease-out shadow-lg shadow-cyan-500/50 relative overflow-hidden"
-                                                style={{ width: `${Math.min(100, Math.max(2, ((localCampaign.stats?.sent || 0) / Math.max(1, localCampaign.totalTargetAudience || 1)) * 100))}%` }}
+                                    {/* Progress bar with animated stripes */}
+                                    <div className="w-full h-4 bg-black/40 border border-white/10 rounded-full overflow-hidden p-0.5 relative z-10">
+                                        <div
+                                            className="h-full bg-gradient-to-r from-cyan-400 via-blue-400 to-emerald-400 rounded-full transition-all duration-700 ease-out shadow-lg shadow-cyan-500/50 relative overflow-hidden"
+                                            style={{ width: `${Math.min(100, Math.max(2, ((localCampaign.stats?.sent || 0) / Math.max(1, localCampaign.totalTargetAudience || 1)) * 100))}%` }}
+                                        >
+                                            <div className="absolute inset-0 bg-[linear-gradient(45deg,rgba(255,255,255,0.3)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.3)_50%,rgba(255,255,255,0.3)_75%,transparent_75%,transparent)] bg-[length:20px_20px] animate-sending-shimmer" />
+                                        </div>
+                                    </div>
+
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-[11px] font-bold text-blue-100 relative z-10">
+                                        <div className="flex flex-wrap items-center gap-4">
+                                            <span className="uppercase tracking-wider">
+                                                Đã gửi: <span className="text-cyan-300 font-black text-sm">{(localCampaign.stats?.sent || 0).toLocaleString()}</span>
+                                            </span>
+                                            <span className="uppercase tracking-wider">
+                                                Còn lại: <span className="text-white font-black text-sm">{Math.max(0, (localCampaign.totalTargetAudience || 0) - (localCampaign.stats?.sent || 0)).toLocaleString()}</span>
+                                            </span>
+                                            {(localCampaign.stats?.failed || 0) > 0 && (
+                                                <span className="text-rose-300 uppercase tracking-wider">
+                                                    Thất bại: <span className="font-black text-sm">{(localCampaign.stats?.failed || 0).toLocaleString()}</span>
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-blue-200/80 uppercase tracking-widest text-[10px]">
+                                                Mục tiêu: {(localCampaign.totalTargetAudience || 0).toLocaleString()} liên hệ
+                                            </span>
+                                            <button
+                                                onClick={handlePauseCampaign}
+                                                disabled={pauseLoading}
+                                                className="ml-2 px-3 py-1.5 bg-rose-500/80 hover:bg-rose-600 text-white text-[10px] font-black uppercase rounded-xl transition-all flex items-center gap-1.5 shadow-md shadow-rose-900/30 cursor-pointer"
+                                                title="Tạm dừng gửi chiến dịch ngay lập tức"
                                             >
-                                                <div className="absolute inset-0 bg-[linear-gradient(45deg,rgba(255,255,255,0.3)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.3)_50%,rgba(255,255,255,0.3)_75%,transparent_75%,transparent)] bg-[length:20px_20px] animate-sending-shimmer" />
-                                            </div>
-                                        </div>
-
-                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-[11px] font-bold text-blue-100">
-                                            <div className="flex flex-wrap items-center gap-4">
-                                                <span className="uppercase tracking-wider">
-                                                    Đã gửi: <span className="text-cyan-300 font-black text-sm">{(localCampaign.stats?.sent || 0).toLocaleString()}</span>
-                                                </span>
-                                                <span className="uppercase tracking-wider">
-                                                    Còn lại: <span className="text-white font-black text-sm">{Math.max(0, (localCampaign.totalTargetAudience || 0) - (localCampaign.stats?.sent || 0)).toLocaleString()}</span>
-                                                </span>
-                                                {(localCampaign.stats?.failed || 0) > 0 && (
-                                                    <span className="text-rose-300 uppercase tracking-wider">
-                                                        Thất bại: <span className="font-black text-sm">{(localCampaign.stats?.failed || 0).toLocaleString()}</span>
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-blue-200/80 uppercase tracking-widest text-[10px]">
-                                                    Mục tiêu: {(localCampaign.totalTargetAudience || 0).toLocaleString()} liên hệ
-                                                </span>
-                                                <button
-                                                    onClick={handlePauseCampaign}
-                                                    disabled={pauseLoading}
-                                                    className="ml-2 px-3 py-1.5 bg-rose-500/80 hover:bg-rose-600 text-white text-[10px] font-black uppercase rounded-xl transition-all flex items-center gap-1.5 shadow-md shadow-rose-900/30 cursor-pointer"
-                                                    title="Tạm dừng gửi chiến dịch ngay lập tức"
-                                                >
-                                                    {pauseLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <PauseCircle className="w-3.5 h-3.5" />}
-                                                    Tạm dừng
-                                                </button>
-                                                <button
-                                                    onClick={handleTriggerRefresh}
-                                                    disabled={refreshLoading}
-                                                    className="px-3 py-1.5 bg-white/20 hover:bg-white/30 text-white text-[10px] font-black uppercase rounded-xl transition-all flex items-center gap-1.5 shadow-md cursor-pointer"
-                                                    title="Nếu tiến độ bị kẹt, nhấn để kích hoạt lại tiến trình gửi"
-                                                >
-                                                    {refreshLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Zap className="w-3.5 h-3.5 text-cyan-300" />}
-                                                    Đẩy gửi tiếp
-                                                </button>
-                                            </div>
+                                                {pauseLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <PauseCircle className="w-3.5 h-3.5" />}
+                                                Tạm dừng
+                                            </button>
+                                            <button
+                                                onClick={handleTriggerRefresh}
+                                                disabled={refreshLoading}
+                                                className="px-3 py-1.5 bg-white/20 hover:bg-white/30 text-white text-[10px] font-black uppercase rounded-xl transition-all flex items-center gap-1.5 shadow-md cursor-pointer"
+                                                title="Nếu tiến độ bị kẹt, nhấn để kích hoạt lại tiến trình gửi"
+                                            >
+                                                {refreshLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Zap className="w-3.5 h-3.5 text-cyan-300" />}
+                                                Đẩy gửi tiếp
+                                            </button>
                                         </div>
                                     </div>
                                 </div>

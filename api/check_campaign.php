@@ -14,10 +14,10 @@ if (file_exists(__DIR__ . '/db_connect.php')) {
 header('Content-Type: text/html; charset=utf-8');
 echo "<pre style='font-family: monospace; font-size: 14px; line-height: 1.5; padding: 20px; background: #f9f9f9;'>";
 
-$campaignId = '6a3a2ebbb41a7';
+$campaignId = $_GET['id'] ?? ($argv[1] ?? '6a87aeb6c88d1');
 
-echo "=== CAMPAIGN DETAILS ===\n";
-$stmt = $pdo->prepare("SELECT id, name, type, status, target_config, total_target_audience, count_sent, sent_at, workspace_id FROM campaigns WHERE id = ?");
+echo "=== CAMPAIGN DETAILS: $campaignId ===\n";
+$stmt = $pdo->prepare("SELECT id, name, type, status, scheduled_at, target_list_ids, target_config, total_target_audience, count_sent, sent_at, workspace_id FROM campaigns WHERE id = ?");
 $stmt->execute([$campaignId]);
 $campaign = $stmt->fetch(PDO::FETCH_ASSOC);
 if (!$campaign) {
