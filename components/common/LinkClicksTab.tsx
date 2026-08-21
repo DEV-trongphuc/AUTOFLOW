@@ -26,7 +26,7 @@ const LinkClicksTab: React.FC<LinkClicksTabProps> = ({ type, id, stepId, initial
     const [uniqueUserClicks, setUniqueUserClicks] = useState(0);
 
     // Heatmap State
-    const [viewMode, setViewMode] = useState<'list' | 'heatmap'>(initialViewMode || 'heatmap');
+    const [viewMode, setViewMode] = useState<'list' | 'heatmap'>(initialViewMode || 'list');
     const [html, setHtml] = useState(initialHtml || '');
     const [loadingHtml, setLoadingHtml] = useState(false);
     const [deviceFilter, setDeviceFilter] = useState<'all' | 'desktop' | 'mobile'>('all');

@@ -124,8 +124,8 @@ if (!function_exists('runWorkerCampaign')) {
             // [FIX BUG-WC-1] Extract workspace_id to scope all subscriber queries
             $workspace_id = (int)($campaign['workspace_id'] ?? 0);
 
-            // [OPTIMIZATION] Clean up stale temporary locks to auto-recover if worker crashed on previous runs
-            $pdo->prepare("DELETE FROM subscriber_activity WHERE campaign_id = ? AND type = 'processing_campaign' AND created_at < DATE_SUB(NOW(), INTERVAL 5 MINUTE)")->execute([$cid]);
+            // [OPTIMIZATION] Clean up all temporary processing locks so subscribers are immediately available
+            $pdo->prepare("DELETE FROM subscriber_activity WHERE campaign_id = ? AND type = 'processing_campaign'")->execute([$cid]);
 
             // Start a transaction for the campaign processing
             $pdo->beginTransaction();
@@ -578,20 +578,22 @@ if (!function_exists('runWorkerCampaign')) {
                             $personalHtml = replaceMergeTags($currentHtml, $sub, $context);
                             $personalSubject = replaceMergeTags($currentSubject, $sub, $context);
 
-                            $recipientIndexInBatch++;
-
-                            // Every 5 recipients: check if campaign was paused/stopped mid-batch
-                            if ($recipientIndexInBatch % 5 === 0) {
+                            // Periodically check if campaign was explicitly paused/stopped mid-batch
+                            if ($recipientIndexInBatch % 20 === 0) {
                                 if (function_exists('ensure_pdo_alive')) {
                                     ensure_pdo_alive($pdo);
                                 }
-                                $stmtLiveSt = $pdo->prepare("SELECT status FROM campaigns WHERE id = ?");
-                                $stmtLiveSt->execute([$cid]);
-                                $curLiveStatus = $stmtLiveSt->fetchColumn();
-                                if ($curLiveStatus !== 'sending') {
-                                    writeWorkerLog("Campaign $cid: Stopped mid-batch (status: '$curLiveStatus'). Aborting recipient loop.");
-                                    $hasMore = false;
-                                    break;
+                                try {
+                                    $stmtLiveSt = $pdo->prepare("SELECT status FROM campaigns WHERE id = ?");
+                                    $stmtLiveSt->execute([$cid]);
+                                    $curLiveStatus = $stmtLiveSt->fetchColumn();
+                                    if ($curLiveStatus && in_array(strtolower($curLiveStatus), ['paused', 'cancelled', 'draft'])) {
+                                        writeWorkerLog("Campaign $cid: Explicitly paused/stopped mid-batch (status: '$curLiveStatus'). Aborting recipient loop.");
+                                        $hasMore = false;
+                                        break;
+                                    }
+                                } catch (Throwable $ignoreLiveCheck) {
+                                    // Transient query error: continue processing
                                 }
                             }
 
@@ -969,6 +971,8 @@ if (!function_exists('runWorkerCampaign')) {
                 if (function_exists('ensure_pdo_alive')) {
                     ensure_pdo_alive($pdo);
                 }
+                // Clean up any remaining temporary locks so follow-up workers/cron can immediately process
+                $pdo->prepare("DELETE FROM subscriber_activity WHERE campaign_id = ? AND type = 'processing_campaign'")->execute([$cid]);
                 $pdo->beginTransaction(); // New transaction for final status
 
                 // Final Status Check - Double check if actually finished
