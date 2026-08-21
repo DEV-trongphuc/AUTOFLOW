@@ -261,32 +261,8 @@ class Mailer {
             $trackedHtml = $htmlContent;
         }
 
-        // [ANTI-FALSE-TRACKING] Send TRACKED version ONLY to the primary recipient ($toEmail).
-        // CC/BCC are NOT included in the tracked SMTP delivery envelope so that when staff/managers
-        // open CC/BCC emails, it NEVER triggers fake Open/Click events for the customer ($subscriberId).
-        $success = $this->dispatchRaw($toEmail, $subject, $trackedHtml, $attachments, $error, [], $this->workspaceId, []);
-
-        // Send CLEAN UNTRACKED copies to CC recipients (no open pixel, direct unmodified links)
-        if (!empty($ccEmails)) {
-            $cleanHtml = $this->getCleanUntrackedHtml($cleanHtmlContent);
-            foreach ($ccEmails as $ccEmail) {
-                if (filter_var($ccEmail, FILTER_VALIDATE_EMAIL)) {
-                    $dummyErr = "";
-                    $this->dispatchRaw($ccEmail, $subject, $cleanHtml, $attachments, $dummyErr, [], $this->workspaceId, []);
-                }
-            }
-        }
-
-        // Send CLEAN UNTRACKED copies to BCC recipients (no open pixel, direct unmodified links)
-        if (!empty($bccEmails)) {
-            $cleanHtml = $this->getCleanUntrackedHtml($cleanHtmlContent);
-            foreach ($bccEmails as $bccEmail) {
-                if (filter_var($bccEmail, FILTER_VALIDATE_EMAIL)) {
-                    $dummyErr = "";
-                    $this->dispatchRaw($bccEmail, $subject, $cleanHtml, $attachments, $dummyErr, [], $this->workspaceId, []);
-                }
-            }
-        }
+        // Send email with TO, CC, and BCC combined in a single email envelope so headers and reply-all work correctly
+        $success = $this->dispatchRaw($toEmail, $subject, $trackedHtml, $attachments, $error, $ccEmails, $this->workspaceId, $bccEmails);
 
         // Batch logging instead of synchronous DB hit
         if (!$isQACopy) {
