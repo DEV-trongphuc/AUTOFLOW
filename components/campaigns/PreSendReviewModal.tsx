@@ -124,14 +124,21 @@ export const PreSendReviewModal: React.FC<PreSendReviewModalProps> = ({
                     url = `subscribers?tag=${targetTagId}&limit=10`;
                 }
                 
-                let res = await api.get<Subscriber[]>(url);
-                let list = (res.success && Array.isArray(res.data) && res.data.length > 0) ? res.data : [];
+                const extractList = (resData: any): any[] => {
+                    if (Array.isArray(resData)) return resData;
+                    if (resData && Array.isArray(resData.data)) return resData.data;
+                    if (resData && Array.isArray(resData.subscribers)) return resData.subscribers;
+                    return [];
+                };
+
+                let res = await api.get<any>(url);
+                let list = res.success ? extractList(res.data) : [];
 
                 // If specific target returned empty, fallback to active workspace subscribers
                 if (list.length === 0 && url !== 'subscribers?limit=10') {
-                    const fallbackRes = await api.get<Subscriber[]>('subscribers?limit=10');
-                    if (fallbackRes.success && Array.isArray(fallbackRes.data) && fallbackRes.data.length > 0) {
-                        list = fallbackRes.data;
+                    const fallbackRes = await api.get<any>('subscribers?limit=10');
+                    if (fallbackRes.success) {
+                        list = extractList(fallbackRes.data);
                     }
                 }
 

@@ -286,22 +286,103 @@ const LaunchPreview: React.FC<LaunchPreviewProps> = ({
         }
     }, [isZns, formData.id]);
 
+    const [sampledSubscriber, setSampledSubscriber] = useState<any>(null);
+
+    useEffect(() => {
+        let isMounted = true;
+        const fetchTargetSubscriber = async () => {
+            try {
+                const targetListId = formData.target?.listIds?.[0] || (formData as any).target_list_ids?.[0];
+                const targetSegmentId = formData.target?.segmentIds?.[0];
+                const targetTagId = formData.target?.tagIds?.[0];
+
+                let url = 'subscribers?limit=5';
+                if (targetListId) {
+                    url = `subscribers?list_id=${targetListId}&limit=5`;
+                } else if (targetSegmentId) {
+                    url = `subscribers?segment_id=${targetSegmentId}&limit=5`;
+                } else if (targetTagId) {
+                    url = `subscribers?tag=${targetTagId}&limit=5`;
+                }
+
+                const res = await api.get<any>(url);
+                const extractList = (resData: any): any[] => {
+                    if (Array.isArray(resData)) return resData;
+                    if (resData && Array.isArray(resData.data)) return resData.data;
+                    if (resData && Array.isArray(resData.subscribers)) return resData.subscribers;
+                    return [];
+                };
+
+                let list = res.success ? extractList(res.data) : [];
+
+                if (list.length === 0 && url !== 'subscribers?limit=5') {
+                    const fallback = await api.get<any>('subscribers?limit=5');
+                    if (fallback.success) {
+                        list = extractList(fallback.data);
+                    }
+                }
+
+                if (isMounted && list.length > 0) {
+                    const sub = list[0];
+                    const fName = sub.firstName || sub.first_name || (sub.name ? sub.name.split(' ').slice(-1)[0] : '');
+                    const lName = sub.lastName || sub.last_name || (sub.name ? sub.name.split(' ').slice(0, -1).join(' ') : '');
+                    const full = sub.name || sub.fullName || [lName, fName].filter(Boolean).join(' ').trim() || sub.email?.split('@')[0] || 'Khách hàng';
+                    const cAttrs = typeof sub.customAttributes === 'object' && sub.customAttributes 
+                        ? sub.customAttributes 
+                        : (typeof sub.custom_attributes === 'object' && sub.custom_attributes ? sub.custom_attributes : {});
+
+                    setSampledSubscriber({
+                        id: sub.id,
+                        firstName: fName || full || 'Khách',
+                        first_name: fName || full || 'Khách',
+                        lastName: lName || '',
+                        last_name: lName || '',
+                        fullName: full || fName || 'Khách hàng',
+                        name: full || fName || 'Khách hàng',
+                        customer_name: full || fName || 'Khách hàng',
+                        customerName: full || fName || 'Khách hàng',
+                        email: sub.email || formData.senderEmail || '',
+                        phone: sub.phoneNumber || sub.phone_number || sub.phone || '',
+                        phoneNumber: sub.phoneNumber || sub.phone_number || sub.phone || '',
+                        company: sub.companyName || sub.company_name || sub.company || '',
+                        companyName: sub.companyName || sub.company_name || sub.company || '',
+                        company_name: sub.companyName || sub.company_name || sub.company || '',
+                        jobTitle: sub.jobTitle || sub.job_title || '',
+                        job_title: sub.jobTitle || sub.job_title || '',
+                        city: sub.city || '',
+                        address: sub.address || sub.city || '',
+                        ...cAttrs
+                    });
+                }
+            } catch (e) {
+                // ignore
+            }
+        };
+
+        fetchTargetSubscriber();
+        return () => { isMounted = false; };
+    }, [formData.target?.listIds, formData.target?.segmentIds, formData.target?.tagIds]);
+
     const contentToRender = formData.templateId === 'custom-html' ? formData.contentBody : (selectedTemplate?.htmlContent || '');
 
     const interpolatedPreviewHtml = useMemo(() => {
         if (!contentToRender) return '';
-        const sampleSub = {
-            firstName: 'Nguyễn',
-            lastName: 'Văn A',
-            fullName: 'Nguyễn Văn A',
-            name: 'Nguyễn Văn A',
+        const sampleSub = sampledSubscriber || {
+            firstName: 'Quý khách',
+            first_name: 'Quý khách',
+            lastName: '',
+            last_name: '',
+            fullName: 'Quý khách hàng',
+            name: 'Quý khách hàng',
+            customer_name: 'Quý khách hàng',
+            customerName: 'Quý khách hàng',
             email: formData.senderEmail || 'khachhang@example.com',
             phone: '0901234567',
             company: 'Công ty Cổ phần Mẫu',
             companyName: 'Công ty Cổ phần Mẫu',
             company_name: 'Công ty Cổ phần Mẫu',
-            jobTitle: 'Trưởng phòng Kinh doanh',
-            job_title: 'Trưởng phòng Kinh doanh',
+            jobTitle: 'Khách hàng',
+            job_title: 'Khách hàng',
             city: 'TP. Hồ Chí Minh',
             address: '123 Đường Nguyễn Huệ, Quận 1',
             ...(formData.target?.sampleSubscriber || {})
@@ -315,7 +396,7 @@ const LaunchPreview: React.FC<LaunchPreviewProps> = ({
             fallbacks: formData.config?.variable_fallbacks || {}
         };
         return interpolateMergeTags(contentToRender, sampleSub, previewContext);
-    }, [contentToRender, formData.senderEmail, formData.name, formData.id, formData.config?.variable_fallbacks, formData.target?.sampleSubscriber]);
+    }, [contentToRender, sampledSubscriber, formData.senderEmail, formData.name, formData.id, formData.config?.variable_fallbacks, formData.target?.sampleSubscriber]);
 
     return (
         <div className="space-y-8 animate-in zoom-in-95 duration-500 pb-10">
