@@ -969,16 +969,42 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
             const marginCss = imgAlign === 'center' ? 'margin: 0 auto;' : (imgAlign === 'right' ? 'margin-left: auto; margin-right: 0;' : 'margin-right: auto; margin-left: 0;');
             const imgClass = (isPercent || imgWidth === '100%') ? 'full-width' : '';
 
-            const dataFallbackSrcAttr = b.fallbackContent ? ` data-fallback-src="${b.fallbackContent}"` : '';
+            // Handle aspect ratio proxy for email client compatibility (Gmail, Outlook, Yahoo strip aspect-ratio & object-fit)
+            let finalSrc = b.content || '';
+            const isDynamicTag = /(?:{{\s*([^{}%]+?)\s*}}|%7B%7B\s*([^{}%]+?)\s*%7D%7D)/i.test(finalSrc);
+            if (aspectRatio && aspectRatio !== 'auto' && !isDynamicTag && finalSrc) {
+                let cleanSrc = finalSrc;
+                if (cleanSrc.includes('/img_ratio.php?') && cleanSrc.includes('url=')) {
+                    try {
+                        const parsed = new URL(cleanSrc, EXTERNAL_API_BASE);
+                        cleanSrc = parsed.searchParams.get('url') || cleanSrc;
+                    } catch (_) {}
+                }
+                finalSrc = `${EXTERNAL_API_BASE}/img_ratio.php?url=${encodeURIComponent(cleanSrc)}&ratio=${encodeURIComponent(aspectRatio)}&fit=${encodeURIComponent(objectFit)}`;
+            }
+
+            let fallbackSrc = b.fallbackContent || '';
+            if (aspectRatio && aspectRatio !== 'auto' && fallbackSrc && !fallbackSrc.includes('{{')) {
+                let cleanFallback = fallbackSrc;
+                if (cleanFallback.includes('/img_ratio.php?') && cleanFallback.includes('url=')) {
+                    try {
+                        const parsed = new URL(cleanFallback, EXTERNAL_API_BASE);
+                        cleanFallback = parsed.searchParams.get('url') || cleanFallback;
+                    } catch (_) {}
+                }
+                fallbackSrc = `${EXTERNAL_API_BASE}/img_ratio.php?url=${encodeURIComponent(cleanFallback)}&ratio=${encodeURIComponent(aspectRatio)}&fit=${encodeURIComponent(objectFit)}`;
+            }
+
+            const dataFallbackSrcAttr = fallbackSrc ? ` data-fallback-src="${fallbackSrc}"` : '';
             const dataFallbackLinkAttr = b.fallbackUrl ? ` data-fallback-url="${b.fallbackUrl}"` : '';
 
             let imgHtml: string;
             if (isPercent) {
-                imgHtml = `<img src="${b.content}"${dataFallbackSrcAttr} class="${imgClass} ${customClassName}" style="display: block; width: 100%; max-width: 100%; height: ${imgHeight}; object-fit: ${objectFit}; ${ratioCss} ${marginCss} border-radius: ${sanitizeRadius(s.borderRadius || '0')};" alt="${b.altText || ''}" />`;
+                imgHtml = `<img src="${finalSrc}"${dataFallbackSrcAttr} class="${imgClass} ${customClassName}" style="display: block; width: 100%; max-width: 100%; height: ${imgHeight}; object-fit: ${objectFit}; ${ratioCss} ${marginCss} border-radius: ${sanitizeRadius(s.borderRadius || '0')};" alt="${b.altText || ''}" />`;
             } else {
                 const pxVal = imgWidth.replace('px', '') || '600';
                 const pxHeight = imgHeight !== 'auto' ? imgHeight.replace('px', '') : '';
-                imgHtml = `<img src="${b.content}"${dataFallbackSrcAttr} width="${pxVal}" ${pxHeight ? `height="${pxHeight}"` : ''} class="${imgClass} ${customClassName}" style="display: block; width: ${imgWidth}; max-width: 100%; height: ${imgHeight}; object-fit: ${objectFit}; ${ratioCss} ${marginCss} border-radius: ${sanitizeRadius(s.borderRadius || '0')};" alt="${b.altText || ''}" />`;
+                imgHtml = `<img src="${finalSrc}"${dataFallbackSrcAttr} width="${pxVal}" ${pxHeight ? `height="${pxHeight}"` : ''} class="${imgClass} ${customClassName}" style="display: block; width: ${imgWidth}; max-width: 100%; height: ${imgHeight}; object-fit: ${objectFit}; ${ratioCss} ${marginCss} border-radius: ${sanitizeRadius(s.borderRadius || '0')};" alt="${b.altText || ''}" />`;
             }
 
             if (b.url) {

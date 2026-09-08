@@ -4,8 +4,8 @@ import { Survey, SurveyAnalyticsOverview, QuestionAnalytics } from '../../types/
 import {
     X, Users, CheckCircle, Clock, Smartphone, Monitor, Globe, BarChart2,
     Mail, QrCode, Zap, Link2, Star, TrendingUp, TrendingDown, Minus,
-    ChevronRight, ExternalLink, RefreshCw, User, Copy, Check,
-    ArrowUp, ArrowDown, Search, MapPin
+    ChevronRight, ChevronDown, ExternalLink, RefreshCw, User, Copy, Check,
+    ArrowUp, ArrowDown, Search, MapPin, Phone, Calendar
 } from 'lucide-react';
 import {
     LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
@@ -29,6 +29,54 @@ const formatTime = (secs: number) => {
 };
 
 const pct = (n: number, total: number) => total > 0 ? Math.round(n / total * 100) : 0;
+
+const formatChoiceLabel = (raw: string, options?: any[]): string => {
+    if (!raw) return '';
+    let s = String(raw);
+
+    // If options available from survey block, find matching option first
+    if (options && Array.isArray(options)) {
+        for (const opt of options) {
+            const optVal = typeof opt === 'string' ? opt : (opt.value || '');
+            const optLbl = typeof opt === 'string' ? opt : (opt.label || optVal);
+            if (optVal === s || optLbl === s || String(optVal).toLowerCase() === s.toLowerCase()) {
+                return optLbl;
+            }
+            if (String(optVal).replace(/_/g, ' ').toLowerCase() === s.replace(/_/g, ' ').toLowerCase()) {
+                return optLbl;
+            }
+        }
+    }
+
+    // 1. Decode unicode escape sequences like \u00ed or \\u00ed
+    if (s.includes('\\u')) {
+        try {
+            s = s.replace(/\\u([0-9a-fA-F]{4})/g, (_, code) => String.fromCharCode(parseInt(code, 16)));
+        } catch {}
+    }
+
+    // 2. Decode HTML entities (&amp;, &quot;, &#39;, &lt;, &gt;)
+    if (s.includes('&')) {
+        try {
+            const txt = document.createElement('textarea');
+            txt.innerHTML = s;
+            s = txt.value;
+        } catch {}
+    }
+
+    // 3. Yes / No standard mapping
+    const lower = s.trim().toLowerCase();
+    if (lower === 'yes' || lower === 'true') return 'Có';
+    if (lower === 'no' || lower === 'false') return 'Không';
+
+    // 4. If slug with underscores (e.g. bút_phá_quy_mô...), replace underscores with spaces and capitalize
+    if (s.includes('_') && !s.includes(' ')) {
+        s = s.replace(/_/g, ' ');
+        s = s.charAt(0).toUpperCase() + s.slice(1);
+    }
+
+    return s;
+};
 
 // ─── Pill-style progress bar ──────────────────────────────────────────────────
 const Bar: React.FC<{ value: number; color?: string; height?: string }> = ({
@@ -131,30 +179,32 @@ const StarRating: React.FC<{ avg: number; dist?: Array<{ value: number; count: n
 };
 
 // ─── Choice bar chart ─────────────────────────────────────────────────────────
-const ChoiceChart: React.FC<{ dist: Array<{ label: string; count: number; percentage: number }> }> = ({ dist }) => {
-    const max = Math.max(...dist.map(d => d.percentage), 1);
+const ChoiceChart: React.FC<{ dist: Array<{ label: string; count: number; percentage: number }>; options?: any[] }> = ({ dist, options }) => {
     const COLORS = ['#f59e0b', '#3b82f6', '#10b981', '#8b5cf6', '#ef4444', '#ec4899', '#14b8a6', '#f97316'];
 
     return (
         <div className="space-y-2.5">
-            {dist.map((c, i) => (
-                <div key={c.label}>
-                    <div className="flex justify-between text-xs mb-1">
-                        <span className="text-slate-600 font-medium truncate max-w-[55%]">{c.label}</span>
-                        <span className="font-black text-slate-700">{c.count} <span className="font-normal text-slate-400">({c.percentage}%)</span></span>
+            {dist.map((c, i) => {
+                const labelFormatted = formatChoiceLabel(c.label, options);
+                return (
+                    <div key={c.label}>
+                        <div className="flex justify-between text-xs mb-1">
+                            <span className="text-slate-600 font-medium truncate max-w-[70%]" title={labelFormatted}>{labelFormatted}</span>
+                            <span className="font-black text-slate-700 shrink-0 ml-2">{c.count} <span className="font-normal text-slate-400">({c.percentage}%)</span></span>
+                        </div>
+                        <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                            <div className="h-full rounded-full transition-all duration-700"
+                                style={{ width: `${c.percentage}%`, background: COLORS[i % COLORS.length] }} />
+                        </div>
                     </div>
-                    <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
-                        <div className="h-full rounded-full transition-all duration-700"
-                            style={{ width: `${c.percentage}%`, background: COLORS[i % COLORS.length] }} />
-                    </div>
-                </div>
-            ))}
+                );
+            })}
         </div>
     );
 };
 
 // ─── Per-question card ────────────────────────────────────────────────────────
-const QuestionCard: React.FC<{ q: QuestionAnalytics; idx: number }> = ({ q, idx }) => {
+const QuestionCard: React.FC<{ q: QuestionAnalytics; idx: number; survey?: Survey | null }> = ({ q, idx, survey }) => {
     const typeIcons: Record<string, React.ReactNode> = {
         nps:           <div className="text-[9px] font-black text-violet-600 bg-violet-50 px-1.5 py-0.5 rounded-full">NPS</div>,
         star_rating:   <Star className="w-3.5 h-3.5 text-amber-500" fill="#f59e0b" stroke="#f59e0b" />,
@@ -168,6 +218,12 @@ const QuestionCard: React.FC<{ q: QuestionAnalytics; idx: number }> = ({ q, idx 
         matrix_single: <div className="text-[9px] font-black text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded-full">Matrix</div>,
     };
 
+    const block = survey?.blocks?.find(b => b.id === q.question_id || (b as any).id === (q as any).id);
+    const resolvedTitle = (q.label && q.label !== 'Untitled Question' && q.label.trim() !== '')
+        ? q.label
+        : (block?.label || (block as any)?.content || (block as any)?.title || `Câu hỏi #${idx + 1}`);
+
+    const displayTitle = formatChoiceLabel(resolvedTitle);
     const skipPct = Math.round((q.skip_rate ?? 0) * 100);
 
     return (
@@ -178,7 +234,7 @@ const QuestionCard: React.FC<{ q: QuestionAnalytics; idx: number }> = ({ q, idx 
                     <span className="text-[10px] font-black text-amber-600">#{idx + 1}</span>
                 </div>
                 <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-slate-800 leading-snug">{q.label}</p>
+                    <p className="text-sm font-bold text-slate-800 leading-snug">{displayTitle}</p>
                     <div className="flex items-center gap-2 mt-1">
                         {typeIcons[q.type] ?? <div className="text-[9px] text-slate-400">{q.type}</div>}
                         <span className="text-[10px] text-slate-400">{q.total_answered} phản hồi</span>
@@ -201,7 +257,7 @@ const QuestionCard: React.FC<{ q: QuestionAnalytics; idx: number }> = ({ q, idx 
                     <StarRating avg={q.avg_rating} dist={q.rating_distribution} total={q.total_answered} />
                 )}
                 {q.choice_distribution && q.choice_distribution.length > 0 && (
-                    <ChoiceChart dist={q.choice_distribution} />
+                    <ChoiceChart dist={q.choice_distribution} options={block?.options} />
                 )}
                 {q.text_responses && q.text_responses.length > 0 && (
                     <div className="space-y-2">
@@ -227,7 +283,7 @@ const QuestionCard: React.FC<{ q: QuestionAnalytics; idx: number }> = ({ q, idx 
                                                 }
                                                 return results.join(' | ');
                                             } catch (e) {
-                                                return t;
+                                                return formatChoiceLabel(t, block?.options);
                                             }
                                         }
                                         if (q.type === 'ranking' && q.options) {
@@ -238,10 +294,10 @@ const QuestionCard: React.FC<{ q: QuestionAnalytics; idx: number }> = ({ q, idx 
                                                 const results = (answer as string[]).map((id, index) => `${index + 1}. ${optMap.get(id) || id}`);
                                                 return results.join(' ➔ ');
                                             } catch (e) {
-                                                return t;
+                                                return formatChoiceLabel(t, block?.options);
                                             }
                                         }
-                                        return t;
+                                        return formatChoiceLabel(t, block?.options);
                                     })()}
                                 </p>
                             </div>
@@ -267,11 +323,12 @@ const QuestionCard: React.FC<{ q: QuestionAnalytics; idx: number }> = ({ q, idx 
 };
 
 // ─── Respondents list ─────────────────────────────────────────────────────────
-const RespondentsList: React.FC<{ surveyId: string }> = ({ surveyId }) => {
+const RespondentsList: React.FC<{ surveyId: string; survey?: Survey | null }> = ({ surveyId, survey }) => {
     const [data, setData] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
     const [copiedId, setCopiedId] = useState<string | null>(null);
+    const [expandedId, setExpandedId] = useState<string | null>(null);
 
     useEffect(() => {
         api.get<any>(`surveys/${surveyId}?action=respondents`)
@@ -279,81 +336,216 @@ const RespondentsList: React.FC<{ surveyId: string }> = ({ surveyId }) => {
             .finally(() => setLoading(false));
     }, [surveyId]);
 
-    const filtered = data.filter(r =>
-        !search || (r.subscriber_email ?? '').toLowerCase().includes(search.toLowerCase())
-        || (r.subscriber_name ?? '').toLowerCase().includes(search.toLowerCase())
-    );
+    const filtered = data.filter(r => {
+        const q = search.toLowerCase();
+        return !search 
+            || (r.subscriber_email ?? '').toLowerCase().includes(q)
+            || (r.subscriber_name ?? '').toLowerCase().includes(q)
+            || (r.subscriber_phone ?? '').toLowerCase().includes(q)
+            || (r.geo_city ?? '').toLowerCase().includes(q);
+    });
 
-    const copyLink = (email: string, id: string) => {
-        const link = `${window.location.origin}/survey/${encodeURIComponent(id)}?src=email&uid=${encodeURIComponent(email)}`;
+    const surveySlug = survey?.slug || surveyId;
+    const basePublicUrl = `${window.location.origin}/s/${surveySlug}`;
+
+    const copyLink = (email: string) => {
+        const link = `${basePublicUrl}?src=email&email=${encodeURIComponent(email)}&uid=${encodeURIComponent(email)}`;
         navigator.clipboard.writeText(link);
         setCopiedId(email);
         setTimeout(() => setCopiedId(null), 2000);
     };
 
     return (
-        <div className="space-y-3">
+        <div className="space-y-4">
             <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
                 <input
                     value={search} onChange={e => setSearch(e.target.value)}
-                    placeholder="Tìm theo email hoặc tên..."
-                    className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-amber-300"
+                    placeholder="Tìm theo họ tên, email hoặc số điện thoại..."
+                    className="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-amber-300"
                 />
             </div>
 
             {loading ? (
                 <div className="space-y-2">
-                    {[1, 2, 3].map(i => <div key={i} className="h-12 bg-slate-100 rounded-xl animate-pulse" />)}
+                    {[1, 2, 3].map(i => <div key={i} className="h-14 bg-slate-100 rounded-2xl animate-pulse" />)}
                 </div>
             ) : filtered.length === 0 ? (
-                <div className="text-center py-8 text-slate-400 text-sm">
-                    {search ? 'Không tìm thấy kết quả' : 'Chưa có phản hồi nào'}
+                <div className="text-center py-12 text-slate-400 text-sm bg-white rounded-2xl border border-slate-100">
+                    <Users className="w-8 h-8 mx-auto mb-2 text-slate-300" />
+                    {search ? 'Không tìm thấy người tham gia phù hợp' : 'Chưa có phản hồi nào'}
                 </div>
             ) : (
-                <div className="space-y-1.5 max-h-[400px] overflow-y-auto">
-                    {filtered.map((r, i) => (
-                        <div key={r.id ?? i} className="flex items-center gap-3 px-4 py-2.5 bg-white rounded-xl border border-slate-100 hover:border-slate-200 transition-all group">
-                            {/* Avatar */}
-                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center flex-shrink-0 text-white text-xs font-bold">
-                                {(r.subscriber_name || r.subscriber_email || '?')[0]?.toUpperCase()}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <p className="text-xs font-bold text-slate-700 truncate">
-                                    {r.subscriber_name || <span className="text-slate-400 font-normal">Ẩn danh</span>}
-                                </p>
-                                <p className="text-[10px] text-slate-400 truncate">{r.subscriber_email || 'N/A'}</p>
-                            </div>
-                            <div className="flex items-center gap-2 shrink-0">
-                                <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-full ${r.completion_rate >= 80 ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
-                                    {Math.round(r.completion_rate ?? 0)}%
-                                </span>
-                                {r.subscriber_email && (
-                                    <button
-                                        onClick={() => copyLink(r.subscriber_email, surveyId)}
-                                        className="opacity-0 group-hover:opacity-100 p-1 rounded-lg hover:bg-slate-100 transition-all"
-                                        title="Copy link có tracking email"
-                                    >
-                                        {copiedId === r.subscriber_email ? <Check className="w-3 h-3 text-emerald-500" /> : <Link2 className="w-3 h-3 text-slate-400" />}
-                                    </button>
+                <div className="space-y-2.5 max-h-[520px] overflow-y-auto pr-1">
+                    {filtered.map((r, i) => {
+                        const isEmail = r.source_channel === 'email_embed' || r.source_channel === 'email';
+                        const isQR = r.source_channel === 'qr_code';
+                        const isWidget = r.source_channel === 'widget';
+                        const isExpanded = expandedId === (r.id || String(i));
+                        const initialChar = (r.subscriber_name || r.subscriber_email || '?').charAt(0).toUpperCase();
+
+                        return (
+                            <div 
+                                key={r.id ?? i} 
+                                className={`bg-white rounded-2xl border transition-all ${isExpanded ? 'border-amber-400 shadow-md ring-1 ring-amber-100' : 'border-slate-100 hover:border-slate-200 shadow-sm'}`}
+                            >
+                                <div className="p-4 flex items-center gap-3.5">
+                                    {/* Avatar */}
+                                    <div className={`w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 text-white text-sm font-bold shadow-sm ${isEmail ? 'bg-gradient-to-br from-amber-500 to-orange-500' : 'bg-gradient-to-br from-slate-600 to-slate-800'}`}>
+                                        {initialChar}
+                                    </div>
+
+                                    {/* Info */}
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            <p className="text-sm font-bold text-slate-800 truncate">
+                                                {r.subscriber_name || <span className="text-slate-400 font-normal italic">Khách chưa lưu tên</span>}
+                                            </p>
+                                            {/* Channel Badge */}
+                                            {isEmail ? (
+                                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 flex items-center gap-1">
+                                                    <Mail className="w-3 h-3 text-amber-600" /> Email
+                                                </span>
+                                            ) : isQR ? (
+                                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200 flex items-center gap-1">
+                                                    <QrCode className="w-3 h-3 text-purple-600" /> QR
+                                                </span>
+                                            ) : isWidget ? (
+                                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
+                                                    <Zap className="w-3 h-3 text-emerald-600" /> Widget
+                                                </span>
+                                            ) : (
+                                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200 flex items-center gap-1">
+                                                    <Globe className="w-3 h-3 text-blue-600" /> Link trực tiếp
+                                                </span>
+                                            )}
+
+                                            {r.device_type && (
+                                                <span className="text-[10px] text-slate-400 font-medium px-1.5 py-0.5 bg-slate-50 rounded border border-slate-100">
+                                                    {r.device_type}
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        {/* Contact row */}
+                                        <div className="flex items-center gap-3 mt-1 text-[11px] text-slate-500 flex-wrap">
+                                            {r.subscriber_email && (
+                                                <span className="flex items-center gap-1 font-medium text-slate-600">
+                                                    <Mail className="w-3 h-3 text-slate-400" /> {r.subscriber_email}
+                                                </span>
+                                            )}
+                                            {r.subscriber_phone && (
+                                                <span className="flex items-center gap-1 font-mono font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded">
+                                                    <Phone className="w-3 h-3 text-amber-600" /> {r.subscriber_phone}
+                                                </span>
+                                            )}
+                                            {r.submitted_at && (
+                                                <span className="flex items-center gap-1 text-slate-400">
+                                                    <Clock className="w-3 h-3 text-slate-300" /> {new Date(r.submitted_at).toLocaleString('vi-VN')}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Right actions */}
+                                    <div className="flex items-center gap-2 shrink-0">
+                                        <div className="text-right hidden sm:block">
+                                            <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${r.completion_rate >= 80 ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-amber-50 text-amber-600 border border-amber-200'}`}>
+                                                {Math.round(r.completion_rate ?? 0)}% xong
+                                            </span>
+                                            {r.time_spent_sec ? (
+                                                <p className="text-[10px] text-slate-400 mt-0.5">{formatTime(r.time_spent_sec)}</p>
+                                            ) : null}
+                                        </div>
+
+                                        {/* Expand answers button */}
+                                        <button
+                                            onClick={() => setExpandedId(isExpanded ? null : (r.id || String(i)))}
+                                            className={`p-2 rounded-xl text-xs font-bold flex items-center gap-1 transition-all ${isExpanded ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 hover:bg-slate-200 text-slate-600'}`}
+                                            title="Xem chi tiết các câu trả lời"
+                                        >
+                                            <span className="hidden sm:inline">{isExpanded ? 'Thu gọn' : 'Xem trả lời'}</span>
+                                            <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                                        </button>
+
+                                        {r.subscriber_email && (
+                                            <button
+                                                onClick={() => copyLink(r.subscriber_email)}
+                                                className="p-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-500 transition-all"
+                                                title="Sao chép link khảo sát cho người này"
+                                            >
+                                                {copiedId === r.subscriber_email ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Expanded Answers View */}
+                                {isExpanded && (
+                                    <div className="px-4 pb-4 pt-1 border-t border-slate-100 bg-slate-50/50 rounded-b-2xl space-y-2">
+                                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-2 mb-2">Câu trả lời đã gửi:</p>
+                                        {Array.isArray(r.answers) && r.answers.length > 0 ? (
+                                            r.answers.map((ans: any, aIdx: number) => {
+                                                const block = survey?.blocks?.find(b => b.id === ans.block_id || b.id === ans.question_id);
+                                                const qTitle = ans.question_title || block?.label || (block as any)?.content || (block as any)?.title || `Câu hỏi #${aIdx + 1}`;
+                                                const rawAnswer = ans.answer_text || (Array.isArray(ans.answer_json) ? ans.answer_json.join(', ') : (ans.answer_num != null ? String(ans.answer_num) : ''));
+                                                const answerText = formatChoiceLabel(rawAnswer, block?.options);
+
+                                                return (
+                                                    <div key={aIdx} className="bg-white p-3 rounded-xl border border-slate-200/70 shadow-2xs">
+                                                        <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 mb-1">
+                                                            <span className="w-4 h-4 rounded bg-amber-50 text-amber-700 text-[10px] font-black flex items-center justify-center">{aIdx + 1}</span>
+                                                            <span>{formatChoiceLabel(qTitle)}</span>
+                                                        </div>
+                                                        <div className="text-xs text-amber-800 font-medium pl-5">
+                                                            {answerText ? (
+                                                                <span className="bg-amber-50/80 px-2 py-0.5 rounded border border-amber-100 inline-block">{answerText}</span>
+                                                            ) : (
+                                                                <span className="text-slate-400 italic">Không có phản hồi</span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })
+                                        ) : (
+                                            <p className="text-xs text-slate-400 italic py-2">Không có chi tiết câu trả lời được lưu trong phiên này.</p>
+                                        )}
+                                    </div>
                                 )}
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             )}
 
             {/* Email tracking instruction */}
-            <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 space-y-2">
-                <p className="text-xs font-bold text-blue-700 flex items-center gap-2">
-                    <Mail className="w-3.5 h-3.5" /> Email Tracking Link
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100/80 rounded-2xl p-4 space-y-2.5">
+                <div className="flex items-center justify-between">
+                    <p className="text-xs font-bold text-blue-800 flex items-center gap-2">
+                        <Mail className="w-4 h-4 text-blue-600" /> Cấu hình gửi qua Email Campaign
+                    </p>
+                    <span className="text-[10px] font-bold bg-blue-100/80 text-blue-700 px-2 py-0.5 rounded-full">Tự động nhận diện danh tính</span>
+                </div>
+                <p className="text-[11px] text-blue-700 leading-relaxed">
+                    Khi gửi khảo sát qua Mailflow/Email Automation, gắn link dưới đây vào nút bấm (Call-To-Action).
+                    Hệ thống sẽ tự động bắt Email, Họ tên và SĐT người click:
                 </p>
-                <p className="text-[11px] text-blue-600 leading-relaxed">
-                    Khi gửi khảo sát qua email, thêm <code className="bg-blue-100 px-1 rounded font-mono">?src=email&uid={"{{email}}"}</code> vào cuối link.
-                    Hệ thống sẽ tự động gắn email người nhận để tracking cá nhân hóa.
-                </p>
-                <div className="bg-white rounded-xl px-3 py-2 font-mono text-[10px] text-slate-500 break-all">
-                    https://yourdomain.com/s/<span className="text-amber-600">{surveyId.slice(0, 8)}</span>?src=email&uid=<span className="text-blue-600">{"{{email}}"}</span>
+                <div className="bg-white/90 rounded-xl px-3.5 py-2.5 font-mono text-[10px] text-slate-600 break-all border border-blue-100 flex items-center justify-between gap-2">
+                    <span className="select-all">
+                        {basePublicUrl}?utm_source=mailflow&amp;utm_medium=email&amp;email=<span className="text-blue-600">{"{{email}}"}</span>&amp;name=<span className="text-amber-600">{"{{name}}"}</span>&amp;phone=<span className="text-emerald-600">{"{{phone}}"}</span>
+                    </span>
+                    <button
+                        onClick={() => {
+                            navigator.clipboard.writeText(`${basePublicUrl}?utm_source=mailflow&utm_medium=email&email={{email}}&name={{name}}&phone={{phone}}`);
+                            setCopiedId('template-link');
+                            setTimeout(() => setCopiedId(null), 2000);
+                        }}
+                        className="p-1.5 rounded-lg hover:bg-blue-50 text-blue-600 shrink-0 font-sans text-xs font-bold flex items-center gap-1"
+                        title="Copy mẫu link"
+                    >
+                        {copiedId === 'template-link' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                        {copiedId === 'template-link' ? 'Đã chép' : 'Chép link'}
+                    </button>
                 </div>
             </div>
         </div>
@@ -622,7 +814,7 @@ const SurveyReportModal: React.FC<Props> = ({ survey, isOpen, onClose }) => {
                                     </div>
                                     <div className="space-y-4">
                                         {questions.slice(0, 2).map((q, i) => (
-                                            <QuestionCard key={q.question_id} q={q} idx={i} />
+                                            <QuestionCard key={q.question_id} q={q} idx={i} survey={survey} />
                                         ))}
                                     </div>
                                 </div>
@@ -634,13 +826,13 @@ const SurveyReportModal: React.FC<Props> = ({ survey, isOpen, onClose }) => {
                             {questions.length === 0 ? (
                                 <div className="text-center py-20 text-slate-400 text-sm">Chưa có dữ liệu phân tích câu hỏi</div>
                             ) : (
-                                questions.map((q, i) => <QuestionCard key={q.question_id} q={q} idx={i} />)
+                                questions.map((q, i) => <QuestionCard key={q.question_id} q={q} idx={i} survey={survey} />)
                             )}
                         </div>
 
                     ) : tab === 'respondents' ? (
                         <div className="p-6">
-                            <RespondentsList surveyId={survey.id} />
+                            <RespondentsList surveyId={survey.id} survey={survey} />
                         </div>
                       ) : null}
                 </div>

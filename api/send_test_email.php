@@ -24,43 +24,7 @@ if (!$hasAuth) {
     exit;
 }
 
-// --- RATE LIMITING: Max 5 test emails per IP per 10 minutes ---
-// [FIX] Prevent SMTP abuse — unauthenticated endpoint can be hammered without this guard.
-$clientIp = $_SERVER['HTTP_CF_CONNECTING_IP'] ?? $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? 'unknown';
-$rateLimitKey = 'test_email_rate_' . md5($clientIp);
-$rateLimit = 5;
-$rateWindow = 600; // 10 minutes
-
-$blocked = false;
-if (function_exists('apcu_fetch') && function_exists('apcu_store')) {
-    $hits = (int) apcu_fetch($rateLimitKey);
-    if ($hits >= $rateLimit) {
-        $blocked = true;
-    } else {
-        apcu_store($rateLimitKey, $hits + 1, $rateWindow);
-    }
-} else {
-    // Fallback: file-based counter
-    $lockFile = __DIR__ . '/_locks/test_email_rate_' . md5($clientIp) . '.json';
-    $state = file_exists($lockFile) ? json_decode(@file_get_contents($lockFile), true) : null;
-    $now = time();
-    if ($state && ($now - $state['since']) < $rateWindow) {
-        if ($state['count'] >= $rateLimit) {
-            $blocked = true;
-        } else {
-            $state['count']++;
-            @file_put_contents($lockFile, json_encode($state));
-        }
-    } else {
-        @file_put_contents($lockFile, json_encode(['since' => $now, 'count' => 1]));
-    }
-}
-
-if ($blocked) {
-    http_response_code(429);
-    echo json_encode(['success' => false, 'error' => 'Rate limit exceeded. Maximum 5 test emails per 10 minutes per IP.']);
-    exit;
-}
+// Rate limit removed as requested — authenticated users can send unlimited test emails.
 
 // Get POST data
 $data = json_decode(file_get_contents('php://input'), true);

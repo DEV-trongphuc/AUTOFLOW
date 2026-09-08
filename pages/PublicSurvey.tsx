@@ -47,6 +47,8 @@ const PublicSurvey: React.FC = () => {
         if (sid) query.set('sid', sid);
         if (emailParam) query.set('email', emailParam);
         if (uid) query.set('uid', uid);
+        if (nameParam) query.set('name', nameParam);
+        if (phoneParam) query.set('phone', phoneParam);
 
         fetch(`${PUBLIC_API}?${query.toString()}`)
             .then(r => { if (!r.ok) throw new Error("Fetch survey failed"); return r.json(); })
@@ -380,18 +382,32 @@ const PublicSurvey: React.FC = () => {
                 });
             }
 
+            const isEmailTraffic = srcParam === 'email' || 
+                srcParam === 'email_embed' || 
+                utmMedium === 'email' || 
+                searchParams.get('utm_source') === 'mailflow' || 
+                Boolean(emailParam) || 
+                Boolean(sid);
+
+            const effectiveChannel = isEmailTraffic 
+                ? 'email_embed' 
+                : (['qr_code', 'widget', 'api'].includes(srcParam) ? srcParam : 'direct_link');
+
             const res = await fetch(`${PUBLIC_API}?slug=${slug}&action=submit`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-Session-Token': sessionToken.current, 'X-Survey-Source': srcParam },
+                headers: { 'Content-Type': 'application/json', 'X-Session-Token': sessionToken.current, 'X-Survey-Source': effectiveChannel },
                 body: JSON.stringify({
                     session_token: sessionToken.current,
                     answers: Object.values(answers),
                     sid: sid || (survey as any)?.prefill?.subscriber_id,
                     uid: uid || emailParam || (survey as any)?.prefill?.email,
                     email: emailParam || (survey as any)?.prefill?.email,
+                    name: nameParam || (survey as any)?.prefill?.name || (survey as any)?.prefill?.full_name,
+                    phone: phoneParam || (survey as any)?.prefill?.phone || (survey as any)?.prefill?.phone_number,
                     completion_rate: 100,
                     time_spent_sec: Math.round((Date.now() - startTime.current) / 1000),
-                    source_channel: ['qr_code', 'email_embed', 'widget', 'api'].includes(srcParam) ? srcParam : 'direct_link',
+                    source_channel: effectiveChannel,
+                    utm_source: searchParams.get('utm_source') || undefined,
                     utm_medium: utmMedium,
                     utm_campaign: utmCampaign,
                     total_score: survey.settings?.quiz?.enabled ? score : null,

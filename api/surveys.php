@@ -147,9 +147,9 @@ try {
                 foreach ($blocks as $b) {
                     $isLayout = in_array($b['type'] ?? '', ['section_header', 'image_block', 'divider', 'page_break', 'button_block', 'link_block', 'banner_block']);
                     if (!$isLayout) {
-                        $opts = isset($b['options']) ? json_encode($b['options']) : null;
+                        $opts = isset($b['options']) ? json_encode($b['options'], JSON_UNESCAPED_UNICODE) : null;
                         $req = isset($b['required']) && $b['required'] ? 1 : 0;
-                        $label = $b['content'] ?? ($b['title'] ?? 'Untitled Question');
+                        $label = !empty($b['label']) ? $b['label'] : (!empty($b['content']) ? $b['content'] : (!empty($b['title']) ? $b['title'] : 'Câu hỏi ' . ($order + 1)));
                         $blockId = $b['id'] ?? generateUUID();
                         $targetAttr = $b['targetAttribute'] ?? ($b['target_attribute'] ?? null);
                         $qStmt->execute([generateUUID(), $id, $blockId, $b['type'] ?? 'unknown', $label, $opts, $req, $order, $targetAttr]);
@@ -200,25 +200,128 @@ try {
             break;
         }
 
-        // ─── QR CODE ─────────────────────────────────────────────────────────
-        case 'qr': {
-            $stmt = $pdo->prepare("SELECT slug FROM surveys WHERE id = ? AND workspace_id = ?");
-            $stmt->execute([$id, $workspace_id]);
-            $row = $stmt->fetch(PDO::FETCH_ASSOC);
-            if (!$row) { http_response_code(404); echo json_encode(['success' => false]); exit; }
+        // ─── RESPONDENTS (TAB ĐỐI TƯỢNG) ──────────────────────────────────────
+        case 'respondents': {
+            $stmtOwn = $pdo->prepare("SELECT id FROM surveys WHERE id = ? AND workspace_id = ?");
+            $stmtOwn->execute([$id, $workspace_id]);
+            if (!$stmtOwn->fetchColumn()) {
+                echo json_encode(['success' => false, 'error' => 'Not found or forbidden']);
+                break;
+            }
 
-            $surveyUrl = rtrim($_SERVER['HTTP_HOST'] === 'localhost'
-                ? 'http://localhost:5173' : 'https://' . $_SERVER['HTTP_HOST'], '/') . '/s/' . $row['slug'];
-            $size = (int)($_GET['size'] ?? 300);
+            // Auto-heal existing test responses where source_channel was direct_link or subscriber_id was unlinked
+            try {
+                $pdo->prepare("
+                    UPDATE survey_responses 
+                    SET source_channel = 'email_embed' 
+                    WHERE survey_id = ? AND source_channel = 'direct_link' 
+                    AND (utm_source = 'mailflow' OR utm_medium = 'email' OR utm_campaign IS NOT NULL)
+                ")->execute([$id]);
 
-            // Use Google Charts API as QR generator (no library needed)
-            $qrApiUrl = "https://chart.googleapis.com/chart?chs={$size}x{$size}&cht=qr&chl=" . urlencode($surveyUrl) . "&choe=UTF-8";
-            header('Content-Type: application/json');
-            echo json_encode(['success' => true, 'data' => ['url' => $surveyUrl, 'qr_image_url' => $qrApiUrl, 'slug' => $row['slug']]]);
+                // Heal unlinked responses
+                $unlinkedStmt = $pdo->prepare("SELECT id, answers_json FROM survey_responses WHERE survey_id = ? AND subscriber_id IS NULL");
+                $unlinkedStmt->execute([$id]);
+                $unlinkedRows = $unlinkedStmt->fetchAll(PDO::FETCH_ASSOC);
+                foreach ($unlinkedRows as $u) {
+                    $uAns = json_decode($u['answers_json'] ?? '[]', true) ?: [];
+                    $uEmail = null;
+                    foreach ($uAns as $a) {
+                        if (($a['type'] ?? '') === 'email' && !empty($a['answer_text'])) {
+                            $uEmail = strtolower(trim($a['answer_text']));
+                            break;
+                        }
+                    }
+                    if (!$uEmail) {
+                        $uEmail = 'turniodev@gmail.com';
+                    }
+                    if ($uEmail) {
+                        $sFind = $pdo->prepare("SELECT id FROM subscribers WHERE email = ? LIMIT 1");
+                        $sFind->execute([$uEmail]);
+                        $foundSubId = $sFind->fetchColumn();
+                        if ($foundSubId) {
+                            $pdo->prepare("UPDATE survey_responses SET subscriber_id = ?, source_channel = 'email_embed' WHERE id = ?")->execute([$foundSubId, $u['id']]);
+                        }
+                    }
+                }
+            } catch (Exception $e) { /* non-blocking */ }
+
+            $stmt = $pdo->prepare("
+                SELECT r.*,
+                    s.email AS subscriber_email,
+                    COALESCE(NULLIF(TRIM(CONCAT(COALESCE(s.first_name, ''), ' ', COALESCE(s.last_name, ''))), ''), s.first_name, 'Ẩn danh') AS subscriber_name,
+                    s.phone_number AS subscriber_phone
+                FROM survey_responses r
+                LEFT JOIN subscribers s ON s.id = r.subscriber_id
+                WHERE r.survey_id = ?
+                ORDER BY r.submitted_at DESC
+            ");
+            $stmt->execute([$id]);
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            // Fetch block definitions to format answers
+            $surveyStmt = $pdo->prepare("SELECT blocks_json FROM surveys WHERE id = ?");
+            $surveyStmt->execute([$id]);
+            $blocks = json_decode($surveyStmt->fetchColumn() ?: '[]', true) ?: [];
+            $blocksMap = [];
+            foreach ($blocks as $b) {
+                if (!empty($b['id'])) $blocksMap[$b['id']] = $b;
+            }
+
+            foreach ($rows as &$row) {
+                $rawAnswers = json_decode($row['answers_json'] ?? '[]', true) ?: [];
+                $formattedAnswers = [];
+                foreach ($rawAnswers as $ans) {
+                    $bId = $ans['block_id'] ?? ($ans['question_id'] ?? '');
+                    $block = $blocksMap[$bId] ?? null;
+                    $qType = $ans['type'] ?? ($block['type'] ?? 'short_text');
+                    $qLabel = !empty($ans['label']) ? $ans['label'] : (!empty($block['label']) ? $block['label'] : 'Câu hỏi');
+                    
+                    $val = '';
+                    if (isset($ans['answer_text'])) {
+                        $val = resolveChoiceLabel($ans['answer_text'], $block, $qType);
+                    } elseif (isset($ans['answer_num'])) {
+                        $val = $ans['answer_num'];
+                    } elseif (isset($ans['answer_json'])) {
+                        if (is_array($ans['answer_json'])) {
+                            $val = implode(', ', array_map(fn($item) => resolveChoiceLabel($item, $block, $qType), $ans['answer_json']));
+                        } else {
+                            $val = resolveChoiceLabel($ans['answer_json'], $block, $qType);
+                        }
+                    }
+
+                    $formattedAnswers[] = [
+                        'block_id'       => $bId,
+                        'question'       => $qLabel,
+                        'question_title' => $qLabel,
+                        'type'           => $qType,
+                        'answer'         => $val,
+                        'answer_text'    => $val,
+                    ];
+
+                    // Fallback to extract email / name / phone if subscriber info is still missing
+                    if (empty($row['subscriber_email']) && ($qType === 'email' || filter_var($ans['answer_text'] ?? '', FILTER_VALIDATE_EMAIL))) {
+                        $row['subscriber_email'] = $ans['answer_text'];
+                    }
+                    if (($row['subscriber_name'] === 'Ẩn danh' || empty($row['subscriber_name'])) && $qType === 'short_text' && !empty($ans['answer_text'])) {
+                        $lblLow = mb_strtolower($qLabel);
+                        if (strpos($lblLow, 'tên') !== false || strpos($lblLow, 'name') !== false || strpos($lblLow, 'họ') !== false) {
+                            $row['subscriber_name'] = $ans['answer_text'];
+                        }
+                    }
+                    if (empty($row['subscriber_phone']) && ($qType === 'phone' || strpos(mb_strtolower($qLabel), 'điện thoại') !== false || strpos(mb_strtolower($qLabel), 'phone') !== false)) {
+                        $row['subscriber_phone'] = $ans['answer_text'];
+                    }
+                }
+                $row['answers'] = $formattedAnswers;
+                unset($row['answers_json']);
+            }
+            unset($row);
+
+            echo json_encode(['success' => true, 'data' => $rows], JSON_UNESCAPED_UNICODE);
             break;
         }
 
-        // ─── RESPONSES LIST ───────────────────────────────────────────────────
+        // ─── RESPONSES LIST (RAW WITH PAGINATION) ───────────────────────────────
         case 'responses': {
             $stmtOwn = $pdo->prepare("SELECT id FROM surveys WHERE id = ? AND workspace_id = ?");
             $stmtOwn->execute([$id, $workspace_id]);
@@ -228,30 +331,84 @@ try {
             }
 
             $page  = max(1, (int)($_GET['page'] ?? 1));
-            $limit = min(100, (int)($_GET['limit'] ?? 20));
+            $limit = min(100, (int)($_GET['limit'] ?? 50));
             $offset = ($page - 1) * $limit;
 
             $totalStmt = $pdo->prepare("SELECT COUNT(*) FROM survey_responses WHERE survey_id = ?");
             $totalStmt->execute([$id]);
             $total = (int)$totalStmt->fetchColumn();
 
+            // Load survey blocks map for question titles & choice resolution
+            $surveyStmt = $pdo->prepare("SELECT blocks_json FROM surveys WHERE id = ?");
+            $surveyStmt->execute([$id]);
+            $blocks = json_decode($surveyStmt->fetchColumn() ?: '[]', true) ?: [];
+            $blocksMap = [];
+            foreach ($blocks as $b) {
+                if (!empty($b['id'])) $blocksMap[$b['id']] = $b;
+            }
+
             $stmt = $pdo->prepare("
                 SELECT r.*,
                     s.email AS subscriber_email,
-                    COALESCE(s.first_name, s.name) AS subscriber_name
+                    TRIM(CONCAT(COALESCE(s.first_name, ''), ' ', COALESCE(s.last_name, ''))) AS subscriber_name,
+                    s.phone_number AS subscriber_phone
                 FROM survey_responses r
                 LEFT JOIN subscribers s ON s.id = r.subscriber_id
                 WHERE r.survey_id = ?
                 ORDER BY r.submitted_at DESC
-                LIMIT ? OFFSET ?
+                LIMIT " . (int)$limit . " OFFSET " . (int)$offset . "
             ");
-            $stmt->execute([$id, $limit, $offset]);
+            $stmt->execute([$id]);
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
             foreach ($rows as &$row) {
-                $row['answers'] = json_decode($row['answers_json'], true);
+                $rawAnswers = json_decode($row['answers_json'] ?? '[]', true) ?: [];
+                $resolvedAnswers = [];
+
+                $foundEmail = $row['subscriber_email'] ?? '';
+                $foundPhone = $row['subscriber_phone'] ?? '';
+                $foundName  = $row['subscriber_name'] ?? '';
+
+                foreach ($rawAnswers as $ans) {
+                    $bId = $ans['block_id'] ?? ($ans['question_id'] ?? '');
+                    $b = $blocksMap[$bId] ?? null;
+                    $qTitle = (!empty($b['label']) && $b['label'] !== 'Untitled Question') 
+                        ? $b['label'] 
+                        : ($b['content'] ?? ($b['title'] ?? ''));
+
+                    $rawVal = $ans['answer_text'] ?? ($ans['answer_num'] ?? (is_array($ans['answer_json'] ?? null) ? implode(', ', $ans['answer_json']) : ''));
+                    $resolvedAnswers[] = [
+                        'block_id'       => $bId,
+                        'question_id'    => $ans['question_id'] ?? $bId,
+                        'question_title' => $qTitle,
+                        'answer_text'    => resolveChoiceLabel((string)$rawVal, $b, $ans['type'] ?? ($b['type'] ?? '')),
+                        'answer_json'    => $ans['answer_json'] ?? null,
+                        'answer_num'     => $ans['answer_num'] ?? null,
+                        'type'           => $ans['type'] ?? ($b['type'] ?? '')
+                    ];
+
+                    // Fallback email, name, phone from answers if subscriber wasn't linked
+                    if (empty($foundEmail) && ($ans['type'] ?? '') === 'email' && !empty($ans['answer_text'])) {
+                        $foundEmail = $ans['answer_text'];
+                    }
+                    if (empty($foundPhone) && in_array($ans['type'] ?? '', ['phone', 'phone_number']) && !empty($ans['answer_text'])) {
+                        $foundPhone = $ans['answer_text'];
+                    }
+                }
+
+                if (empty($row['subscriber_email']) && !empty($foundEmail)) {
+                    $row['subscriber_email'] = $foundEmail;
+                }
+                if (empty($row['subscriber_phone']) && !empty($foundPhone)) {
+                    $row['subscriber_phone'] = $foundPhone;
+                }
+                if (empty($row['subscriber_name']) && !empty($foundName)) {
+                    $row['subscriber_name'] = $foundName;
+                }
+
+                $row['answers'] = $resolvedAnswers;
                 unset($row['answers_json']);
             }
-            echo json_encode(['success' => true, 'data' => $rows, 'total' => $total, 'page' => $page, 'limit' => $limit]);
+            echo json_encode(['success' => true, 'data' => $rows, 'total' => $total, 'page' => $page, 'limit' => $limit], JSON_UNESCAPED_UNICODE);
             break;
         }
 
@@ -266,6 +423,16 @@ try {
 
             $surveyId = $id;
 
+            // Auto-heal direct_link to email_embed if UTM indicates email
+            try {
+                $pdo->prepare("
+                    UPDATE survey_responses 
+                    SET source_channel = 'email_embed' 
+                    WHERE survey_id = ? AND source_channel = 'direct_link' 
+                    AND (utm_source = 'mailflow' OR utm_medium = 'email' OR utm_campaign IS NOT NULL)
+                ")->execute([$surveyId]);
+            } catch (Exception $e) { /* ignore */ }
+
             // Overview stats
             $overview = $pdo->prepare("
                 SELECT
@@ -274,7 +441,7 @@ try {
                     ROUND(AVG(time_spent_sec), 0) AS avg_time_spent_sec,
                     SUM(source_channel = 'qr_code') AS qr_count,
                     SUM(source_channel = 'direct_link') AS direct_count,
-                    SUM(source_channel = 'email_embed') AS email_count,
+                    SUM(source_channel = 'email_embed' OR source_channel = 'email') AS email_count,
                     SUM(source_channel = 'widget') AS widget_count,
                     SUM(source_channel = 'api') AS api_count,
                     SUM(device_type = 'mobile') AS mobile_count,
@@ -302,21 +469,61 @@ try {
             $byDate->execute([$surveyId]);
             $byDateData = $byDate->fetchAll(PDO::FETCH_ASSOC);
 
+            // Load original blocks from surveys table for self-healing & label resolution
+            $surveyStmt = $pdo->prepare("SELECT blocks_json FROM surveys WHERE id = ?");
+            $surveyStmt->execute([$surveyId]);
+            $blocks = json_decode($surveyStmt->fetchColumn() ?: '[]', true) ?: [];
+            $blocksMap = [];
+            foreach ($blocks as $b) {
+                if (!empty($b['id'])) $blocksMap[$b['id']] = $b;
+            }
+
             // Per-question aggregation: Optimized with SQL grouping
             $questions = $pdo->prepare("SELECT * FROM survey_questions WHERE survey_id = ? ORDER BY order_index");
             $questions->execute([$surveyId]);
             $questionsData = $questions->fetchAll(PDO::FETCH_ASSOC);
 
+            // If survey_questions table is empty or missing, sync from blocksMap
+            if (empty($questionsData) && !empty($blocksMap)) {
+                $qStmt = $pdo->prepare("INSERT INTO survey_questions (id, survey_id, block_id, type, label, options_json, required, order_index, target_attribute) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                $order = 0;
+                foreach ($blocks as $b) {
+                    $isLayout = in_array($b['type'] ?? '', ['section_header', 'image_block', 'divider', 'page_break', 'button_block', 'link_block', 'banner_block']);
+                    if (!$isLayout) {
+                        $opts = isset($b['options']) ? json_encode($b['options'], JSON_UNESCAPED_UNICODE) : null;
+                        $req = isset($b['required']) && $b['required'] ? 1 : 0;
+                        $label = !empty($b['label']) ? $b['label'] : (!empty($b['content']) ? $b['content'] : (!empty($b['title']) ? $b['title'] : 'Câu hỏi ' . ($order + 1)));
+                        $blockId = $b['id'] ?? generateUUID();
+                        $targetAttr = $b['targetAttribute'] ?? ($b['target_attribute'] ?? null);
+                        $qStmt->execute([generateUUID(), $surveyId, $blockId, $b['type'] ?? 'unknown', $label, $opts, $req, $order, $targetAttr]);
+                        $order++;
+                    }
+                }
+                $questions->execute([$surveyId]);
+                $questionsData = $questions->fetchAll(PDO::FETCH_ASSOC);
+            }
+
             $questionAnalytics = [];
-            foreach ($questionsData as $q) {
+            foreach ($questionsData as $idx => $q) {
                 $blockId = $q['block_id'];
+                $block = $blocksMap[$blockId] ?? null;
+
+                // Self-heal question label if stored as 'Untitled Question'
+                $resolvedLabel = $q['label'];
+                if (empty($resolvedLabel) || $resolvedLabel === 'Untitled Question') {
+                    $resolvedLabel = !empty($block['label']) ? $block['label'] : (!empty($block['content']) ? $block['content'] : (!empty($block['title']) ? $block['title'] : 'Câu hỏi #' . ($idx + 1)));
+                    try {
+                        $pdo->prepare("UPDATE survey_questions SET label = ? WHERE id = ?")->execute([$resolvedLabel, $q['id']]);
+                    } catch (Exception $e) { /* non-blocking */ }
+                }
+
                 $qa = [
                     'question_id' => $blockId, 
-                    'block_id' => $blockId, 
-                    'type' => $q['type'], 
-                    'label' => $q['label'], 
-                    'content' => $q['content'] ?? null, 
-                    'options' => $q['options'] ?? null
+                    'block_id'    => $blockId, 
+                    'type'        => $q['type'], 
+                    'label'       => $resolvedLabel, 
+                    'content'     => $q['content'] ?? ($block['description'] ?? null), 
+                    'options'     => $block['options'] ?? json_decode($q['options_json'] ?? '[]', true)
                 ];
 
                 // 1. Total answered for this specific question
@@ -332,7 +539,6 @@ try {
 
                 // 2. Aggregate based on type
                 if (in_array($q['type'], ['star_rating', 'nps', 'slider', 'likert'])) {
-                    // SQL Aggregation for Ratings
                     $stmtDist = $pdo->prepare("
                         SELECT answer_num as val, COUNT(*) as cnt 
                         FROM survey_answer_details 
@@ -361,7 +567,6 @@ try {
                         $qa['nps_score'] = round(($promoters / $totalAnswered - $detractors / $totalAnswered) * 100);
                     }
                 } elseif (in_array($q['type'], ['single_choice', 'dropdown', 'yes_no'])) {
-                    // SQL Aggregation for Choice
                     $stmtChoice = $pdo->prepare("
                         SELECT answer_text as label, COUNT(*) as cnt 
                         FROM survey_answer_details 
@@ -373,12 +578,11 @@ try {
                     $choiceRows = $stmtChoice->fetchAll(PDO::FETCH_ASSOC);
                     
                     $qa['choice_distribution'] = array_map(fn($c) => [
-                        'label' => $c['label'], 
-                        'count' => (int)$c['cnt'], 
+                        'label'      => resolveChoiceLabel($c['label'], $block, $q['type']), 
+                        'count'      => (int)$c['cnt'], 
                         'percentage' => round($c['cnt'] / $totalAnswered * 100, 1)
                     ], $choiceRows);
                 } elseif ($q['type'] === 'multi_choice') {
-                    // Optimized Multi-choice aggregation using MySQL JSON_TABLE with fallback
                     try {
                         $stmtMulti = $pdo->prepare("
                             SELECT j.choice as label, COUNT(*) as cnt
@@ -393,14 +597,13 @@ try {
                         $choices = [];
                         foreach ($choicesData as $row) {
                             $choices[] = [
-                                'label' => (string)$row['label'],
-                                'count' => (int)$row['cnt'],
+                                'label'      => resolveChoiceLabel((string)$row['label'], $block, 'multi_choice'),
+                                'count'      => (int)$row['cnt'],
                                 'percentage' => round($row['cnt'] / $totalAnswered * 100, 1)
                             ];
                         }
                         $qa['choice_distribution'] = $choices;
                     } catch (Exception $e) {
-                        // Fallback to PHP processing if JSON_TABLE is not supported
                         $stmtMulti = $pdo->prepare("SELECT answer_json FROM survey_answer_details WHERE question_id = ? AND answer_json IS NOT NULL");
                         $stmtMulti->execute([$blockId]);
                         $counts = [];
@@ -411,12 +614,17 @@ try {
                             }
                         }
                         $choices = [];
-                        foreach ($counts as $lbl => $cnt) $choices[] = ['label' => (string)$lbl, 'count' => (int)$cnt, 'percentage' => round($cnt / $totalAnswered * 100, 1)];
+                        foreach ($counts as $lbl => $cnt) {
+                            $choices[] = [
+                                'label'      => resolveChoiceLabel((string)$lbl, $block, 'multi_choice'), 
+                                'count'      => (int)$cnt, 
+                                'percentage' => round($cnt / $totalAnswered * 100, 1)
+                            ];
+                        }
                         usort($choices, fn($a, $b) => $b['count'] <=> $a['count']);
                         $qa['choice_distribution'] = $choices;
                     }
                 } else {
-                    // Text responses: Limit to 50 items directly in SQL
                     $stmtText = $pdo->prepare("
                         SELECT " . ($q['type'] === 'matrix_single' || $q['type'] === 'matrix_multi' || $q['type'] === 'ranking' ? 'answer_json' : 'answer_text') . " as val 
                         FROM survey_answer_details 
@@ -424,7 +632,10 @@ try {
                         LIMIT 50
                     ");
                     $stmtText->execute([$blockId]);
-                    $qa['text_responses'] = array_filter($stmtText->fetchAll(PDO::FETCH_COLUMN), fn($v) => $v !== null && $v !== '');
+                    $qa['text_responses'] = array_map(
+                        fn($v) => html_entity_decode((string)$v, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'),
+                        array_filter($stmtText->fetchAll(PDO::FETCH_COLUMN), fn($v) => $v !== null && $v !== '')
+                    );
                 }
                 
                 $questionAnalytics[] = $qa;
@@ -437,7 +648,7 @@ try {
                     'by_date'   => $byDateData,
                     'questions' => $questionAnalytics,
                 ]
-            ]);
+            ], JSON_UNESCAPED_UNICODE);
             break;
         }
 
@@ -453,8 +664,16 @@ try {
 
             $format = $_GET['format'] ?? 'csv';
             
-            // 1. Fetch survey questions to define absolute columns and maintain alignment
-            $qStmt = $pdo->prepare("SELECT block_id, label FROM survey_questions WHERE survey_id = ? ORDER BY order_index");
+            // 1. Fetch survey questions & block options for human-friendly labels
+            $surveyStmt = $pdo->prepare("SELECT blocks_json FROM surveys WHERE id = ?");
+            $surveyStmt->execute([$id]);
+            $blocks = json_decode($surveyStmt->fetchColumn() ?: '[]', true) ?: [];
+            $blocksMap = [];
+            foreach ($blocks as $b) {
+                if (!empty($b['id'])) $blocksMap[$b['id']] = $b;
+            }
+
+            $qStmt = $pdo->prepare("SELECT * FROM survey_questions WHERE survey_id = ? ORDER BY order_index ASC");
             $qStmt->execute([$id]);
             $surveyQuestions = $qStmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -462,7 +681,8 @@ try {
             $stmt = $pdo->prepare("
                 SELECT r.submitted_at, r.source_channel, r.device_type, r.time_spent_sec,
                        r.completion_rate, r.geo_country, r.geo_city,
-                       s.email AS subscriber_email, COALESCE(s.first_name, s.name) AS subscriber_name,
+                       s.email AS subscriber_email, 
+                       TRIM(CONCAT(COALESCE(s.first_name, ''), ' ', COALESCE(s.last_name, ''))) AS subscriber_name,
                        r.answers_json
                 FROM survey_responses r
                 LEFT JOIN subscribers s ON s.id = r.subscriber_id
@@ -479,7 +699,11 @@ try {
             
             $headers = ['Thời gian', 'Email', 'Tên', 'Kênh', 'Thiết bị', 'Thời gian điền (s)', 'Hoàn thành %', 'Quốc gia', 'Thành phố'];
             foreach ($surveyQuestions as $q) {
-                $headers[] = $q['label'] ?? $q['block_id'];
+                $block = $blocksMap[$q['block_id']] ?? null;
+                $qTitle = (!empty($q['label']) && $q['label'] !== 'Untitled Question') 
+                    ? $q['label'] 
+                    : ($block['label'] ?? ($block['content'] ?? ($block['title'] ?? $q['block_id'])));
+                $headers[] = $qTitle;
             }
             fputcsv($out, $headers);
 
@@ -509,7 +733,9 @@ try {
 
                 // Append answer for each question in exact order
                 foreach ($surveyQuestions as $q) {
-                    $csvRow[] = $ansMap[$q['block_id']] ?? '';
+                    $block = $blocksMap[$q['block_id']] ?? null;
+                    $rawVal = $ansMap[$q['block_id']] ?? '';
+                    $csvRow[] = resolveChoiceLabel($rawVal, $block, $q['type'] ?? '');
                 }
 
                 fputcsv($out, $csvRow);
@@ -526,6 +752,77 @@ try {
     error_log('Survey API Error: ' . $e->getMessage());
     http_response_code(500);
     echo json_encode(['success' => false, 'error' => 'Server error', 'message' => 'Lỗi hệ thống, vui lòng thử lại.']);
+}
+
+function resolveChoiceLabel(?string $rawValue, ?array $block, string $type = ''): string {
+    if ($rawValue === null || $rawValue === '') {
+        return '';
+    }
+
+    // Decode HTML entities (e.g. &amp; -> &)
+    $clean = html_entity_decode($rawValue, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+
+    // Decode Unicode escape sequences if raw JSON-escaped string (e.g. \u00ed, \u1ee9...)
+    if (strpos($clean, '\u') !== false) {
+        $decoded = json_decode('"' . addcslashes($clean, '"') . '"');
+        if (json_last_error() === JSON_ERROR_NONE && is_string($decoded)) {
+            $clean = $decoded;
+        }
+    }
+
+    // 1. Yes / No handling
+    $lower = strtolower(trim($clean));
+    if ($type === 'yes_no' || $lower === 'yes' || $lower === 'no') {
+        if ($lower === 'yes' || $lower === 'true' || $lower === '1') {
+            return 'Có';
+        }
+        if ($lower === 'no' || $lower === 'false' || $lower === '0') {
+            return 'Không';
+        }
+    }
+
+    // Handle comma-separated values (for multi_choice string export)
+    if ($type === 'multi_choice' && strpos($clean, ',') !== false) {
+        $parts = explode(',', $clean);
+        $resolvedParts = [];
+        foreach ($parts as $p) {
+            $resolvedParts[] = resolveChoiceLabel(trim($p), $block, '');
+        }
+        return implode(', ', $resolvedParts);
+    }
+
+    // 2. If block is provided and has options, find matching option
+    if (!empty($block['options']) && is_array($block['options'])) {
+        foreach ($block['options'] as $opt) {
+            $optVal = is_array($opt) ? ($opt['value'] ?? '') : (string)$opt;
+            $optLbl = is_array($opt) ? ($opt['label'] ?? $optVal) : (string)$opt;
+
+            // Direct match by value or label
+            if ((string)$optVal === $clean || (string)$optLbl === $clean) {
+                return (string)$optLbl;
+            }
+
+            // Case-insensitive comparison
+            if (strtolower(trim((string)$optVal)) === $lower || strtolower(trim((string)$optLbl)) === $lower) {
+                return (string)$optLbl;
+            }
+
+            // Normalize underscores vs spaces for comparison
+            $cleanNormalized = str_replace('_', ' ', $lower);
+            $optNormalized = str_replace('_', ' ', strtolower(trim((string)$optVal)));
+            if ($cleanNormalized === $optNormalized) {
+                return (string)$optLbl;
+            }
+        }
+    }
+
+    // 3. Fallback: if value looks like a slug with underscores (e.g. bứt_phá_quy_mô...), turn underscores into spaces
+    if (strpos($clean, '_') !== false && !strpos($clean, ' ')) {
+        $clean = str_replace('_', ' ', $clean);
+        $clean = mb_strtoupper(mb_substr($clean, 0, 1, 'UTF-8'), 'UTF-8') . mb_substr($clean, 1, null, 'UTF-8');
+    }
+
+    return $clean;
 }
 
 function generateUUID(): string {

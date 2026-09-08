@@ -16,8 +16,7 @@ echo "<pre style='font-family: monospace; font-size: 14px; line-height: 1.5; pad
 
 $campaignId = $_GET['id'] ?? ($argv[1] ?? '6a87aeb6c88d1');
 
-echo "=== CAMPAIGN DETAILS: $campaignId ===\n";
-$stmt = $pdo->prepare("SELECT id, name, type, status, scheduled_at, target_list_ids, target_config, total_target_audience, count_sent, sent_at, workspace_id FROM campaigns WHERE id = ?");
+$stmt = $pdo->prepare("SELECT id, name, type, status, scheduled_at, target_config, total_target_audience, count_sent, sent_at, workspace_id FROM campaigns WHERE id = ?");
 $stmt->execute([$campaignId]);
 $campaign = $stmt->fetch(PDO::FETCH_ASSOC);
 if (!$campaign) {

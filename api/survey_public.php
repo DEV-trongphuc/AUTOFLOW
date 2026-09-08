@@ -66,18 +66,20 @@ try {
 
         // [PREFILL LOOKUP] Look up subscriber if sid, email, or uid is passed in query
         $prefill = null;
-        $querySid = $_GET['sid'] ?? '';
+        $querySid = trim((string)($_GET['sid'] ?? ''));
         $queryEmail = filter_var($_GET['email'] ?? ($_GET['uid'] ?? ''), FILTER_VALIDATE_EMAIL) ?: '';
+        $queryName = trim((string)($_GET['name'] ?? ''));
+        $queryPhone = trim((string)($_GET['phone'] ?? ''));
         
         $sub = null;
         if (!empty($querySid)) {
-            $stmtSub = $pdo->prepare("SELECT id, email, first_name, last_name, phone_number, company_name FROM subscribers WHERE id = ? AND workspace_id = ? LIMIT 1");
-            $stmtSub->execute([$querySid, $survey['workspace_id']]);
+            $stmtSub = $pdo->prepare("SELECT id, email, first_name, last_name, phone_number, company_name FROM subscribers WHERE id = ? LIMIT 1");
+            $stmtSub->execute([$querySid]);
             $sub = $stmtSub->fetch(PDO::FETCH_ASSOC);
         }
         if (!$sub && !empty($queryEmail)) {
-            $stmtSub = $pdo->prepare("SELECT id, email, first_name, last_name, phone_number, company_name FROM subscribers WHERE email = ? AND workspace_id = ? LIMIT 1");
-            $stmtSub->execute([$queryEmail, $survey['workspace_id']]);
+            $stmtSub = $pdo->prepare("SELECT id, email, first_name, last_name, phone_number, company_name FROM subscribers WHERE email = ? LIMIT 1");
+            $stmtSub->execute([$queryEmail]);
             $sub = $stmtSub->fetch(PDO::FETCH_ASSOC);
         }
         
@@ -85,12 +87,23 @@ try {
             $fullName = trim(($sub['first_name'] ?? '') . ' ' . ($sub['last_name'] ?? ''));
             $prefill = [
                 'subscriber_id' => $sub['id'],
-                'email'         => $sub['email'] ?? '',
-                'first_name'    => $sub['first_name'] ?? '',
+                'email'         => $sub['email'] ?? ($queryEmail ?: ''),
+                'first_name'    => $sub['first_name'] ?: $queryName,
                 'last_name'     => $sub['last_name'] ?? '',
-                'full_name'     => $fullName ?: ($sub['first_name'] ?? ''),
-                'phone_number'  => $sub['phone_number'] ?? '',
+                'full_name'     => $fullName ?: ($sub['first_name'] ?: ($queryName ?: '')),
+                'phone_number'  => $sub['phone_number'] ?: $queryPhone,
                 'company_name'  => $sub['company_name'] ?? ''
+            ];
+        } elseif (!empty($queryEmail) || !empty($queryName) || !empty($queryPhone) || !empty($querySid)) {
+            // Prefill directly from URL query params (e.g. from Mailflow email link)
+            $prefill = [
+                'subscriber_id' => $querySid,
+                'email'         => $queryEmail,
+                'first_name'    => $queryName,
+                'last_name'     => '',
+                'full_name'     => $queryName,
+                'phone_number'  => $queryPhone,
+                'company_name'  => ''
             ];
         }
 
@@ -109,7 +122,7 @@ try {
                 'require_login'   => (bool)$survey['require_login'],
                 'prefill'      => $prefill,
             ]
-        ]);
+        ], JSON_UNESCAPED_UNICODE);
         exit;
     }
 
@@ -194,7 +207,7 @@ try {
             exit;
         }
 
-        // [SEC] Sanitize payload to prevent XSS (Harden: Strip dangerous tags and encode)
+        // [SEC] Sanitize payload to prevent XSS (Strip dangerous tags without corrupting entity chars)
         $sanitizePayload = function($data) use (&$sanitizePayload) {
             if (is_array($data)) {
                 $sanitized = [];
@@ -205,9 +218,9 @@ try {
             }
             if (is_scalar($data)) {
                 $str = (string)$data;
-                // Strip tags for safety, but keep & for legitimate entities if needed (standard encoding)
+                // Strip tags for safety while preserving characters like &, quotes, and Vietnamese diacritics
                 $str = strip_tags($str);
-                return htmlspecialchars($str, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+                return trim($str);
             }
             return $data;
         };
@@ -242,19 +255,38 @@ try {
             $device = preg_match('/iPad|Tablet/i', $ua) ? 'tablet' : 'mobile';
         }
 
-        // Source channel
-        $sourceChannel = $_SERVER['HTTP_X_SURVEY_SOURCE'] ?? ($input['source_channel'] ?? 'direct_link');
-        $allowedSources = ['direct_link', 'qr_code', 'email_embed', 'widget', 'api'];
-        if (!in_array($sourceChannel, $allowedSources)) $sourceChannel = 'direct_link';
+        // Source channel & UTM detection
+        $rawSource = $_SERVER['HTTP_X_SURVEY_SOURCE'] ?? ($input['source_channel'] ?? ($input['utm_source'] ?? ($_GET['src'] ?? ($_GET['utm_source'] ?? ''))));
+        $utmMed = strtolower(trim((string)($input['utm_medium'] ?? ($_GET['utm_medium'] ?? ''))));
+        $utmSrc = strtolower(trim((string)($input['utm_source'] ?? ($_GET['utm_source'] ?? ''))));
+        $rawSourceLower = strtolower(trim((string)$rawSource));
+
+        if (
+            $rawSourceLower === 'email' || 
+            $rawSourceLower === 'email_embed' || 
+            $rawSourceLower === 'mailflow' || 
+            $utmMed === 'email' || 
+            $utmSrc === 'mailflow' || 
+            !empty($input['email']) || 
+            !empty($_GET['email']) || 
+            !empty($input['sid']) || 
+            !empty($_GET['sid'])
+        ) {
+            $sourceChannel = 'email_embed';
+        } elseif (in_array($rawSourceLower, ['qr_code', 'widget', 'api'])) {
+            $sourceChannel = $rawSourceLower;
+        } else {
+            $sourceChannel = 'direct_link';
+        }
 
         // Geo Location (from Cloudflare if available)
         $geoCountry = $_SERVER['HTTP_CF_IPCOUNTRY'] ?? null;
         $geoCity = $_SERVER['HTTP_CF_IPCITY'] ?? null;
 
         $subscriberId = null;
-        $submittedName = null;
-        $submittedPhone = null;
-        $submittedCompany = null;
+        $submittedName = trim((string)($input['name'] ?? ($_GET['name'] ?? '')));
+        $submittedPhone = trim((string)($input['phone'] ?? ($_GET['phone'] ?? '')));
+        $submittedCompany = trim((string)($input['company'] ?? ($_GET['company'] ?? '')));
         
         foreach ($answers as $ans) {
             $ansType = $ans['type'] ?? '';
@@ -279,22 +311,34 @@ try {
         }
 
         // Check UID or email or SID passed from query/input
-        $passedSid = $input['sid'] ?? ($input['subscriber_id'] ?? ($_GET['sid'] ?? ''));
-        $passedUid = filter_var(trim($input['uid'] ?? ($input['email'] ?? ($_GET['uid'] ?? ($_GET['email'] ?? '')))), FILTER_VALIDATE_EMAIL);
+        $passedSid = trim((string)($input['sid'] ?? ($input['subscriber_id'] ?? ($_GET['sid'] ?? ''))));
+        $passedUid = filter_var(trim((string)($input['uid'] ?? ($input['email'] ?? ($_GET['uid'] ?? ($_GET['email'] ?? ''))))), FILTER_VALIDATE_EMAIL);
         if (empty($submittedEmail) && $passedUid) {
-            $submittedEmail = $passedUid;
+            $submittedEmail = strtolower($passedUid);
         }
 
         $existSub = null;
         if (!empty($passedSid)) {
+            // First search within workspace
             $subStmt = $pdo->prepare("SELECT id, email, phone_number, first_name, last_name, company_name FROM subscribers WHERE id = ? AND workspace_id = ? LIMIT 1");
             $subStmt->execute([$passedSid, $survey['workspace_id']]);
             $existSub = $subStmt->fetch(PDO::FETCH_ASSOC);
+            if (!$existSub) {
+                // Fallback cross-workspace lookup for campaigns originating from main/shared workspace
+                $subStmt = $pdo->prepare("SELECT id, email, phone_number, first_name, last_name, company_name FROM subscribers WHERE id = ? LIMIT 1");
+                $subStmt->execute([$passedSid]);
+                $existSub = $subStmt->fetch(PDO::FETCH_ASSOC);
+            }
         }
         if (!$existSub && !empty($submittedEmail)) {
             $subStmt = $pdo->prepare("SELECT id, email, phone_number, first_name, last_name, company_name FROM subscribers WHERE email = ? AND workspace_id = ? LIMIT 1");
             $subStmt->execute([$submittedEmail, $survey['workspace_id']]);
             $existSub = $subStmt->fetch(PDO::FETCH_ASSOC);
+            if (!$existSub) {
+                $subStmt = $pdo->prepare("SELECT id, email, phone_number, first_name, last_name, company_name FROM subscribers WHERE email = ? LIMIT 1");
+                $subStmt->execute([$submittedEmail]);
+                $existSub = $subStmt->fetch(PDO::FETCH_ASSOC);
+            }
         }
 
         if ($existSub) {
@@ -306,17 +350,17 @@ try {
             $updateParams = [];
             
             // Update missing phone
-            if ($submittedPhone && empty($existSub['phone_number'])) {
+            if (!empty($submittedPhone) && empty($existSub['phone_number'])) {
                 $updateFields[] = "phone_number = ?";
                 $updateParams[] = $submittedPhone;
             }
             // Update missing name
-            if ($submittedName && (empty($existSub['first_name']) || $existSub['first_name'] === 'Guest')) {
+            if (!empty($submittedName) && (empty($existSub['first_name']) || $existSub['first_name'] === 'Guest')) {
                 $updateFields[] = "first_name = ?";
                 $updateParams[] = $submittedName;
             }
             // Update missing company
-            if ($submittedCompany && empty($existSub['company_name'])) {
+            if (!empty($submittedCompany) && empty($existSub['company_name'])) {
                 $updateFields[] = "company_name = ?";
                 $updateParams[] = $submittedCompany;
             }
@@ -327,10 +371,16 @@ try {
                     ->execute($updateParams);
             }
         } elseif (!empty($submittedEmail)) {
-            $subscriberId = generateUUID();
-            $pdo->prepare("INSERT INTO subscribers (id, email, phone_number, first_name, company_name, source, workspace_id, created_at)
-                VALUES (?, ?, ?, ?, ?, 'survey', ?, NOW())")
-                ->execute([$subscriberId, $submittedEmail, $submittedPhone, $submittedName ?? '', $submittedCompany ?? '', $survey['workspace_id']]);
+            $subscriberId = !empty($passedSid) ? $passedSid : generateUUID();
+            try {
+                $pdo->prepare("INSERT INTO subscribers (id, email, phone_number, first_name, company_name, source, workspace_id, created_at)
+                    VALUES (?, ?, ?, ?, ?, 'survey', ?, NOW())")
+                    ->execute([$subscriberId, $submittedEmail, $submittedPhone, $submittedName ?: 'Khách khảo sát', $submittedCompany ?? '', $survey['workspace_id']]);
+            } catch (Exception $e) {
+                $subFind = $pdo->prepare("SELECT id FROM subscribers WHERE email = ? LIMIT 1");
+                $subFind->execute([$submittedEmail]);
+                $subscriberId = $subFind->fetchColumn() ?: $subscriberId;
+            }
         }
 
         if ($subscriberId) {
@@ -409,13 +459,13 @@ try {
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ")->execute([
             $responseId, $survey['id'], $subscriberId, $sessionToken,
-            json_encode($answers),
+            json_encode($answers, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
             (int)($input['completion_rate'] ?? 100),
             $input['time_spent_sec'] ?? null,
             $sourceChannel,
-            $input['utm_source'] ?? null,
-            $input['utm_medium'] ?? null,
-            $input['utm_campaign'] ?? null,
+            $input['utm_source'] ?? ($_GET['utm_source'] ?? ($sourceChannel === 'email_embed' ? 'mailflow' : null)),
+            $input['utm_medium'] ?? ($_GET['utm_medium'] ?? ($sourceChannel === 'email_embed' ? 'email' : null)),
+            $input['utm_campaign'] ?? ($_GET['utm_campaign'] ?? null),
             $ipHash, substr($ua, 0, 512), $device,
             substr($_SERVER['HTTP_REFERER'] ?? '', 0, 1024),
             $geoCountry, $geoCity,
@@ -434,7 +484,7 @@ try {
             $answerJson = null;
             $answerText = $ans['answer_text'] ?? null;
             if (isset($ans['answer_num'])) $answerNum = (float)$ans['answer_num'];
-            if (isset($ans['answer_json'])) $answerJson = json_encode($ans['answer_json']);
+            if (isset($ans['answer_json'])) $answerJson = json_encode($ans['answer_json'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             $detailStmt->execute([generateUUID(), $responseId, $survey['id'], $ans['question_id'], $answerText, $answerNum, $answerJson]);
         }
 
