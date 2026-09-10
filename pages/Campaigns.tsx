@@ -422,11 +422,8 @@ const Campaigns: React.FC = () => {
             if (res.success) {
                 logAction(data.id ? "Cập nhật chiến dịch" : "Khởi tạo chiến dịch", `Chiến dịch: ${data.name || res.data.name} (Trạng thái: ${finalStatus})`);
                 const campId = data.id || res.data.id;
-
-                if (finalStatus === CampaignStatus.SENDING) {
-                    api.post(`campaigns?route=trigger_refresh`, { id: campId });
-                }
-
+                // [FIX DUP-SEND] Backend POST/PUT campaigns already dispatches worker when status is SENDING.
+                // Triggering trigger_refresh here spawned a duplicate worker simultaneously, sending duplicate emails.
                 if (options.connectFlow && options.activateFlowId) {
                     const flow = allFlows.find(f => f.id === options.activateFlowId);
                     if (flow) {

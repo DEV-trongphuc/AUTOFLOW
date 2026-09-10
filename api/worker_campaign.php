@@ -112,10 +112,19 @@ if (!function_exists('runWorkerCampaign')) {
         }
 
         if (!$campaign) {
-            // Fallback: Pick next scheduled campaign
-            $stmtCamp = $pdo->prepare("SELECT * FROM campaigns WHERE status IN ('scheduled', 'sending') AND (scheduled_at <= ? OR scheduled_at IS NULL) ORDER BY scheduled_at ASC LIMIT 1");
+            // Fallback: Pick next scheduled campaign that is NOT currently locked by an active worker
+            $stmtCamp = $pdo->prepare("SELECT * FROM campaigns WHERE status IN ('scheduled', 'sending') AND (scheduled_at <= ? OR scheduled_at IS NULL) ORDER BY scheduled_at ASC LIMIT 10");
             $stmtCamp->execute([$now]);
-            $campaign = $stmtCamp->fetch();
+            $candidates = $stmtCamp->fetchAll();
+            foreach ($candidates as $cand) {
+                $testLockKey = "campaign_worker_" . $cand['id'];
+                $stmtCheck = $pdo->prepare("SELECT IS_USED_LOCK(?)");
+                $stmtCheck->execute([$testLockKey]);
+                if (!$stmtCheck->fetchColumn()) {
+                    $campaign = $cand;
+                    break;
+                }
+            }
         }
 
         if ($campaign) {
@@ -124,8 +133,31 @@ if (!function_exists('runWorkerCampaign')) {
             // [FIX BUG-WC-1] Extract workspace_id to scope all subscriber queries
             $workspace_id = (int)($campaign['workspace_id'] ?? 0);
 
-            // [OPTIMIZATION] Clean up all temporary processing locks so subscribers are immediately available
-            $pdo->prepare("DELETE FROM subscriber_activity WHERE campaign_id = ? AND type = 'processing_campaign'")->execute([$cid]);
+            // [CONCURRENCY GUARD] Acquire exclusive MySQL Advisory Lock per Campaign
+            // Prevents cron runs, concurrent triggers, or double clicks from sending duplicate emails
+            $lockKey = "campaign_worker_" . $cid;
+            $lockTimeout = $manualCampaignId ? 3 : 0;
+            $stmtLock = $pdo->prepare("SELECT GET_LOCK(?, ?)");
+            $stmtLock->execute([$lockKey, $lockTimeout]);
+            $lockAcquired = ((int)$stmtLock->fetchColumn() === 1);
+
+            if (!$lockAcquired) {
+                $msg = "[LOCK GUARD] Campaign $cid is currently being processed by another active worker. Skipping to prevent duplicate emails.";
+                $logs[] = $msg;
+                writeWorkerLog($msg);
+                return ['status' => 'locked', 'campaign_id' => $cid];
+            }
+
+            // Register shutdown handler to guarantee lock release on script exit or crash
+            register_shutdown_function(function() use ($pdo, $lockKey) {
+                try {
+                    $pdo->prepare("SELECT RELEASE_LOCK(?)")->execute([$lockKey]);
+                } catch (Throwable $e) {}
+            });
+
+            // [STALE LOCK CLEANUP] Clean up ONLY stale temporary processing locks (>15 minutes old) from crashed processes
+            // CRITICAL: NEVER delete active locks, as that allows concurrent workers to re-pick in-flight subscribers!
+            $pdo->prepare("DELETE FROM subscriber_activity WHERE campaign_id = ? AND type = 'processing_campaign' AND created_at < DATE_SUB(NOW(), INTERVAL 15 MINUTE)")->execute([$cid]);
 
             // Start a transaction for the campaign processing
             $pdo->beginTransaction();
@@ -619,6 +651,14 @@ if (!function_exists('runWorkerCampaign')) {
                                 $capCache[$subId][$campChannel]++;
                             }
 
+                            // [DEFENSE-IN-DEPTH DEDUP GUARD] Guarantee subscriber has not already received this campaign
+                            $stmtCheckSent = $pdo->prepare("SELECT 1 FROM subscriber_activity WHERE workspace_id = ? AND subscriber_id = ? AND campaign_id = ? AND type IN ('receive_email', 'zns_sent') LIMIT 1");
+                            $stmtCheckSent->execute([$workspace_id, $subId, $cid]);
+                            if ($stmtCheckSent->fetchColumn()) {
+                                $logs[] = "  -> Dedup guard: Subscriber {$sub['email']} already received Campaign $cid. Skipping duplicate.";
+                                continue;
+                            }
+
                             if (($campaign['type'] ?? 'email') === 'zalo_zns') {
                                 // [PERF B3] Use pre-decoded ZNS config instead of re-decoding per subscriber
                                 $znsConfig    = $znsConfigPreloaded ?? [];
@@ -1051,6 +1091,13 @@ if (!function_exists('runWorkerCampaign')) {
         } else {
             $logs[] = "[Campaign] No campaigns ready to process.";
             writeWorkerLog("No campaigns ready to process.");
+        }
+
+        // Release campaign advisory lock on normal completion
+        if (!empty($lockKey)) {
+            try {
+                $pdo->prepare("SELECT RELEASE_LOCK(?)")->execute([$lockKey]);
+            } catch (Throwable $e) {}
         }
 
         file_put_contents(__DIR__ . '/worker_campaign.log', implode("\n", $logs) . "\n", FILE_APPEND);
