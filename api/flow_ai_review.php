@@ -106,7 +106,7 @@ try {
     }
 
     // [FIX] Temperature reduced from 1.2 to 0.7 to enforce concise, analytical responses instead of creative rambling
-    $response = generateResponse($contents, $systemInst, $apiKey, 'gemini-2.5-flash-lite', 0.7, 14096);
+    $response = generateResponse($contents, $systemInst, $apiKey, 'gemini-3.5-flash-lite', 0.7, 14096);
 
     if (isset($response['error'])) {
         throw new Exception($response['error']);

@@ -784,7 +784,7 @@ const Settings: React.FC = () => {
                                 <h4 className="text-base lg:text-lg font-black mb-2 italic">Mô hình sử dụng</h4>
                                 <p className="text-amber-100 text-[11px] lg:text-sm font-medium leading-relaxed opacity-90">
                                     Hệ thống hiện đang hỗ trợ tốt nhất cho phiên bản **Gemini 2.0 Flash**.
-                                    Đảm bảo API Key của bạn có quyền truy cập vào các mô hình `gemini-2.0-flash-exp` hoặc `gemini-2.5-flash-lite`.
+                                    Đảm bảo API Key của bạn có quyền truy cập vào các mô hình `gemini-2.0-flash-exp` hoặc `gemini-3.5-flash-lite`.
                                 </p>
                             </div>
                         </div>

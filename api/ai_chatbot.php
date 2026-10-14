@@ -1642,7 +1642,7 @@ CHÚ Ý:
                 [["parts" => [["text" => $contextText]]]],
                 $systemInst,
                 $apiKey,
-                'gemini-2.5-flash-lite',
+                'gemini-3.5-flash-lite',
                 1.3,
                 16384
             );
@@ -2629,7 +2629,7 @@ CHÚ Ý:
             }
 
             try {
-                $botRes = generateResponse($contents, $systemInst, $apiKey, 'gemini-2.5-flash-lite', $settings['temperature'] ?? 0.9, $settings['max_output_tokens'] ?? 16000);
+                $botRes = generateResponse($contents, $systemInst, $apiKey, 'gemini-3.5-flash-lite', $settings['temperature'] ?? 0.9, $settings['max_output_tokens'] ?? 16000);
 
                 // Parse [ACTIONS: Act1 | Act2] or [ACTIONS: Act1, Act2] or [BUTTONS: ...]
                 $quickActions = [];
@@ -3056,7 +3056,7 @@ CHÚ Ý:
                                 ob_flush();
                             flush();
                         }
-                    }, 'gemini-2.5-flash-lite', $settings['temperature'] ?? 1.1, $settings['max_output_tokens'] ?? 16000);
+                    }, 'gemini-3.5-flash-lite', $settings['temperature'] ?? 1.1, $settings['max_output_tokens'] ?? 16000);
 
                     // [RECONNECT SAFETY]
                     ensure_pdo_alive($pdo);
@@ -3066,7 +3066,7 @@ CHÚ Ý:
                         $fullBotRes = processImageRequests(
                             $fullBotRes,
                             $apiKey,
-                            'gemini-2.5-flash-lite', // Default image model for public widget
+                            'gemini-3.5-flash-lite', // Default image model for public widget
                             [], // config
                             [], // reference images
                             $propertyId,
@@ -3102,14 +3102,14 @@ CHÚ Ý:
             }
 
             try {
-                $botRes = generateResponse($contents, $systemInst, $apiKey, 'gemini-2.5-flash-lite', $settings['temperature'] ?? 1.1, $settings['max_output_tokens'] ?? 16000);
+                $botRes = generateResponse($contents, $systemInst, $apiKey, 'gemini-3.5-flash-lite', $settings['temperature'] ?? 1.1, $settings['max_output_tokens'] ?? 16000);
 
                 // Post-Process Image Requests
                 if (strpos($botRes, '[IMAGE_REQUEST:') !== false) {
                     $botRes = processImageRequests(
                         $botRes,
                         $apiKey,
-                        'gemini-2.5-flash-lite',
+                        'gemini-3.5-flash-lite',
                         [],
                         [],
                         $propertyId,

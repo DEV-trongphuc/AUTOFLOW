@@ -74,7 +74,7 @@ if (empty($geminiKey)) {
     exit;
 }
 
-$url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=" . $geminiKey;
+$url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=" . $geminiKey;
 $payload = [
     "contents" => [
         ["parts" => [["text" => $prompt]]]

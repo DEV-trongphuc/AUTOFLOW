@@ -286,7 +286,7 @@ SYSTEM;
     $contents,
     $systemPrompt,
     $apiKey,
-    'gemini-2.5-flash-lite',
+    'gemini-3.5-flash-lite',
     0.3,
     60000
   );

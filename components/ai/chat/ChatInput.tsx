@@ -173,7 +173,7 @@ const ChatInput: React.FC<ChatInputProps> = React.memo(({
                                     action: 'chat',
                                     property_id: activeBot?.id,
                                     message: `Rewrite and enhance this prompt: "${input}"`,
-                                    model_config: { model: 'gemini-2.5-flash-lite' }
+                                    model_config: { model: 'gemini-3.5-flash-lite' }
                                 });
                                 if (res.success && res.data?.message) { setInput(res.data.message); toast.success('Enhanced!'); }
                             } catch (e) { toast.error('AI Error'); } finally { setIsEnhancing(false); }

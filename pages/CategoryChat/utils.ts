@@ -60,15 +60,15 @@ export const formatFileSize = (bytes: number) => {
 };
 
 export const AI_MODELS = [
-    { id: 'auto', name: 'Auto (2.5 Flash)', icon: Sparkles, desc: 'Tự động chọn model tối ưu - Gemini 2.5 Flash' },
-    { id: 'gemini-2.5-flash-lite', name: 'Gemini 2.5 Flash', icon: Zap, desc: 'Thế hệ mới, tốc độ cao, xử lý ảnh & văn bản cực tốt' },
+    { id: 'auto', name: 'Auto (3.5 Flash)', icon: Sparkles, desc: 'Tự động chọn model tối ưu - Gemini 3.5 Flash' },
+    { id: 'gemini-3.5-flash-lite', name: 'Gemini 3.5 Flash', icon: Zap, desc: 'Thế hệ mới, tốc độ cao, xử lý ảnh & văn bản cực tốt' },
     { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', icon: Cpu, desc: 'Cao cấp nhất, phân tích sâu ảnh, video & hội thoại dài' },
     { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash', icon: Zap, desc: 'Mới nhất (Preview), siêu tốc và thông minh vượt trội' },
     { id: 'gemini-3-pro-preview', name: 'Gemini 3 Pro', icon: Cpu, desc: 'Mạnh mẽ nhất thế giới (Preview), đa phương thức cực hạn' },
 ];
 
 export const IMAGE_PROVIDERS = [
-    { id: 'gemini-2.5-flash-lite-image', name: '🍌 Nano Banana', desc: 'Tốc độ cực cao, hiệu suất tối ưu cho tác vụ lớn.', version: '2.5 Flash' },
+    { id: 'gemini-3.5-flash-lite-image', name: '🍌 Nano Banana', desc: 'Tốc độ cực cao, hiệu suất tối ưu cho tác vụ lớn.', version: '3.5 Flash' },
     { id: 'gemini-3-pro-image-preview', name: '🍌 Nano Banana Pro', desc: 'Chất lượng chuyên nghiệp, hỗ trợ 4K & Google Search.', version: '3 Pro' },
 ];
 

@@ -2,7 +2,7 @@
 // api/chat_gemini.php
 require_once 'chat_helpers.php';
 
-function generateResponse($contents, $systemInst, $apiKey, $model = 'gemini-2.5-flash-lite', $temperature = 0.9, $maxOutputTokens = 16384)
+function generateResponse($contents, $systemInst, $apiKey, $model = 'gemini-3.5-flash-lite', $temperature = 0.9, $maxOutputTokens = 16384)
 {
     if (empty(trim($apiKey ?? ''))) {
         return "Lỗi: Chưa cấu hình API Key.";
@@ -118,7 +118,7 @@ function generateResponse($contents, $systemInst, $apiKey, $model = 'gemini-2.5-
 /**
  * OPTIMIZED: Initialize an asynchronous Gemini request
  */
-function generateResponseAsyncInit($contents, $systemInst, $apiKey, $model = 'gemini-2.5-flash-lite', $temperature = 1.0, $maxOutputTokens = 16384)
+function generateResponseAsyncInit($contents, $systemInst, $apiKey, $model = 'gemini-3.5-flash-lite', $temperature = 1.0, $maxOutputTokens = 16384)
 {
     if (empty($apiKey))
         return null;
@@ -223,7 +223,7 @@ function generateResponseAsyncWait($asyncHandle)
 
     return "Dạ, em chưa tìm thấy câu trả lời phù hợp nhất lúc này.";
 }
-function streamResponse($contents, $systemInst, $apiKey, $onChunk, $model = 'gemini-2.5-flash-lite', $temperature = 0.9, $maxOutputTokens = 2048)
+function streamResponse($contents, $systemInst, $apiKey, $onChunk, $model = 'gemini-3.5-flash-lite', $temperature = 0.9, $maxOutputTokens = 2048)
 {
     if (empty($apiKey)) {
         $onChunk(["error" => "No API Key"]);

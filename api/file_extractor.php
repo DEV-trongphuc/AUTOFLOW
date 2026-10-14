@@ -398,8 +398,8 @@ Quy tắc:
 - Trả về JSON thuần túy (không markdown wrapper)
 PROMPT;
 
-        // Dùng gemini-2.5-flash-lite (nhất quán toàn bộ file)
-        $apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key={$apiKey}";
+        // Dùng gemini-3.5-flash-lite (nhất quán toàn bộ file)
+        $apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key={$apiKey}";
         $payload = [
             "contents" => [
                 [
@@ -481,7 +481,7 @@ PROMPT;
      */
     function extractPdfPageRangeMulti(string $fileUri, array $pageRanges, string $apiKey): array
     {
-        $apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key={$apiKey}";
+        $apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key={$apiKey}";
         $mh = curl_multi_init();
         $handles = [];
 
@@ -771,7 +771,7 @@ Quy tắc:
 - Trả về JSON thuần túy, không có markdown wrapper hay giải thích
 PROMPT;
 
-        $apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key={$apiKey}";
+        $apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key={$apiKey}";
         $payload = [
             "contents" => [
                 [
@@ -918,7 +918,7 @@ PROMPT;
         // Trích xuất
         sleep(3);
         $prompt = "Extract all text content from this document. Return as plain text preserving paragraphs.";
-        $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key={$apiKey}";
+        $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key={$apiKey}";
         $payload = [
             "contents" => [
                 [

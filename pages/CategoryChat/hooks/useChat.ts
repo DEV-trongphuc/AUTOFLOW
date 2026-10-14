@@ -186,7 +186,7 @@ export function useChat(user: any) {
                 })),
                 workspace_context: workspaceContext,
                 model_config: {
-                    model: selectedModel === 'auto' ? 'gemini-2.5-flash-lite' : selectedModel,
+                    model: selectedModel === 'auto' ? 'gemini-3.5-flash-lite' : selectedModel,
                     code_mode: isCodeMode,
                     is_research: isResearchMode,
                     kb_only: isKbOnlyMode,

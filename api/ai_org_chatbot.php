@@ -1147,7 +1147,7 @@ Sử dụng tiếng Việt, chuyên nghiệp và súc tích.";
             ];
 
             try {
-                $summary = generateResponse($contents, $systemInst, $apiKey, 'gemini-2.5-flash-lite');
+                $summary = generateResponse($contents, $systemInst, $apiKey, 'gemini-3.5-flash-lite');
 
                 // 2. Save summary to conversation
                 $pdo->prepare("UPDATE ai_org_conversations SET summary = ?, updated_at = NOW() WHERE id = ?")
@@ -1794,7 +1794,7 @@ Sử dụng tiếng Việt, chuyên nghiệp và súc tích.";
 
         // --- EXTENDED CONFIGURATION FROM FRONTEND ---
         $modelConfig = $input['model_config'] ?? [];
-        $selectedModel = $modelConfig['model'] ?? 'gemini-2.5-flash-lite';
+        $selectedModel = $modelConfig['model'] ?? 'gemini-3.5-flash-lite';
 
         // Feature Flags
         $isCodeMode = $modelConfig['code_mode'] ?? false;
@@ -1809,7 +1809,7 @@ Sử dụng tiếng Việt, chuyên nghiệp và súc tích.";
         $isPro = false;
         $aspectRatio = '1:1';
         $apiImageSize = '1K';
-        $imageProvider = 'gemini-2.5-flash-lite-image';
+        $imageProvider = 'gemini-3.5-flash-lite-image';
         $width = 1024;
         $height = 1024;
 
@@ -2343,7 +2343,7 @@ Sử dụng tiếng Việt, chuyên nghiệp và súc tích.";
 
         if ($isImageGen) {
             // Get advanced image settings from frontend
-            $imageProvider = $modelConfig['image_provider'] ?? 'gemini-2.5-flash-lite-image';
+            $imageProvider = $modelConfig['image_provider'] ?? 'gemini-3.5-flash-lite-image';
             $imageStyle = $modelConfig['image_style'] ?? 'professional';
             $imageSize = $modelConfig['image_size'] ?? '1k';
             $isPro = ($imageProvider === 'gemini-3-pro-image-preview');
@@ -2670,7 +2670,7 @@ Sử dụng tiếng Việt, chuyên nghiệp và súc tích.";
                     $fullBotRes = processImageRequests(
                         $fullBotRes,
                         $apiKey,
-                        $imageProvider ?? 'gemini-2.5-flash-lite-image',
+                        $imageProvider ?? 'gemini-3.5-flash-lite-image',
                         $imageConfig,
                         $allReferenceImages,
                         $propertyId,

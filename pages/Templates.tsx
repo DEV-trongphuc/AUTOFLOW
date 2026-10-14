@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useEffect, useState, useMemo, useDeferredValue, memo } from 'react';
+import { useEffect, useState, useMemo, useDeferredValue, useCallback, memo } from 'react';
 import { api } from '../services/storageAdapter';
 import { Template, TemplateGroup } from '../types';
 import { logAction } from '../services/historyService';
@@ -27,52 +27,218 @@ import { usePermissionGuard } from '../components/common/PermissionGuard';
 const VisualTemplate: React.FC<{ template: Template }> = memo(({ template }) => {
     const containerRef = React.useRef<HTMLDivElement>(null);
     const [scale, setScale] = useState(0.4);
+    const [isVisible, setIsVisible] = useState(false);
 
+    // [PERF] Use precompiled htmlContent directly whenever available, avoiding heavy synchronous AST compilation
     const html = useMemo(() => {
         if (!template) return '';
-        if (template.blocks && template.blocks.length > 0) return compileHTML(template.blocks, template.bodyStyle, template.name);
         if (template.htmlContent) return template.htmlContent;
+        if (template.blocks && template.blocks.length > 0 && typeof template.blocks[0] === 'object') {
+            return compileHTML(template.blocks, template.bodyStyle, template.name);
+        }
         return '';
-    }, [template]);
+    }, [template.htmlContent, template.name]);
 
+    // [PERF] ResizeObserver instead of adding window resize listener for every single card
     useEffect(() => {
-        const updateScale = () => {
-            if (containerRef.current) {
-                setScale(containerRef.current.offsetWidth / 600);
+        if (!containerRef.current) return;
+        const observer = new ResizeObserver((entries) => {
+            for (const entry of entries) {
+                if (entry.contentRect.width > 0) {
+                    setScale(entry.contentRect.width / 600);
+                }
             }
-        };
-        updateScale();
-        window.addEventListener('resize', updateScale);
-        return () => window.removeEventListener('resize', updateScale);
+        });
+        observer.observe(containerRef.current);
+        return () => observer.disconnect();
+    }, []);
+
+    // [PERF] IntersectionObserver: Only mount heavy <iframe> when card enters/nears viewport
+    useEffect(() => {
+        if (!containerRef.current) return;
+        const observer = new IntersectionObserver(([entry]) => {
+            if (entry.isIntersecting) {
+                setIsVisible(true);
+                observer.disconnect();
+            }
+        }, { rootMargin: '300px' });
+        observer.observe(containerRef.current);
+        return () => observer.disconnect();
     }, []);
 
     return (
         <div ref={containerRef} className="w-full h-full bg-white dark:bg-slate-900 relative overflow-hidden flex items-start justify-center">
-            <div className="absolute top-0 left-0 origin-top-left" style={{
-                width: '600px',
-                height: '1000px',
-                transform: `scale(${scale})`,
-                pointerEvents: 'none'
-            }}>
-                <iframe
-                    srcDoc={`
-                        <html>
-                            <head>
-                                <style>
-                                    body { margin: 0; padding: 0; overflow: hidden; background: white; }
-                                    ::-webkit-scrollbar { display: none; }
-                                </style>
-                            </head>
-                            <body>${html}</body>
-                        </html>
-                    `}
-                    className="w-full h-full border-none"
-                    title="preview"
-                    scrolling="no"
-                />
-            </div>
+            {isVisible && html ? (
+                <div className="absolute top-0 left-0 origin-top-left" style={{
+                    width: '600px',
+                    height: '1000px',
+                    transform: `scale(${scale})`,
+                    pointerEvents: 'none'
+                }}>
+                    <iframe
+                        srcDoc={`
+                            <html>
+                                <head>
+                                    <style>
+                                        body { margin: 0; padding: 0; overflow: hidden; background: white; }
+                                        ::-webkit-scrollbar { display: none; }
+                                    </style>
+                                </head>
+                                <body>${html}</body>
+                            </html>
+                        `}
+                        className="w-full h-full border-none"
+                        title="preview"
+                        loading="lazy"
+                        scrolling="no"
+                    />
+                </div>
+            ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950/40 p-4 text-slate-300 dark:text-slate-600 transition-opacity">
+                    <Layout className="w-8 h-8 mb-2 opacity-30 animate-pulse" />
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Xem trước</span>
+                </div>
+            )}
             {/* Smooth overlay */}
             <div className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-white/20 to-transparent pointer-events-none"></div>
+        </div>
+    );
+});
+
+interface TemplateCardProps {
+    template: Template;
+    isSelected: boolean;
+    groupName: string;
+    onToggleSelect: (id: string) => void;
+    onPreview: (template: Template) => void;
+    onEdit: (template: Template) => void;
+    onDuplicate: (template: Template) => void;
+    onDelete: (id: string) => void;
+}
+
+const TemplateCard: React.FC<TemplateCardProps> = memo(({
+    template,
+    isSelected,
+    groupName,
+    onToggleSelect,
+    onPreview,
+    onEdit,
+    onDuplicate,
+    onDelete
+}) => {
+    return (
+        <div className={`bg-white dark:bg-slate-900 rounded-[24px] shadow-[0_10px_40px_-15px_rgba(0,0,0,0.05)] border-2 overflow-hidden group hover:shadow-[0_20px_40px_-12px_rgba(245,158,11,0.15)] hover:-translate-y-1.5 transition-all duration-300 flex flex-col h-[380px] relative ${isSelected ? 'border-amber-600 shadow-xl ring-4 ring-amber-600/10' : 'border-white hover:border-amber-200'}`}>
+
+            {/* Selection Checkbox */}
+            {!template.id.startsWith('sys_') && (
+                <button
+                    onClick={(e) => { e.stopPropagation(); onToggleSelect(template.id); }}
+                    className={`absolute top-5 left-5 z-20 w-10 h-10 rounded-2xl border-2 flex items-center justify-center transition-all duration-300 ${isSelected ? 'bg-amber-600 border-amber-600 text-white scale-110 shadow-lg' : 'bg-white dark:bg-slate-900/90 backdrop-blur border-slate-100 dark:border-slate-800/60 text-slate-400 opacity-0 group-hover:opacity-100 hover:border-amber-400 hover:scale-105'}`}
+                >
+                    <Check className={`w-5 h-5 transition-transform duration-500 ${isSelected ? 'scale-100 rotate-0' : 'scale-0 rotate-12'}`} />
+                </button>
+            )}
+
+            {/* Thumbnail Area */}
+            <div className="relative h-52 bg-slate-50 dark:bg-slate-950 overflow-hidden cursor-pointer" onClick={() => onPreview(template)}>
+                <div className="w-full h-full bg-white dark:bg-slate-900 flex items-center justify-center group-hover:scale-110 transition-transform duration-[1.5s] ease-out overflow-hidden relative">
+                    {template.thumbnail && !template.thumbnail.includes('placehold.co') ? (
+                        <img src={template.thumbnail} alt={template.name} className="w-full h-full object-cover object-top" loading="lazy" />
+                    ) : (
+                        <VisualTemplate template={template} />
+                    )}
+                </div>
+
+                {/* Overlay Actions */}
+                <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-[4px] opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col items-center justify-center gap-4">
+                    <button onClick={(e) => { e.stopPropagation(); onPreview(template); }} className="px-5 py-2.5 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-amber-600 hover:text-white transition-all shadow-2xl flex items-center gap-2 transform translate-y-8 group-hover:translate-y-0 duration-300 ease-out">
+                        <Eye className="w-3.5 h-3.5" /> Xem chi tiết
+                    </button>
+
+                    {template.id.startsWith('sys_') ? (
+                        <button onClick={(e) => { e.stopPropagation(); onDuplicate(template); }} className="px-5 py-2.5 bg-indigo-600 text-white rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-2xl flex items-center gap-2 transform translate-y-8 group-hover:translate-y-0 duration-300 delay-75 ease-out">
+                            <Copy className="w-3.5 h-3.5" /> Sử dụng ngay
+                        </button>
+                    ) : (
+                        <div className="flex gap-2 transform translate-y-8 group-hover:translate-y-0 duration-300 delay-75 ease-out">
+                            <button onClick={(e) => { e.stopPropagation(); onEdit(template); }} className="p-2.5 bg-white dark:bg-slate-900 text-amber-600 rounded-xl hover:bg-amber-600 hover:text-white shadow-xl transition-all" title="Chỉnh sửa">
+                                <Edit3 className="w-4 h-4" />
+                            </button>
+                            <button onClick={(e) => { e.stopPropagation(); onDuplicate(template); }} className="p-2.5 bg-white dark:bg-slate-900 text-blue-600 rounded-xl hover:bg-blue-500 hover:text-white shadow-xl transition-all" title="Nhân bản">
+                                <Copy className="w-4 h-4" />
+                            </button>
+                            <button onClick={(e) => { e.stopPropagation(); onDelete(template.id); }} className="p-2.5 bg-white dark:bg-slate-900 text-rose-600 rounded-xl hover:bg-rose-500 hover:text-white shadow-xl transition-all" title="Xóa">
+                                <Trash2 className="w-4 h-4" />
+                            </button>
+                        </div>
+                    )}
+                </div>
+
+                {/* Tech Badge */}
+                <div className="absolute top-5 right-5 flex flex-col items-end gap-2">
+                    {template.id.startsWith('sys_') && !['sys_welcome', 'sys_promo', 'sys_newsletter', 'sys_trans'].includes(template.id) && (
+                        <span className="bg-rose-500 text-white px-3 py-1 rounded-xl text-[9px] font-bold uppercase tracking-[0.1em] shadow-lg animate-pulse">
+                            Premium
+                        </span>
+                    )}
+                    <span className="bg-white dark:bg-slate-900/95 backdrop-blur px-3 py-1.5 rounded-xl text-[9px] font-bold uppercase tracking-widest text-slate-700 dark:text-slate-200 shadow-md flex items-center gap-1.5 border border-slate-100 dark:border-slate-800/60">
+                        {template.blocks && template.blocks.length > 0 ? (
+                            <><Sparkles className="w-3.5 h-3.5 text-amber-600" /> Editor</>
+                        ) : (
+                            <><Layout className="w-3.5 h-3.5 text-blue-500" /> HTML</>
+                        )}
+                    </span>
+                </div>
+            </div>
+
+            {/* Info Area */}
+            <div className="p-5 flex-1 flex flex-col justify-between bg-white dark:bg-slate-900 group-hover:bg-slate-50 dark:bg-slate-950/50 transition-colors duration-300">
+                <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                        <span className="text-[10px] uppercase tracking-[0.15em] font-bold px-3 py-1 rounded-xl bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 border border-slate-100 dark:border-slate-800/60 flex items-center gap-1.5 shadow-sm">
+                            <FolderOpen className="w-3 h-3 text-slate-400" /> {groupName}
+                        </span>
+                    </div>
+                    <h3 className="font-bold text-[#333333] text-sm group-hover:text-amber-600 transition-colors line-clamp-2 leading-tight tracking-tight" title={template.name}>
+                        {template.name}
+                    </h3>
+                </div>
+
+                <div className="pt-4 border-t border-slate-100 dark:border-slate-800/60 flex justify-between items-center mt-auto">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="w-7 h-7 rounded-full overflow-hidden border border-slate-200 dark:border-slate-700/60 bg-slate-50 dark:bg-slate-950 shrink-0">
+                            <img 
+                                src={(template.bodyStyle as any)?.creator?.picture || "/imgs/ICON.png"} 
+                                className="w-full h-full object-cover" 
+                                alt="" 
+                                onError={(e) => { (e.target as HTMLImageElement).src = "/imgs/ICON.png"; }}
+                            />
+                        </div>
+                        <div className="flex flex-col min-w-0">
+                            <span className="text-[10px] text-slate-700 dark:text-slate-200 font-bold truncate max-w-[120px]" title={(template.bodyStyle as any)?.creator?.name || 'Hệ thống'}>
+                                {(template.bodyStyle as any)?.creator?.name || 'Hệ thống'}
+                            </span>
+                            <span className="text-[9px] text-slate-400 font-medium">
+                                {template.id.startsWith('sys_') 
+                                    ? 'Mẫu hệ thống' 
+                                    : (() => {
+                                        const dateToShow = template.created_at || template.createdAt || template.lastModified;
+                                        if (!dateToShow) return '';
+                                        const d = new Date(dateToShow);
+                                        if (isNaN(d.getTime())) return '';
+                                        const day = String(d.getDate()).padStart(2, '0');
+                                        const month = String(d.getMonth() + 1).padStart(2, '0');
+                                        const year = d.getFullYear();
+                                        const hours = String(d.getHours()).padStart(2, '0');
+                                        const minutes = String(d.getMinutes()).padStart(2, '0');
+                                        return `${day}/${month}/${year} ${hours}:${minutes}`;
+                                      })()
+                                }
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 });
@@ -308,9 +474,9 @@ const Templates: React.FC = () => {
         }
     }, 'di chuyển vị trí mẫu');
 
-    const toggleSelect = (id: string) => {
+    const toggleSelect = useCallback((id: string) => {
         setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
-    };
+    }, []);
 
     const handleSelectAll = (filtered: Template[]) => {
         const filteredIds = filtered.map(t => t.id);
@@ -347,14 +513,51 @@ const Templates: React.FC = () => {
         }
     }, 'tạo nhóm');
 
+    const handleStartEdit = useCallback(async (template: Template) => {
+        if (template.id.startsWith('sys_')) {
+            setEditingTemplate(template);
+            setIsEditorOpen(true);
+            return;
+        }
+
+        // If template blocks are already full objects
+        if (template.blocks && template.blocks.length > 0 && typeof template.blocks[0] === 'object') {
+            setEditingTemplate(template);
+            setIsEditorOpen(true);
+            return;
+        }
+
+        // Need to load full blocks for editor
+        const loadToast = toast.loading('Đang mở trình thiết kế...');
+        try {
+            const res = await api.get<Template>(`templates/${template.id}`);
+            toast.dismiss(loadToast);
+            if (res.success && res.data) {
+                setEditingTemplate(res.data);
+                setIsEditorOpen(true);
+            } else {
+                showToast('Không thể tải chi tiết mẫu', 'error');
+            }
+        } catch {
+            toast.dismiss(loadToast);
+            showToast('Lỗi kết nối khi tải mẫu', 'error');
+        }
+    }, []);
+
     const handleDuplicate = adminGuard(async (tpl: Template) => {
         try {
-            const baseName = tpl.name.replace(' (Copy)', '');
+            let fullTpl = tpl;
+            if (!tpl.id.startsWith('sys_') && (!tpl.blocks || tpl.blocks.length === 0 || typeof tpl.blocks[0] !== 'object')) {
+                const res = await api.get<Template>(`templates/${tpl.id}`);
+                if (res.success && res.data) fullTpl = res.data;
+            }
+
+            const baseName = fullTpl.name.replace(' (Copy)', '');
             const newName = `${baseName} (Copy)`;
 
-            let htmlContent = tpl.htmlContent;
-            if (!htmlContent && tpl.blocks) {
-                htmlContent = compileHTML(tpl.blocks, tpl.bodyStyle, tpl.name);
+            let htmlContent = fullTpl.htmlContent;
+            if (!htmlContent && fullTpl.blocks && typeof fullTpl.blocks[0] === 'object') {
+                htmlContent = compileHTML(fullTpl.blocks, fullTpl.bodyStyle, fullTpl.name);
             }
 
             const user = JSON.parse(localStorage.getItem('user') || localStorage.getItem('currentUser') || '{}');
@@ -362,11 +565,11 @@ const Templates: React.FC = () => {
 
             const newTpl = {
                 name: newName,
-                category: tpl.category,
-                thumbnail: tpl.thumbnail,
-                blocks: tpl.blocks,
+                category: fullTpl.category,
+                thumbnail: fullTpl.thumbnail,
+                blocks: fullTpl.blocks,
                 bodyStyle: {
-                    ...tpl.bodyStyle,
+                    ...fullTpl.bodyStyle,
                     creator: creatorInfo || { name: 'Hệ thống', picture: '/imgs/ICON.png' }
                 },
                 htmlContent: htmlContent
@@ -419,21 +622,19 @@ const Templates: React.FC = () => {
     // [FIX] Always recompile from blocks when available so compiler improvements
     // (like the image width fix) take effect immediately in the preview modal
     // without needing to re-save each template.
-    // Fall back to stored htmlContent only for HTML-only templates (no blocks).
     const getPreviewHTML = (tpl: Template | null) => {
         if (!tpl) return '';
-        if (tpl.blocks && tpl.blocks.length > 0) return compileHTML(tpl.blocks, tpl.bodyStyle, tpl.name);
         if (tpl.htmlContent) return tpl.htmlContent;
+        if (tpl.blocks && tpl.blocks.length > 0 && typeof tpl.blocks[0] === 'object') {
+            return compileHTML(tpl.blocks, tpl.bodyStyle, tpl.name);
+        }
         return '';
     };
 
-
-
-
-    const getGroupName = (groupId?: string) => {
+    const getGroupName = useCallback((groupId?: string) => {
         const group = groups.find(g => g.id === groupId);
         return group ? group.name : 'Chưa phân loại';
-    };
+    }, [groups]);
 
     const previewHtml = useMemo(() => getPreviewHTML(previewTemplate), [previewTemplate]);
 
@@ -567,123 +768,17 @@ const Templates: React.FC = () => {
                             ) : (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-8">
                                     {paginatedTemplates.map((template) => (
-                                        <div key={template.id} className={`bg-white dark:bg-slate-900 rounded-[24px] shadow-[0_10px_40px_-15px_rgba(0,0,0,0.05)] border-2 overflow-hidden group hover:shadow-[0_20px_40px_-12px_rgba(245,158,11,0.15)] hover:-translate-y-1.5 transition-all duration-500 flex flex-col h-[380px] relative ${selectedIds.includes(template.id) ? 'border-amber-600 shadow-xl ring-4 ring-amber-600/10' : 'border-white hover:border-amber-200'}`}>
-
-                                            {/* Selection Checkbox */}
-                                            {!template.id.startsWith('sys_') && (
-                                                <button
-                                                    onClick={(e) => { e.stopPropagation(); toggleSelect(template.id); }}
-                                                    className={`absolute top-5 left-5 z-20 w-10 h-10 rounded-2xl border-2 flex items-center justify-center transition-all duration-300 ${selectedIds.includes(template.id) ? 'bg-amber-600 border-amber-600 text-white scale-110 shadow-lg' : 'bg-white dark:bg-slate-900/90 backdrop-blur border-slate-100 dark:border-slate-800/60 text-slate-400 opacity-0 group-hover:opacity-100 hover:border-amber-400 hover:scale-105'}`}
-                                                >
-                                                    <Check className={`w-5 h-5 transition-transform duration-500 ${selectedIds.includes(template.id) ? 'scale-100 rotate-0' : 'scale-0 rotate-12'}`} />
-                                                </button>
-                                            )}
-
-                                            {/* Thumbnail Area */}
-                                            <div className="relative h-52 bg-slate-50 dark:bg-slate-950 overflow-hidden cursor-pointer" onClick={() => setPreviewTemplate(template)}>
-                                                <div className="w-full h-full bg-white dark:bg-slate-900 flex items-center justify-center group-hover:scale-110 transition-transform duration-[1.5s] ease-out overflow-hidden relative">
-                                                    {template.thumbnail && !template.thumbnail.includes('placehold.co') ? (
-                                                        <img src={template.thumbnail} alt={template.name} className="w-full h-full object-cover object-top" loading="lazy" />
-                                                    ) : (
-                                                        <VisualTemplate template={template} />
-                                                    )}
-                                                </div>
-
-                                                {/* Overlay Actions */}
-                                                <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-[4px] opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col items-center justify-center gap-4">
-                                                    <button onClick={(e) => { e.stopPropagation(); setPreviewTemplate(template); }} className="px-5 py-2.5 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-amber-600 hover:text-white transition-all shadow-2xl flex items-center gap-2 transform translate-y-8 group-hover:translate-y-0 duration-500 ease-out">
-                                                        <Eye className="w-3.5 h-3.5" /> Xem chi tiết
-                                                    </button>
-
-                                                    {template.id.startsWith('sys_') ? (
-                                                        <button onClick={(e) => { e.stopPropagation(); handleDuplicate(template); }} className="px-5 py-2.5 bg-indigo-600 text-white rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-2xl flex items-center gap-2 transform translate-y-8 group-hover:translate-y-0 duration-500 delay-100 ease-out">
-                                                            <Copy className="w-3.5 h-3.5" /> Sử dụng ngay
-                                                        </button>
-                                                    ) : (
-                                                        <div className="flex gap-2 transform translate-y-8 group-hover:translate-y-0 duration-500 delay-100 ease-out">
-                                                            <button onClick={(e) => { e.stopPropagation(); setEditingTemplate(template); setIsEditorOpen(true); }} className="p-2.5 bg-white dark:bg-slate-900 text-amber-600 rounded-xl hover:bg-amber-600 hover:text-white shadow-xl transition-all" title="Chỉnh sửa">
-                                                                <Edit3 className="w-4 h-4" />
-                                                            </button>
-                                                            <button onClick={(e) => { e.stopPropagation(); handleDuplicate(template); }} className="p-2.5 bg-white dark:bg-slate-900 text-blue-600 rounded-xl hover:bg-blue-500 hover:text-white shadow-xl transition-all" title="Nhân bản">
-                                                                <Copy className="w-4 h-4" />
-                                                            </button>
-                                                            <button onClick={(e) => { e.stopPropagation(); setDeleteConfirm({ isOpen: true, ids: [template.id], type: 'template' }); }} className="p-2.5 bg-white dark:bg-slate-900 text-rose-600 rounded-xl hover:bg-rose-500 hover:text-white shadow-xl transition-all" title="Xóa">
-                                                                <Trash2 className="w-4 h-4" />
-                                                            </button>
-                                                        </div>
-                                                    )}
-                                                </div>
-
-                                                {/* Tech Badge */}
-                                                <div className="absolute top-5 right-5 flex flex-col items-end gap-2">
-                                                    {template.id.startsWith('sys_') && !['sys_welcome', 'sys_promo', 'sys_newsletter', 'sys_trans'].includes(template.id) && (
-                                                        <span className="bg-rose-500 text-white px-3 py-1 rounded-xl text-[9px] font-bold uppercase tracking-[0.1em] shadow-lg animate-pulse">
-                                                            Premium
-                                                        </span>
-                                                    )}
-                                                    <span className="bg-white dark:bg-slate-900/95 backdrop-blur px-3 py-1.5 rounded-xl text-[9px] font-bold uppercase tracking-widest text-slate-700 dark:text-slate-200 shadow-md flex items-center gap-1.5 border border-slate-100 dark:border-slate-800/60">
-                                                        {template.blocks && template.blocks.length > 0 ? (
-                                                            <><Sparkles className="w-3.5 h-3.5 text-amber-600" /> Editor</>
-                                                        ) : (
-                                                            <><Layout className="w-3.5 h-3.5 text-blue-500" /> HTML</>
-                                                        )}
-                                                    </span>
-
-                                                </div>
-                                            </div>
-
-                                            {/* Info Area */}
-                                            <div className="p-5 flex-1 flex flex-col justify-between bg-white dark:bg-slate-900 group-hover:bg-slate-50 dark:bg-slate-950/50 transition-colors duration-500">
-                                                <div className="space-y-3">
-                                                    <div className="flex justify-between items-center">
-                                                        <span className="text-[10px] uppercase tracking-[0.15em] font-bold px-3 py-1 rounded-xl bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 border border-slate-100 dark:border-slate-800/60 flex items-center gap-1.5 shadow-sm">
-                                                            <FolderOpen className="w-3 h-3 text-slate-400" /> {getGroupName(template.groupId)}
-                                                        </span>
-                                                    </div>
-                                                    <h3 className="font-bold text-[#333333] text-sm group-hover:text-amber-600 transition-colors line-clamp-2 leading-tight tracking-tight" title={template.name}>
-                                                        {template.name}
-                                                    </h3>
-                                                </div>
-
-                                                <div className="pt-4 border-t border-slate-100 dark:border-slate-800/60 flex justify-between items-center mt-auto">
-                                                    <div className="flex items-center gap-2.5 min-w-0">
-                                                        <div className="w-7 h-7 rounded-full overflow-hidden border border-slate-200 dark:border-slate-700/60 bg-slate-50 dark:bg-slate-950 shrink-0">
-                                                            <img 
-                                                                src={(template.bodyStyle as any)?.creator?.picture || "/imgs/ICON.png"} 
-                                                                className="w-full h-full object-cover" 
-                                                                alt="" 
-                                                                onError={(e) => { (e.target as HTMLImageElement).src = "/imgs/ICON.png"; }}
-                                                            />
-                                                        </div>
-                                                        <div className="flex flex-col min-w-0">
-                                                            <span className="text-[10px] text-slate-700 dark:text-slate-200 font-bold truncate max-w-[120px]" title={(template.bodyStyle as any)?.creator?.name || 'Hệ thống'}>
-                                                                {(template.bodyStyle as any)?.creator?.name || 'Hệ thống'}
-                                                            </span>
-                                                            <span className="text-[9px] text-slate-400 font-medium">
-                                                                {template.id.startsWith('sys_') 
-                                                                    ? 'Mẫu hệ thống' 
-                                                                    : (() => {
-                                                                        const dateToShow = template.created_at || template.createdAt || template.lastModified;
-                                                                        if (!dateToShow) return '';
-                                                                        const d = new Date(dateToShow);
-                                                                        if (isNaN(d.getTime())) return '';
-                                                                        const day = String(d.getDate()).padStart(2, '0');
-                                                                        const month = String(d.getMonth() + 1).padStart(2, '0');
-                                                                        const year = d.getFullYear();
-                                                                        const hours = String(d.getHours()).padStart(2, '0');
-                                                                        const minutes = String(d.getMinutes()).padStart(2, '0');
-                                                                        return `${day}/${month}/${year} ${hours}:${minutes}`;
-                                                                      })()
-                                                                }
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                    <div className="w-8 h-8 bg-slate-50 dark:bg-slate-950 rounded-xl flex items-center justify-center text-slate-400 group-hover:bg-amber-100 group-hover:text-amber-600 transition-all shrink-0">
-                                                        <ChevronRight className="w-4 h-4" />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
+                                        <TemplateCard
+                                            key={template.id}
+                                            template={template}
+                                            isSelected={selectedIds.includes(template.id)}
+                                            groupName={getGroupName(template.groupId)}
+                                            onToggleSelect={toggleSelect}
+                                            onPreview={setPreviewTemplate}
+                                            onEdit={handleStartEdit}
+                                            onDuplicate={handleDuplicate}
+                                            onDelete={(id) => setDeleteConfirm({ isOpen: true, ids: [id], type: 'template' })}
+                                        />
                                     ))}
                                 </div>
                             )}
@@ -885,8 +980,7 @@ const Templates: React.FC = () => {
                             adminGuard(() => { })();
                             return;
                         }
-                        setEditingTemplate(previewTemplate);
-                        setIsEditorOpen(true);
+                        handleStartEdit(previewTemplate);
                         setPreviewTemplate(null);
                     }}
                     onDuplicate={() => {

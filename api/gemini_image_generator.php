@@ -6,11 +6,11 @@
  * Generate image using Gemini Native Image Generation API
  * @param string $prompt - English prompt for image generation
  * @param string $apiKey - Gemini API key
- * @param string $model - gemini-2.5-flash-lite-image or gemini-3-pro-image-preview
+ * @param string $model - gemini-3.5-flash-lite-image or gemini-3-pro-image-preview
  * @param array $config - Image configuration (aspectRatio, imageSize)
  * @return array - ['success' => bool, 'image_data' => base64, 'mime_type' => string, 'error' => string]
  */
-function generateGeminiImage($prompt, $apiKey, $model = 'gemini-2.5-flash-lite-image', $config = [], $referenceImages = [])
+function generateGeminiImage($prompt, $apiKey, $model = 'gemini-3.5-flash-lite-image', $config = [], $referenceImages = [])
 {
     // Use the exact model names from the Gemini Nano Banana documentation provided by user
     $realModel = $model;
@@ -18,8 +18,8 @@ function generateGeminiImage($prompt, $apiKey, $model = 'gemini-2.5-flash-lite-i
     // Normalize if needed
     if (strpos($model, 'gemini-3-pro') !== false) {
         $realModel = 'gemini-3-pro-image-preview';
-    } elseif (strpos($model, 'gemini-2.5-flash-lite') !== false) {
-        $realModel = 'gemini-2.5-flash-lite-image';
+    } elseif (strpos($model, 'gemini-3.5-flash-lite') !== false || strpos($model, 'gemini-2.5-flash-lite') !== false) {
+        $realModel = 'gemini-3.5-flash-lite-image';
     }
 
     if (empty($apiKey)) {
@@ -125,7 +125,7 @@ function generateGeminiImage($prompt, $apiKey, $model = 'gemini-2.5-flash-lite-i
         // AUTO-RETRY: If Pro fails with internal error, fallback to Flash immediately
         if ($realModel === 'gemini-3-pro-image-preview' && (strpos($errMsg, 'Internal error') !== false || $httpCode == 500)) {
             error_log("Nano Banana Pro failed, falling back to Flash: " . $errMsg);
-            return generateGeminiImage($prompt, $apiKey, 'gemini-2.5-flash-lite-image', $config, $referenceImages);
+            return generateGeminiImage($prompt, $apiKey, 'gemini-3.5-flash-lite-image', $config, $referenceImages);
         }
 
         return ['success' => false, 'error' => $errMsg];

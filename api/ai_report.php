@@ -170,7 +170,7 @@ if ($method === 'GET' && $action === 'detailed_ai_insights') {
             ];
             $systemInst = "Bạn là AI phân tích dữ liệu xuất sắc nhất.";
             try {
-                $aiReport = generateResponse($contents, $systemInst, $globalKey, 'gemini-2.5-flash-lite', 0.7);
+                $aiReport = generateResponse($contents, $systemInst, $globalKey, 'gemini-3.5-flash-lite', 0.7);
             } catch (Throwable $e) {
                 $aiReport = "Lỗi khi gọi AI: " . $e->getMessage();
             }
