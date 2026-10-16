@@ -896,11 +896,26 @@ subscriber_activity WHERE campaign_id = ? AND type = 'click_link'";
         $sql .= " GROUP BY details ORDER BY total_clicks DESC";
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
-        $links = $stmt->fetchAll();
-        foreach ($links as &$l) {
-            $l['url'] = str_replace('Clicked link: ', '', $l['details']);
-            unset($l['details']);
+        $rawLinks = $stmt->fetchAll();
+        $mergedLinks = [];
+        foreach ($rawLinks as $l) {
+            $url = extractClickedUrlFromDetails($l['details'] ?? '');
+            if ($url === '') continue;
+            if (!isset($mergedLinks[$url])) {
+                $mergedLinks[$url] = [
+                    'url' => $url,
+                    'total_clicks' => (int) $l['total_clicks'],
+                    'unique_clicks' => (int) $l['unique_clicks']
+                ];
+            } else {
+                $mergedLinks[$url]['total_clicks'] += (int) $l['total_clicks'];
+                $mergedLinks[$url]['unique_clicks'] += (int) $l['unique_clicks'];
+            }
         }
+        $links = array_values($mergedLinks);
+        usort($links, function ($a, $b) {
+            return $b['total_clicks'] <=> $a['total_clicks'];
+        });
 
         // 2. Get Global Unique Clicks (Unique Users)
 // Reset params for global count
@@ -978,7 +993,7 @@ LIMIT $limit OFFSET $offset";
         $clicks = $stmt->fetchAll();
 
         foreach ($clicks as &$c) {
-            $c['url'] = str_replace('Clicked link: ', '', $c['details']);
+            $c['url'] = extractClickedUrlFromDetails($c['details'] ?? '');
             unset($c['details']);
         }
 

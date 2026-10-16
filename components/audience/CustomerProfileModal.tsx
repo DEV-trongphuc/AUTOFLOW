@@ -335,9 +335,18 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                         break;
                 }
 
-                const actUrl = act.page_title || act.url || act.page_url || '';
+                const extractCleanClickUrl = (raw: string): string => {
+                    if (!raw || typeof raw !== 'string') return '';
+                    const stripped = raw.trim().replace(/^(?:Zalo\s+)?Click(?:ed)?\s+(?:link(?:\/button)?|button)(?:\s*\([^)]*\))*:\s*/i, '').trim();
+                    if (/^https?:\/\//i.test(stripped)) return stripped.split(/\s+/)[0];
+                    const match = stripped.match(/(https?:\/\/\S+)/i);
+                    return match ? match[1] : '';
+                };
+
+                const pageTitleOrUrl = act.page_title || act.url || act.page_url || '';
                 let rawLabel = act.label || act.reference_name || '';
                 let detail = act.details || '';
+                const actUrl = extractCleanClickUrl(act.url || act.page_url || '') || (act.type?.includes('click') ? extractCleanClickUrl(detail) : '');
 
                 // [FIX] Detect JSON in label (often happens with Facebook templates)
                 if (rawLabel.includes(': [') || rawLabel.includes(': {')) {
@@ -359,8 +368,8 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                     if (act.type === 'reply_email') return 'Khách hàng phản hồi';
                     if (act.type === 'unsubscribe') return 'Đã Hủy đăng ký'
 
-                    if (act.type.startsWith('web_') && actUrl) {
-                        return `${label}: ${actUrl}`;
+                    if (act.type.startsWith('web_') && pageTitleOrUrl) {
+                        return `${label}: ${pageTitleOrUrl}`;
                     }
 
                     // Avoid redundant: "Website Lead: Website Lead"
@@ -1490,13 +1499,13 @@ const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                                             <div className="bg-white dark:bg-slate-900 p-5 rounded-[28px] border border-slate-100 dark:border-slate-800/60 shadow-sm group hover:border-blue-200 transition-all">
                                                 <div className="flex items-center justify-between gap-4 mb-2">
                                                     <div className="flex-1 min-w-0">
-                                                        {act.type.includes('click') ? (
+                                                        {act.type.includes('click') && act.url && /^https?:\/\//i.test(act.url) ? (
                                                             <a
-                                                                href={act.url || '#'}
+                                                                href={act.url}
                                                                 target="_blank"
                                                                 rel="noopener noreferrer"
                                                                 className="text-sm font-black truncate block hover:underline text-slate-800 dark:text-slate-200"
-                                                                title={act.label}
+                                                                title={act.url}
                                                             >
                                                                 {act.label}
                                                             </a>

@@ -35,6 +35,21 @@ const LinkClicksTab: React.FC<LinkClicksTabProps> = ({ type, id, stepId, initial
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
+    const cleanTrackedUrl = (raw: string): string => {
+        if (!raw || typeof raw !== 'string') return '';
+        let clean = raw.trim();
+        clean = clean.replace(/^(?:Zalo\s+)?Click(?:ed)?\s+(?:link(?:\/button)?|button)(?:\s*\([^)]*\))*:\s*/i, '').trim();
+        if (!/^https?:\/\//i.test(clean)) {
+            const match = clean.match(/(https?:\/\/\S+)/i);
+            if (match) {
+                clean = match[1];
+            } else if (/^[a-z0-9-]+(\.[a-z0-9-]+)+/i.test(clean)) {
+                clean = 'https://' + clean;
+            }
+        }
+        return clean;
+    };
+
     const fetchSummary = async () => {
         setLoading(true);
         try {
@@ -55,11 +70,21 @@ const LinkClicksTab: React.FC<LinkClicksTabProps> = ({ type, id, stepId, initial
                     globalUnique = summaryRes.data.overall?.unique_clicks || 0;
                 }
 
-                const mapped = linksData.map((item: any) => ({
-                    url: item.url, // API already processed this
-                    total_clicks: parseInt(item.total_clicks),
-                    unique_clicks: parseInt(item.unique_clicks)
-                }));
+                const mergedMap = new Map<string, { url: string; total_clicks: number; unique_clicks: number }>();
+                linksData.forEach((item: any) => {
+                    const url = cleanTrackedUrl(item.url || item.details || '');
+                    if (!url) return;
+                    const total = parseInt(item.total_clicks) || 0;
+                    const unique = parseInt(item.unique_clicks) || 0;
+                    const existing = mergedMap.get(url);
+                    if (existing) {
+                        existing.total_clicks += total;
+                        existing.unique_clicks += unique;
+                    } else {
+                        mergedMap.set(url, { url, total_clicks: total, unique_clicks: unique });
+                    }
+                });
+                const mapped = Array.from(mergedMap.values()).sort((a, b) => b.total_clicks - a.total_clicks);
                 setLinks(mapped);
                 setUniqueUserClicks(globalUnique);
             }
@@ -101,7 +126,7 @@ const LinkClicksTab: React.FC<LinkClicksTabProps> = ({ type, id, stepId, initial
                         email: p.email,
                         first_name: p.name, // Map name to first_name for display
                         last_name: '',
-                        url: p.url,
+                        url: cleanTrackedUrl(p.url || p.details || ''),
                         device_type: p.device, // Map device -> device_type
                         os: p.os,
                         location: p.location,
@@ -117,7 +142,11 @@ const LinkClicksTab: React.FC<LinkClicksTabProps> = ({ type, id, stepId, initial
                 const baseQuery = `id=${id}`;
                 const detailsRes = await api.get<any>(`${resource}?route=click_details&${baseQuery}&page=${page}&search=${searchTerm}&link=${encodeURIComponent(selectedLink)}`);
                 if (detailsRes.success) {
-                    setClicks(detailsRes.data.clicks);
+                    const mappedClicks = (detailsRes.data.clicks || []).map((c: any) => ({
+                        ...c,
+                        url: cleanTrackedUrl(c.url || c.details || '')
+                    }));
+                    setClicks(mappedClicks);
                     setTotalPages(detailsRes.data.pagination.totalPages);
                     setTotalClicks(detailsRes.data.pagination.total);
                 }

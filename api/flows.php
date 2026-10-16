@@ -345,7 +345,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'participants') {
                     'name' => trim(($p['first_name'] ?? '') . ' ' . ($p['last_name'] ?? '')),
                     'stepId' => $p['step_id'],
                     'status' => $p['status'],
-                    'url' => str_replace('Clicked link: ', '', $p['details']),
+                    'url' => extractClickedUrlFromDetails($p['details'] ?? ''),
                     'enteredAt' => $p['entered_at'],
                     'ip' => $p['ip_address'],
                     'device' => $p['device_type'],
@@ -788,12 +788,27 @@ if (isset($_GET['route']) && $_GET['route'] === 'click_summary') {
 
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
-        $links = $stmt->fetchAll();
+        $rawLinks = $stmt->fetchAll();
 
-        foreach ($links as &$l) {
-            $l['url'] = str_replace(['Clicked link: ', 'Click link: '], '', $l['details']);
-            unset($l['details']);
+        $mergedLinks = [];
+        foreach ($rawLinks as $l) {
+            $url = extractClickedUrlFromDetails($l['details'] ?? '');
+            if ($url === '') continue;
+            if (!isset($mergedLinks[$url])) {
+                $mergedLinks[$url] = [
+                    'url' => $url,
+                    'total_clicks' => (int) $l['total_clicks'],
+                    'unique_clicks' => (int) $l['unique_clicks']
+                ];
+            } else {
+                $mergedLinks[$url]['total_clicks'] += (int) $l['total_clicks'];
+                $mergedLinks[$url]['unique_clicks'] += (int) $l['unique_clicks'];
+            }
         }
+        $links = array_values($mergedLinks);
+        usort($links, function ($a, $b) {
+            return $b['total_clicks'] <=> $a['total_clicks'];
+        });
 
         // 2. Get Global Unique Clicks (Unique Users)
         $globalSql = "SELECT COUNT(DISTINCT sa.subscriber_id) 
@@ -868,7 +883,7 @@ if (isset($_GET['route']) && $_GET['route'] === 'click_details') {
         $clicks = $stmt->fetchAll();
 
         foreach ($clicks as &$c) {
-            $c['url'] = str_replace('Clicked link: ', '', $c['details']);
+            $c['url'] = extractClickedUrlFromDetails($c['details'] ?? '');
             unset($c['details']);
         }
 

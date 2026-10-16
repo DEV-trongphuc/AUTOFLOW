@@ -545,7 +545,17 @@ switch ($method) {
                 $stmtActs = $pdo->prepare("SELECT type, reference_name, details, created_at, flow_id, campaign_id FROM
 subscriber_activity WHERE workspace_id = ? AND subscriber_id = ? ORDER BY created_at DESC LIMIT 1000");
                 $stmtActs->execute([$workspace_id, $subId]);
-                $sub['activity'] = $stmtActs->fetchAll();
+                $rawActs = $stmtActs->fetchAll();
+                foreach ($rawActs as &$actRow) {
+                    if (in_array($actRow['type'] ?? '', ['click_link', 'click_zns', 'zns_clicked'], true)) {
+                        $extractedUrl = extractClickedUrlFromDetails($actRow['details'] ?? '');
+                        if ($extractedUrl !== '') {
+                            $actRow['url'] = $extractedUrl;
+                        }
+                    }
+                }
+                unset($actRow);
+                $sub['activity'] = $rawActs;
 
                 // Get Active Flows
                 $stmtFlows = $pdo->prepare("

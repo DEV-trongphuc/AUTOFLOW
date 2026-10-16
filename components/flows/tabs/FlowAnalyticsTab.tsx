@@ -2041,7 +2041,7 @@ const LogItem: React.FC<{
                         </span>
                         {log.details && (
                             <span className="text-[9px] text-slate-400 truncate opacity-0 group-hover:opacity-100 transition-opacity max-w-[120px]" title={log.details}>
-                                {log.details.replace('Clicked link:', 'Click:')}
+                                {log.details.replace(/^(?:Zalo\s+)?Click(?:ed)?\s+(?:link(?:\/button)?|button)(?:\s*\([^)]*\))*:\s*/i, 'Click: ')}
                             </span>
                         )}
                     </div>

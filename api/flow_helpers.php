@@ -30,6 +30,35 @@ if (!function_exists('isVirtualEmail')) {
     }
 }
 
+if (!function_exists('extractClickedUrlFromDetails')) {
+    /**
+     * Extract clean destination URL from subscriber_activity.details.
+     * Strips prefixes like "Clicked link: ", "Clicked link (A) (+5 điểm): ",
+     * "Zalo Clicked link/button (+3 điểm): ", etc.
+     */
+    function extractClickedUrlFromDetails($details)
+    {
+        if (empty($details) || !is_string($details)) {
+            return '';
+        }
+        $clean = trim($details);
+        // Strip standard activity log prefixes (with optional variation/score parentheses)
+        $clean = preg_replace('/^(?:Zalo\s+)?Click(?:ed)?\s+(?:link(?:\/button)?|button)(?:\s*\([^)]*\))*:\s*/iu', '', $clean);
+        $clean = trim($clean);
+        // Fallback: if any prefix still precedes http(s):// (e.g. legacy mojibake or custom label)
+        if (!preg_match('/^https?:\/\//i', $clean) && preg_match('/(https?:\/\/\S+)/i', $clean, $m)) {
+            $clean = $m[1];
+        }
+        // Normalize bare domain URLs (e.g. "ideas.edu.vn/..." or "www.ideas.edu.vn")
+        if ($clean !== '' && !preg_match('/^(?:https?:\/\/|mailto:|tel:|#|\/)/i', $clean)) {
+            if (preg_match('/^[a-z0-9-]+(\.[a-z0-9-]+)+/i', $clean)) {
+                $clean = 'https://' . $clean;
+            }
+        }
+        return trim($clean);
+    }
+}
+
 if (!function_exists('checkAdvancedExit')) {
     function checkAdvancedExit($pdo, $subscriberId, $enrolledAt, $advancedExitConfig, $activityCache = [])
     {

@@ -1124,7 +1124,7 @@ class FlowExecutor
                                     break;
                                 } else {
                                     $rawDetail = $act['details'] ?? '';
-                                    $clickedUrl = str_replace(["Click link: ", "Clicked link: ", "Clicked link (+5 Ã„â€˜iÃ¡Â»Æ’m): "], "", $rawDetail);
+                                    $clickedUrl = extractClickedUrlFromDetails($rawDetail);
 
                                     // [FIX #4] Old logic used strtok($u, '?') to strip ALL query strings,
                                     // causing links like ?ref=email to NEVER match the configured target.

@@ -203,8 +203,13 @@ const CampaignDetailDrawer: React.FC<CampaignDetailDrawerProps> = ({
         const linksSet = new Set<string>();
         
         anchors.forEach(a => {
-            let url = a.getAttribute('href');
-            if (url && (url.startsWith('http') || url.startsWith('https'))) {
+            let url = (a.getAttribute('href') || '').trim();
+            if (!url || url === '#' || /^(?:mailto:|tel:|javascript:|data:|\{\{)/i.test(url)) return;
+            if (url.startsWith('//')) url = 'https:' + url;
+            else if (!/^https?:\/\//i.test(url) && !url.startsWith('/') && /^[a-z0-9-]+(\.[a-z0-9-]+)+/i.test(url)) {
+                url = 'https://' + url;
+            }
+            if (url.startsWith('http://') || url.startsWith('https://')) {
                 try {
                     const urlObj = new URL(url);
                     // Remove tracking/cta params to deduplicate

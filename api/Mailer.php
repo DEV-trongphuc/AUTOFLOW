@@ -368,15 +368,23 @@ class Mailer {
         }
 
         // 1. TRACKING LINKS (CLICK)
-        $pattern = '/<a\s+[^>]*?href\s*=\s*(["\'])(?!#|mailto|tel|{{unsubscribe_url}}|{{unsub_url_placeholder}})([^"\']+)\1/i';
+        $pattern = '/(<a\s+[^>]*?href\s*=\s*(["\']))(?!#|mailto:|tel:|javascript:|data:|{{unsubscribe_url}}|{{unsub_url_placeholder}})([^"\']+)(\2)/i';
 
         $html = preg_replace_callback($pattern, function ($m) use ($cid, $fid, $sid, $utmCamp, $fNameEnc, $stepId, $trackedDomains, $variant) {
-            $originalUrl = $m[2];
-            if (strpos($originalUrl, $this->baseUrl . '/webhook.php') !== false)
+            $rawHref = $m[3];
+            $originalUrl = trim(html_entity_decode($rawHref, ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+            if ($originalUrl === '' || preg_match('/^(?:#|mailto:|tel:|javascript:|data:|\{\{)/i', $originalUrl)) {
                 return $m[0];
+            }
+            if (strpos($originalUrl, $this->baseUrl . '/webhook.php') !== false || strpos($originalUrl, '/webhook.php?type=') !== false) {
+                return $m[0];
+            }
 
             $finalUrl = $originalUrl;
-            $parsedUrl = parse_url($originalUrl);
+            if (strpos($finalUrl, '//') === 0) {
+                $finalUrl = 'https:' . $finalUrl;
+            }
+            $parsedUrl = parse_url($finalUrl);
             
             // [FIX-54] Ensure URL has a valid scheme before tracking injection.
             // If the user entered 'www.google.com' in the email builder, parse_url 
@@ -396,8 +404,19 @@ class Mailer {
                 }
             }
 
-            $connector = (strpos($finalUrl, '?') !== false) ? '&' : '?';
-            $finalUrl .= $connector . "utm_source=mailflow&utm_medium=email&utm_campaign=$utmCamp";
+            // Preserve URL #fragment when appending UTM parameters
+            $fragment = '';
+            $hashPos = strpos($finalUrl, '#');
+            if ($hashPos !== false) {
+                $fragment = substr($finalUrl, $hashPos);
+                $finalUrl = substr($finalUrl, 0, $hashPos);
+            }
+
+            if (stripos($finalUrl, 'utm_source=') === false) {
+                $connector = (strpos($finalUrl, '?') !== false) ? '&' : '?';
+                $finalUrl .= $connector . "utm_source=mailflow&utm_medium=email&utm_campaign=" . rawurlencode((string)$utmCamp);
+            }
+            $finalUrl .= $fragment;
 
             // Note: We don't append email here to keep the base64 URL CACHEABLE.
             // Webhook.php will handle appending the email if the verified flag (v=1) is present.
@@ -405,7 +424,7 @@ class Mailer {
             $encodedUrl = urlencode(base64_encode($finalUrl));
             $trackingUrl = $this->baseUrl . "/webhook.php?type=click&sid=$sid" . ($fid ? "&fid=$fid" : "") . ($cid ? "&cid=$cid" : "") . ($stepId ? "&rid=$stepId" : "") . "&fn=" . $fNameEnc . ($isVerified ? "&v=1" : "") . "&var=$variant&url=" . $encodedUrl;
 
-            return str_replace($originalUrl, $trackingUrl, $m[0]);
+            return $m[1] . $trackingUrl . $m[4];
         }, $html);
 
         // 2. TRACKING PIXEL (OPEN)

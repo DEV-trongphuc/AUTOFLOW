@@ -451,9 +451,18 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
             const btnLineHeight = s.lineHeight ? `line-height: ${s.lineHeight}; ` : '';
 
             const tableMarginCss = `margin-top: ${btnMarginTop}; margin-bottom: ${btnMarginBottom}; margin-left: ${btnMarginLeft}; margin-right: ${btnMarginRight};`;
-            const dataFallbackAttr = b.fallbackUrl ? ` data-fallback-url="${b.fallbackUrl}"` : '';
+            const normalizeBlockLink = (raw?: string) => {
+                const u = (raw || '').trim();
+                if (!u || u === '#') return '#';
+                if (/^(?:https?:\/\/|mailto:|tel:|#|\/|\{\{)/i.test(u)) return u;
+                if (u.startsWith('//')) return 'https:' + u;
+                if (/^[a-z0-9-]+(\.[a-z0-9-]+)+/i.test(u)) return 'https://' + u;
+                return u;
+            };
+            const btnHref = normalizeBlockLink(b.url);
+            const dataFallbackAttr = b.fallbackUrl ? ` data-fallback-url="${normalizeBlockLink(b.fallbackUrl)}"` : '';
 
-            return `<tr><td align="${btnAlign}" class="${customClassName}" style="width: 100%; text-align: ${btnAlign} !important; ${hideOnDesktopCss}"><!--[if mso]><table role="presentation" border="0" cellspacing="0" cellpadding="0" align="${btnAlign}" ${tableWidthAttr} style="${tableMarginCss} ${inlineWidth}"><tr><td align="center" style="background: ${btnBg}; border-radius: ${btnRadius};"><![endif]--><!--[if !mso]><!--><table border="0" cellspacing="0" cellpadding="0" align="${btnAlign}" ${tableWidthAttr} style="${tableMarginCss} display: table; border-collapse: separate; ${inlineWidth}"><!--<![endif]--><tr><td align="center" class="${parentNoStack ? 'btn-nostack' : ''}" style="${getBorderStyle(s)} border-radius: ${btnRadius};"><a class="btn-link ${customClassName} ${parentNoStack ? 'btn-nostack' : ''}" href="${b.url || '#'}"${dataFallbackAttr} target="_blank" style="font-family: ${bodyStyle.fontFamily || "'Roboto', Arial, sans-serif"}; font-size: ${s.fontSize || '16px'}; font-weight: ${s.fontWeight || 'bold'}; font-style: ${s.fontStyle || 'normal'}; text-decoration: ${s.textDecoration || 'none'}; text-transform: ${s.textTransform || 'none'}; color: ${btnColor} !important; border-radius: ${btnRadius}; -webkit-border-radius: ${btnRadius}; -moz-border-radius: ${btnRadius}; ${btnPadding} ${btnHeight}${btnLineHeight}display: block; background: ${btnBg}; ${inlineWidth} box-sizing: border-box; text-align: center; overflow: hidden;">${b.content || 'BUTTON'}</a></td></tr></table><!--[if mso]></td></tr></table><![endif]--></td></tr>`;
+            return `<tr><td align="${btnAlign}" class="${customClassName}" style="width: 100%; text-align: ${btnAlign} !important; ${hideOnDesktopCss}"><!--[if mso]><table role="presentation" border="0" cellspacing="0" cellpadding="0" align="${btnAlign}" ${tableWidthAttr} style="${tableMarginCss} ${inlineWidth}"><tr><td align="center" style="background: ${btnBg}; border-radius: ${btnRadius};"><![endif]--><!--[if !mso]><!--><table border="0" cellspacing="0" cellpadding="0" align="${btnAlign}" ${tableWidthAttr} style="${tableMarginCss} display: table; border-collapse: separate; ${inlineWidth}"><!--<![endif]--><tr><td align="center" class="${parentNoStack ? 'btn-nostack' : ''}" style="${getBorderStyle(s)} border-radius: ${btnRadius};"><a class="btn-link ${customClassName} ${parentNoStack ? 'btn-nostack' : ''}" href="${btnHref}"${dataFallbackAttr} target="_blank" style="font-family: ${bodyStyle.fontFamily || "'Roboto', Arial, sans-serif"}; font-size: ${s.fontSize || '16px'}; font-weight: ${s.fontWeight || 'bold'}; font-style: ${s.fontStyle || 'normal'}; text-decoration: ${s.textDecoration || 'none'}; text-transform: ${s.textTransform || 'none'}; color: ${btnColor} !important; border-radius: ${btnRadius}; -webkit-border-radius: ${btnRadius}; -moz-border-radius: ${btnRadius}; ${btnPadding} ${btnHeight}${btnLineHeight}display: block; background: ${btnBg}; ${inlineWidth} box-sizing: border-box; text-align: center; overflow: hidden;">${b.content || 'BUTTON'}</a></td></tr></table><!--[if mso]></td></tr></table><![endif]--></td></tr>`;
         }
 
         if (b.type === 'header') {
@@ -466,7 +475,10 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
             
             const menuHtml = menuItems.map((item, i) => {
                 const paddingLeft = i === 0 ? 0 : menuGap;
-                const itemLink = item.description || '#';
+                const rawItemLink = (item.description || '').trim();
+                const itemLink = (!rawItemLink || rawItemLink === '#')
+                    ? '#'
+                    : (/^(?:https?:\/\/|mailto:|tel:|#|\/|\{\{)/i.test(rawItemLink) ? rawItemLink : (/^[a-z0-9-]+(\.[a-z0-9-]+)+/i.test(rawItemLink) ? 'https://' + rawItemLink : rawItemLink));
                 const itemType = item.menuType || menuType;
                 
                 if (itemType === 'button') {
@@ -939,12 +951,16 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
                 const ZALO_ICON_URL = 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Icon_of_Zalo.svg/960px-Icon_of_Zalo.svg.png';
                 const iconUrl = l.network === 'zalo' ? ZALO_ICON_URL : getIconUrl(l.network, fill);
                 const imgSize = l.network === 'zalo' ? size : size * 0.6;
-                return `<td style="padding: 0 ${gap}px;"><a href="${l.url}" style="display: block; width: ${size}px; height: ${size}px; background-color: ${bg}; border-radius: ${sanitizeRadius(s.borderRadius || '4px')}; text-align: center; line-height: ${size}px;">
+                const rawSocialUrl = (l.url || '').trim();
+                const socialHref = (!rawSocialUrl || rawSocialUrl === '#')
+                    ? '#'
+                    : (/^(?:https?:\/\/|mailto:|tel:|#|\/|\{\{)/i.test(rawSocialUrl) ? rawSocialUrl : (/^[a-z0-9-]+(\.[a-z0-9-]+)+/i.test(rawSocialUrl) ? 'https://' + rawSocialUrl : rawSocialUrl));
+                return `<td style="padding: 0 ${gap}px;"><a href="${socialHref}" target="_blank" style="display: block; width: ${size}px; height: ${size}px; background-color: ${bg}; border-radius: ${sanitizeRadius(s.borderRadius || '4px')}; text-align: center; line-height: ${size}px;">
                     <img src="${iconUrl}" width="${imgSize}" height="${imgSize}" class="icon-img" style="vertical-align: middle; display: inline-block; width: ${imgSize}px !important; max-width: ${imgSize}px !important; height: ${imgSize}px; object-fit: contain;" />
                 </a></td>`;
             }).join('');
             // [FIX] Add getBackgroundStyle so social block background color works in email clients, plus getBorderStyle(s)
-            return wrapWithMargin(`<td align="${align}" class="${customClassName}" style="${paddingCss} ${getBackgroundStyle(s)} ${radiusStyle} ${getBorderStyle(s)} ${hideOnDesktopCss} text-align: ${align};"><table role="presentation" border="0" cellspacing="0" cellpadding="0" style="display: inline-table;"><tr>${icons}</tr></table></td>`);
+            return wrapWithMargin(`<td align="${align}" class="social-block ${customClassName}" style="${paddingCss} ${getBackgroundStyle(s)} ${radiusStyle} ${getBorderStyle(s)} ${hideOnDesktopCss} text-align: ${align};"><table role="presentation" border="0" cellspacing="0" cellpadding="0" style="display: inline-table;"><tr>${icons}</tr></table></td>`);
         }
 
         // Text block: full styles including border, radius, background
@@ -995,8 +1011,17 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
                 fallbackSrc = `${EXTERNAL_API_BASE}/img_ratio.php?url=${encodeURIComponent(cleanFallback)}&ratio=${encodeURIComponent(aspectRatio)}&fit=${encodeURIComponent(objectFit)}`;
             }
 
+            const rawImgLink = (b.url || '').trim();
+            const cleanImgLink = (!rawImgLink || rawImgLink === '#')
+                ? ''
+                : (/^(?:https?:\/\/|mailto:|tel:|#|\/|\{\{)/i.test(rawImgLink) ? rawImgLink : (/^[a-z0-9-]+(\.[a-z0-9-]+)+/i.test(rawImgLink) ? 'https://' + rawImgLink : rawImgLink));
+            const rawFallbackLink = (b.fallbackUrl || '').trim();
+            const cleanFallbackLink = (!rawFallbackLink || rawFallbackLink === '#')
+                ? ''
+                : (/^(?:https?:\/\/|mailto:|tel:|#|\/|\{\{)/i.test(rawFallbackLink) ? rawFallbackLink : (/^[a-z0-9-]+(\.[a-z0-9-]+)+/i.test(rawFallbackLink) ? 'https://' + rawFallbackLink : rawFallbackLink));
+
             const dataFallbackSrcAttr = fallbackSrc ? ` data-fallback-src="${fallbackSrc}"` : '';
-            const dataFallbackLinkAttr = b.fallbackUrl ? ` data-fallback-url="${b.fallbackUrl}"` : '';
+            const dataFallbackLinkAttr = cleanFallbackLink ? ` data-fallback-url="${cleanFallbackLink}"` : '';
 
             let imgHtml: string;
             if (isPercent) {
@@ -1007,8 +1032,8 @@ export const compileHTML = (blocks: EmailBlock[], bodyStyle: EmailBodyStyle, tit
                 imgHtml = `<img src="${finalSrc}"${dataFallbackSrcAttr} width="${pxVal}" ${pxHeight ? `height="${pxHeight}"` : ''} class="${imgClass} ${customClassName}" style="display: block; width: ${imgWidth}; max-width: 100%; height: ${imgHeight}; object-fit: ${objectFit}; ${ratioCss} ${marginCss} border-radius: ${sanitizeRadius(s.borderRadius || '0')};" alt="${b.altText || ''}" />`;
             }
 
-            if (b.url) {
-                return wrapWithMargin(`<td align="${imgAlign}" class="image-block ${customClassName}" width="100%" style="width: 100%; ${paddingCss} ${getBackgroundStyle(s)} ${radiusStyle} ${borderCss} ${hideOnDesktopCss} text-align: ${imgAlign};"><a href="${b.url}"${dataFallbackLinkAttr} target="_blank" style="display: block; text-decoration: none; width: 100%;">${imgHtml}</a></td>`);
+            if (cleanImgLink) {
+                return wrapWithMargin(`<td align="${imgAlign}" class="image-block ${customClassName}" width="100%" style="width: 100%; ${paddingCss} ${getBackgroundStyle(s)} ${radiusStyle} ${borderCss} ${hideOnDesktopCss} text-align: ${imgAlign};"><a href="${cleanImgLink}"${dataFallbackLinkAttr} target="_blank" style="display: block; text-decoration: none; width: 100%;">${imgHtml}</a></td>`);
             }
             return wrapWithMargin(`<td align="${imgAlign}" class="image-block ${customClassName}" width="100%" style="width: 100%; ${paddingCss} ${getBackgroundStyle(s)} ${radiusStyle} ${borderCss} ${hideOnDesktopCss} text-align: ${imgAlign};">${imgHtml}</td>`);
         }

@@ -1212,15 +1212,24 @@ if ($method === 'POST') {
         // Original regex could be bypassed: javascript:@https://legit.com is valid per FILTER_VALIDATE_URL
         // because FILTER_VALIDATE_URL only checks structure, not scheme safety.
         // Fix: Explicitly allow only http:// and https:// scheme AND check host is not empty.
-        $url = isset($_GET['url']) ? base64_decode($_GET['url']) : 'https://automation.ideas.edu.vn';
-        // [SECURITY] Strip control characters & whitespace injections BEFORE parsing/validating.
-        // base64_decode() can produce strings with null bytes or control chars that bypass
-        // FILTER_VALIDATE_URL (which only checks structure, not content safety).
-        $url = filter_var($url, FILTER_SANITIZE_URL);
-        // [SECURITY] Explicit CRLF / null-byte strip — FILTER_SANITIZE_URL does NOT reliably
-        // remove \r, \n, \t or \0. A crafted base64 URL could inject these into the
-        // Location: header (HTTP Response Splitting / Header Injection attack).
-        $url = str_replace(["\r", "\n", "\t", "\0"], '', $url);
+        $rawEncodedUrl = isset($_GET['url']) ? str_replace(' ', '+', (string)$_GET['url']) : '';
+        $url = $rawEncodedUrl !== '' ? base64_decode($rawEncodedUrl) : 'https://automation.ideas.edu.vn';
+        if ($url === false || trim($url) === '') {
+            $url = 'https://automation.ideas.edu.vn';
+        }
+        // Decode HTML entities if any (e.g. &amp; -> &) and strip control characters / CRLF
+        $url = html_entity_decode(trim($url), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $url = preg_replace('/[\x00-\x1F\x7F]+/', '', $url);
+        if (strpos($url, '//') === 0) {
+            $url = 'https:' . $url;
+        } elseif (!preg_match('/^[a-z][a-z0-9+\-.]*:\/\//i', $url) && strpos($url, '/') !== 0 && !preg_match('/^(?:javascript:|data:|mailto:|tel:)/i', $url)) {
+            $url = 'https://' . ltrim($url, '/');
+        }
+        // Percent-encode spaces and UTF-8 / non-ASCII characters so FILTER_VALIDATE_URL does not
+        // reject valid URLs with Vietnamese slugs or query params
+        $url = preg_replace_callback('/[^\x21-\x7E]/', function ($m) {
+            return rawurlencode($m[0]);
+        }, $url);
         $parsedUrl = parse_url($url);
         $urlScheme = strtolower($parsedUrl['scheme'] ?? '');
         $urlHost = $parsedUrl['host'] ?? '';
@@ -1347,6 +1356,7 @@ if ($method === 'POST') {
                 // [DEBOUNCE FIX] Pre-buffer deduplication
                 // Checks raw_event_buffer for identical recent events to prevent redundant logs
                 // from multi-threaded scanners or rapid user clicks.
+                $isDebounced = false;
                 try {
                     $stmtCheck = $pdo->prepare("
                         SELECT 1 FROM raw_event_buffer 
@@ -1355,54 +1365,56 @@ if ($method === 'POST') {
                         AND payload LIKE ? 
                         LIMIT 1
                     ");
-                    $stmtCheck->execute([$type, '%"sid":"' . $sid . '"%' . ($rid ? '%"rid":"' . $rid . '"%' : '')]);
+                    $likePattern = '%"sid":"' . $sid . '"%' . ($rid ? '%"rid":"' . $rid . '"%' : '');
+                    if ($type === 'click' && $url) {
+                        $jsonEscapedUrl = trim(json_encode($url), '"');
+                        $likePattern .= '%"url":"' . $jsonEscapedUrl . '"%';
+                    }
+                    $stmtCheck->execute([$type, $likePattern]);
                     if ($stmtCheck->fetchColumn()) {
-                        if ($type === 'click') {
-                            header("Location: $url");
-                            exit;
-                        }
-                        if ($type === 'open')
-                            exit;
+                        $isDebounced = true;
                     }
                 } catch (Exception $e) {
                 }
 
-                try {
-                    $rawPayload = json_encode([
-                        'sid' => $sid,
-                        'rid' => $rid,
-                        'fid' => $fid,
-                        'cid' => $cid,
-                        'var' => $_GET['var'] ?? null,
-                        'workspace_id' => $wId, // [HARDENING] Pass workspace_id into buffer
-                        // user_agent is already inside $extraData['user_agent'] — no need to duplicate at root
-                        'extra_data' => array_merge($extraData, ['url' => $url]),
-                        'timestamp' => microtime(true)
-                    ]);
+                if (!$isDebounced) {
+                    try {
+                        $rawPayload = json_encode([
+                            'sid' => $sid,
+                            'rid' => $rid,
+                            'fid' => $fid,
+                            'cid' => $cid,
+                            'var' => $_GET['var'] ?? null,
+                            'workspace_id' => $wId, // [HARDENING] Pass workspace_id into buffer
+                            // user_agent is already inside $extraData['user_agent'] — no need to duplicate at root
+                            'extra_data' => array_merge($extraData, ['url' => $url]),
+                            'timestamp' => microtime(true)
+                        ]);
 
-                    $stmt = $pdo->prepare("INSERT INTO raw_event_buffer (type, payload) VALUES (?, ?)");
-                    $stmt->execute([$type, $rawPayload]);
-                } catch (Exception $e) {
-                    // Fallback: If table doesn't exist, create it and retry
-                    if (strpos($e->getMessage(), "doesn't exist") !== false) {
-                        try {
-                            $pdo->exec("CREATE TABLE IF NOT EXISTS raw_event_buffer (
-                                id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-                                type VARCHAR(50) NOT NULL,
-                                payload JSON NOT NULL,
-                                processed TINYINT(1) DEFAULT 0,
-                                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                                INDEX idx_processed (processed)
-                            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+                        $stmt = $pdo->prepare("INSERT INTO raw_event_buffer (type, payload) VALUES (?, ?)");
+                        $stmt->execute([$type, $rawPayload]);
+                    } catch (Exception $e) {
+                        // Fallback: If table doesn't exist, create it and retry
+                        if (strpos($e->getMessage(), "doesn't exist") !== false) {
+                            try {
+                                $pdo->exec("CREATE TABLE IF NOT EXISTS raw_event_buffer (
+                                    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                                    type VARCHAR(50) NOT NULL,
+                                    payload JSON NOT NULL,
+                                    processed TINYINT(1) DEFAULT 0,
+                                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                    INDEX idx_processed (processed)
+                                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
 
-                            $stmt = $pdo->prepare("INSERT INTO raw_event_buffer (type, payload) VALUES (?, ?)");
-                            $stmt->execute([$type, $rawPayload]);
-                        } catch (Exception $ex) {
-                            // If still fails, log and ignore (don't break redirect)
-                            file_put_contents(__DIR__ . '/webhook_error.log', date('[Y-m-d H:i:s] ') . "Buffer Insert Failed: " . $ex->getMessage() . "\n", FILE_APPEND);
+                                $stmt = $pdo->prepare("INSERT INTO raw_event_buffer (type, payload) VALUES (?, ?)");
+                                $stmt->execute([$type, $rawPayload]);
+                            } catch (Exception $ex) {
+                                // If still fails, log and ignore (don't break redirect)
+                                file_put_contents(__DIR__ . '/webhook_error.log', date('[Y-m-d H:i:s] ') . "Buffer Insert Failed: " . $ex->getMessage() . "\n", FILE_APPEND);
+                            }
+                        } else {
+                            file_put_contents(__DIR__ . '/webhook_error.log', date('[Y-m-d H:i:s] ') . $e->getMessage() . "\n", FILE_APPEND);
                         }
-                    } else {
-                        file_put_contents(__DIR__ . '/webhook_error.log', date('[Y-m-d H:i:s] ') . $e->getMessage() . "\n", FILE_APPEND);
                     }
                 }
             } elseif ($type === 'unsubscribe') {
@@ -1452,6 +1464,12 @@ if ($method === 'POST') {
                             strpos($url, 'ideas.edu.vn') !== false
                         );
                         if ($isSurveyOrInternal) {
+                            $fragment = '';
+                            $hashPos = strpos($url, '#');
+                            if ($hashPos !== false) {
+                                $fragment = substr($url, $hashPos);
+                                $url = substr($url, 0, $hashPos);
+                            }
                             $connector = (strpos($url, '?') !== false) ? '&' : '?';
                             $paramsToAdd = [];
                             if (!empty($sub['id']) && strpos($url, 'sid=') === false) {
@@ -1471,6 +1489,7 @@ if ($method === 'POST') {
                             if (!empty($paramsToAdd)) {
                                 $url .= $connector . http_build_query($paramsToAdd);
                             }
+                            $url .= $fragment;
                         }
                     }
                 } catch (Exception $e) {

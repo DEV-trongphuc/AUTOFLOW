@@ -22,28 +22,63 @@ const ClickHeatmap: React.FC<ClickHeatmapProps> = ({ html, clickData, deviceFilt
     const [iframeHeight, setIframeHeight] = useState(600);
     const viewMode = deviceFilter === 'all' ? 'desktop' : deviceFilter; // Map 'all' to desktop layout by default
 
-    // Normalize URL for matching (removes protocol, www, and query params)
-    const normalizeUrl = (url: string) => {
+    // Normalize URL for matching (removes activity prefixes, protocol, www, and auto-injected tracking params)
+    const normalizeUrl = (url: string, stripAllQuery = false) => {
         if (!url) return '';
         try {
-            let clean = url.trim().toLowerCase();
+            let clean = url.trim();
+            // Strip activity log prefixes like "Clicked link (A) (+5 điểm): "
+            clean = clean.replace(/^(?:Zalo\s+)?Click(?:ed)?\s+(?:link(?:\/button)?|button)(?:\s*\([^)]*\))*:\s*/i, '').trim();
+            if (!/^https?:\/\//i.test(clean)) {
+                const match = clean.match(/(https?:\/\/\S+)/i);
+                if (match) clean = match[1];
+            }
 
             // If it's a tracking URL with a 'url' or 'u' parameter, extract the real destination
             if (clean.includes('?url=') || clean.includes('&url=')) {
-                const parts = clean.split(/[?&]url=/);
-                if (parts[1]) clean = decodeURIComponent(parts[1].split('&')[0]);
+                const parts = clean.split(/[?&]url=/i);
+                if (parts[1]) {
+                    const rawParam = decodeURIComponent(parts[1].split('&')[0]);
+                    try {
+                        const decoded = atob(rawParam.replace(/ /g, '+'));
+                        if (/^https?:\/\//i.test(decoded)) clean = decoded;
+                        else clean = rawParam;
+                    } catch {
+                        clean = rawParam;
+                    }
+                }
             } else if (clean.includes('?u=') || clean.includes('&u=')) {
-                const parts = clean.split(/[?&]u=/);
+                const parts = clean.split(/[?&]u=/i);
                 if (parts[1]) clean = decodeURIComponent(parts[1].split('&')[0]);
             }
 
+            // Remove fragments
+            clean = clean.split('#')[0];
+
+            // Strip auto-injected tracking query parameters (utm_*, sid, uid, email, name, phone, mc_*)
+            const qIndex = clean.indexOf('?');
+            if (qIndex !== -1) {
+                const basePart = clean.substring(0, qIndex);
+                if (stripAllQuery) {
+                    clean = basePart;
+                } else {
+                    const queryPart = clean.substring(qIndex + 1);
+                    const params = new URLSearchParams(queryPart);
+                    const trackingParams = [
+                        'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content',
+                        'sid', 'uid', 'email', 'name', 'phone', 'mc_cta', 'mc_cid', 'mc_eid'
+                    ];
+                    trackingParams.forEach(p => params.delete(p));
+                    const remaining = params.toString();
+                    clean = remaining ? `${basePart}?${remaining}` : basePart;
+                }
+            }
+
+            clean = clean.toLowerCase();
             // Remove protocol
             clean = clean.replace(/^https?:\/\//, '');
             // Remove www.
             clean = clean.replace(/^www\./, '');
-            // Remove fragments
-            clean = clean.split('#')[0];
-            
             // Clean up trailing slashes before query params if they exist, or at the end
             clean = clean.replace(/\/\?/, '?').replace(/\/+$/, '');
 
@@ -66,8 +101,9 @@ const ClickHeatmap: React.FC<ClickHeatmapProps> = ({ html, clickData, deviceFilt
 
         // Aggregate clicks by normalized URL
         const clickMap = new Map<string, { total: number; unique: number; originalUrls: string[] }>();
+        const clickPathMap = new Map<string, { total: number; unique: number; originalUrls: string[] }>();
         clickData.forEach(item => {
-            const norm = normalizeUrl(item.url);
+            const norm = normalizeUrl(item.url, false);
             if (!norm) return;
 
             const existing = clickMap.get(norm) || { total: 0, unique: 0, originalUrls: [] };
@@ -76,6 +112,16 @@ const ClickHeatmap: React.FC<ClickHeatmapProps> = ({ html, clickData, deviceFilt
                 unique: existing.unique + item.unique_clicks,
                 originalUrls: [...existing.originalUrls, item.url]
             });
+
+            const normPath = normalizeUrl(item.url, true);
+            if (normPath) {
+                const existingPath = clickPathMap.get(normPath) || { total: 0, unique: 0, originalUrls: [] };
+                clickPathMap.set(normPath, {
+                    total: existingPath.total + item.total_clicks,
+                    unique: existingPath.unique + item.unique_clicks,
+                    originalUrls: [...existingPath.originalUrls, item.url]
+                });
+            }
         });
 
         const maxClicks = Math.max(...Array.from(clickMap.values()).map(v => v.total), 1);
@@ -85,15 +131,22 @@ const ClickHeatmap: React.FC<ClickHeatmapProps> = ({ html, clickData, deviceFilt
             const href = link.getAttribute('href');
             if (!href || href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:')) return;
 
-            const norm = normalizeUrl(href);
+            const norm = normalizeUrl(href, false);
+            const normPath = normalizeUrl(href, true);
 
-            // Try perfect match first
+            // 1. Try exact normalized match (with non-tracking query params preserved)
             let stats = clickMap.get(norm);
 
-            // If no perfect match, try fuzzy match (maybe the href contains the destination URL)
+            // 2. Fallback to exact host + path match (ignoring query params)
+            if (!stats && normPath) {
+                stats = clickPathMap.get(normPath);
+            }
+
+            // 3. Last resort fuzzy match only if one URL contains the other and shares the same base path
             if (!stats) {
                 for (const [clickNorm, clickStats] of clickMap.entries()) {
-                    if (clickNorm.length > 3 && (norm.includes(clickNorm) || clickNorm.includes(norm))) {
+                    const clickBase = clickNorm.split('?')[0];
+                    if (clickBase && clickBase === normPath) {
                         stats = clickStats;
                         break;
                     }
